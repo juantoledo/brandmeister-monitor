@@ -10,13 +10,6 @@ class BrandmeisterMonitor {
         this.callsignAliases = {}; // Store callsign to alias mappings
         this.activeCalls = {}; // Track active calls by SourceCall to update with new info
         this.transmissionGroups = {}; // Group related transmission events
-        this.durationStats = {
-            total: 0,
-            brief: 0,  // < 2s
-            short: 0,  // 2-10s
-            medium: 0, // 10-30s
-            long: 0    // > 30s
-        };
         
         // Configuration (can be made user-configurable later)
         this.config = {
@@ -379,7 +372,6 @@ class BrandmeisterMonitor {
             sessionType: group.sessionType || '',
             status: group.status,
             duration: null,
-            durationClass: '',
             startTime: group.startTime,
             stopTime: group.stopTime
         };
@@ -390,11 +382,9 @@ class BrandmeisterMonitor {
         } else if (group.status === 'completed') {
             const duration = group.duration || (group.stopTime - group.startTime);
             fieldData.duration = duration;
-            fieldData.durationClass = this.getDurationClass(duration);
         }
 
         const eventType = group.status === 'completed' ? 'Transmission Complete' : 'Transmission Active';
-        const durationClass = group.status === 'completed' ? this.getDurationClass(group.duration || 0) : '';
         
         if (group.logEntry) {
             // Update existing entry
@@ -413,7 +403,7 @@ class BrandmeisterMonitor {
             // Create new entry based on status
             if (group.status === 'completed') {
                 // Completed transmissions go to main log
-                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType, durationClass);
+                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType);
                 group.logEntry = logEntry;
                 // Remove from active transmissions (in case it was there)
                 this.removeActiveTransmission(callKey);
@@ -440,6 +430,9 @@ class BrandmeisterMonitor {
         const contextID = call.ContextID || '';
 
         if (eventType === 'start') {
+            // DMR is half-duplex: clear any existing active transmissions for this talkgroup when a new one starts
+            this.clearActiveTransmissionsForTalkgroup(tg);
+            
             // Create new session entry
             this.transmissionGroups[sessionKey] = {
                 sessionID: call.SessionID,
@@ -547,18 +540,6 @@ class BrandmeisterMonitor {
         this.elements.totalCalls.textContent = this.totalCalls;
         this.elements.lastActivity.textContent = this.formatTime(this.lastActivityTime);
 
-        // Update duration statistics
-        this.durationStats.total++;
-        if (duration < 2) {
-            this.durationStats.brief++;
-        } else if (duration < 10) {
-            this.durationStats.short++;
-        } else if (duration < 30) {
-            this.durationStats.medium++;
-        } else {
-            this.durationStats.long++;
-        }
-
         // Update the display
         this.createOrUpdateTransmissionGroup(sessionKey, call);
 
@@ -606,17 +587,8 @@ class BrandmeisterMonitor {
         this.totalCalls++;
         this.lastActivityTime = new Date();
 
-        // Update duration statistics
-        this.durationStats.total++;
-        if (duration < 2) {
-            this.durationStats.brief++;
-        } else if (duration < 10) {
-            this.durationStats.short++;
-        } else if (duration < 30) {
-            this.durationStats.medium++;
-        } else {
-            this.durationStats.long++;
-        }
+        this.totalCalls++;
+        this.lastActivityTime = new Date();
 
         // Update statistics
         this.elements.totalCalls.textContent = this.totalCalls;
@@ -640,17 +612,6 @@ class BrandmeisterMonitor {
         
         // Create detailed log entry with comprehensive information
         let details = `Duration: ${duration.toFixed(1)}s`;
-        
-        // Add duration classification
-        if (duration < 2) {
-            details += ` (Brief)`;
-        } else if (duration < 10) {
-            details += ` (Short)`;
-        } else if (duration < 30) {
-            details += ` (Medium)`;
-        } else {
-            details += ` (Long)`;
-        }
         
         details += ` | TG: ${tg}`;
         
@@ -685,7 +646,7 @@ class BrandmeisterMonitor {
         
         details += ` | Start: ${this.formatTimestamp(startTime)} | Stop: ${this.formatTimestamp(stopTime)}`;
         
-        this.addLogEntry('session-stop', displayName, details, 'Transmission Complete', this.getDurationClass(duration));
+        this.addLogEntry('session-stop', displayName, details, 'Transmission Complete');
 
         // Play notification sound (optional)
         this.playNotificationSound();
@@ -794,6 +755,32 @@ class BrandmeisterMonitor {
         this.activeCalls = {};
     }
 
+    clearActiveTransmissionsForTalkgroup(talkgroup) {
+        // Clear active transmissions for the specified talkgroup
+        const existingActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
+        existingActiveEntries.forEach(entry => {
+            const sessionKey = entry.getAttribute('data-session-key');
+            const group = this.transmissionGroups[sessionKey];
+            // Remove if it's the same talkgroup or if we're in single TG mode (clear all)
+            if (!group || group.tg === talkgroup || !this.config.monitorAllTalkgroups) {
+                entry.remove();
+            }
+        });
+        
+        // Mark any incomplete transmission groups as cleared for this talkgroup
+        for (const sessionKey in this.transmissionGroups) {
+            const group = this.transmissionGroups[sessionKey];
+            if (group && group.tg === talkgroup && group.status !== 'completed') {
+                group.status = 'cleared';
+            }
+        }
+        
+        // Show "no activity" message if container is empty
+        if (this.elements.activeContainer.children.length === 0) {
+            this.elements.activeContainer.innerHTML = '<p class="no-activity">No active transmissions</p>';
+        }
+    }
+
     createActiveTransmissionEntry(sessionKey, titleText, fieldData, eventType) {
         const activeEntry = document.createElement('div');
         activeEntry.className = 'active-transmission';
@@ -813,16 +800,9 @@ class BrandmeisterMonitor {
         return activeEntry;
     }
 
-    getDurationClass(duration) {
-        if (duration < 2) return 'duration-brief';
-        if (duration < 10) return 'duration-short';
-        if (duration < 30) return 'duration-medium';
-        return 'duration-long';
-    }
-
-    addLogEntryWithFields(type, callsign, fieldData, event, durationClass = '') {
+    addLogEntryWithFields(type, callsign, fieldData, event) {
         const logEntry = document.createElement('div');
-        logEntry.className = `log-entry ${type} ${durationClass} new`;
+        logEntry.className = `log-entry ${type} new`;
         
         const timestamp = new Date().toLocaleTimeString();
         
@@ -843,7 +823,7 @@ class BrandmeisterMonitor {
                 ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
                 ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
                 ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
-                ${fieldData.duration !== null ? `<span class="field duration ${fieldData.durationClass}" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
+                ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
                 ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
                 ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
             </div>` : ''}
@@ -908,16 +888,16 @@ class BrandmeisterMonitor {
                 ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
                 ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
                 ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
-                ${fieldData.duration !== null ? `<span class="field duration ${fieldData.durationClass}" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
+                ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
                 ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
                 ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
             ` : '';
         }
     }
 
-    addLogEntry(type, callsign, details, event, durationClass = '') {
+    addLogEntry(type, callsign, details, event) {
         const logEntry = document.createElement('div');
-        logEntry.className = `log-entry ${type} ${durationClass} new`;
+        logEntry.className = `log-entry ${type} new`;
         
         const timestamp = new Date().toLocaleTimeString();
         

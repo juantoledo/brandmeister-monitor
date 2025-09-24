@@ -1001,26 +1001,6 @@ button:disabled {
     border-left-color: var(--md-error);
 }
 
-.log-entry.duration-brief {
-    border-left-color: #ffc107;
-    background: #fff3cd;
-}
-
-.log-entry.duration-short {
-    border-left-color: #17a2b8;
-    background: #d1ecf1;
-}
-
-.log-entry.duration-medium {
-    border-left-color: #28a745;
-    background: #d4edda;
-}
-
-.log-entry.duration-long {
-    border-left-color: #6f42c1;
-    background: #e2d9f3;
-}
-
 .log-header {
     display: flex;
     justify-content: space-between;
