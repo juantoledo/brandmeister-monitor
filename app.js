@@ -45,6 +45,7 @@ class BrandmeisterMonitor {
             statusText: document.getElementById('statusText'),
             currentTg: document.getElementById('currentTg'),
             logContainer: document.getElementById('logContainer'),
+            activeContainer: document.getElementById('activeContainer'),
             totalCalls: document.getElementById('totalCalls'),
             lastActivity: document.getElementById('lastActivity')
         };
@@ -259,6 +260,8 @@ class BrandmeisterMonitor {
                 if (notify) {
                     // Update the transmission group with completion info
                     this.updateTransmissionGroupComplete(sessionKey, call);
+                    // Update the UI to show completion
+                    this.createOrUpdateTransmissionSession(sessionKey, call, 'stop');
                 }
             } else if (event === 'Session-Start') {
                 // Create or update transmission session using SessionID
@@ -364,12 +367,27 @@ class BrandmeisterMonitor {
             
             // Update CSS classes for duration
             if (group.status === 'completed') {
-                group.logEntry.className = `log-entry transmission-complete ${durationClass}`;
+                group.logEntry.className = `log-entry transmission-complete`;
+                // Remove from active transmissions
+                this.removeActiveTransmission(callKey);
+            } else {
+                // Update active transmission
+                this.updateActiveTransmission(callKey, titleText, fieldData, eventType);
             }
         } else {
-            // Create new entry
-            const logEntry = this.addLogEntryWithFields('transmission-active', titleText, fieldData, eventType, durationClass);
-            group.logEntry = logEntry;
+            // Create new entry based on status
+            if (group.status === 'completed') {
+                // Completed transmissions go to main log
+                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType, durationClass);
+                group.logEntry = logEntry;
+                // Remove from active transmissions (in case it was there)
+                this.removeActiveTransmission(callKey);
+            } else {
+                // Active transmissions only go to active section, not main log
+                this.addActiveTransmission(callKey, titleText, fieldData, eventType);
+                // We don't create a main log entry yet for active transmissions
+                group.logEntry = null;
+            }
         }
     }
 
@@ -681,6 +699,68 @@ class BrandmeisterMonitor {
         }
     }
 
+    addActiveTransmission(sessionKey, titleText, fieldData, eventType) {
+        // Remove "no activity" message if it exists
+        const noActivityMsg = this.elements.activeContainer.querySelector('.no-activity');
+        if (noActivityMsg) {
+            noActivityMsg.remove();
+        }
+
+        // Create active transmission entry
+        const activeEntry = this.createActiveTransmissionEntry(sessionKey, titleText, fieldData, eventType);
+        
+        // Add to active container
+        this.elements.activeContainer.appendChild(activeEntry);
+    }
+
+    updateActiveTransmission(sessionKey, titleText, fieldData, eventType) {
+        const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+        if (activeEntry) {
+            // Update the existing active entry
+            const titleElement = activeEntry.querySelector('.active-title');
+            const identityElement = activeEntry.querySelector('.active-identity');
+            
+            if (titleElement) titleElement.textContent = titleText;
+            if (identityElement) {
+                identityElement.innerHTML = `
+                    ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
+                    ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
+                `;
+            }
+        }
+    }
+
+    removeActiveTransmission(sessionKey) {
+        const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+        if (activeEntry) {
+            activeEntry.remove();
+        }
+
+        // Check if active container is empty and show "no activity" message
+        if (this.elements.activeContainer.children.length === 0) {
+            this.elements.activeContainer.innerHTML = '<p class="no-activity">No active transmissions</p>';
+        }
+    }
+
+    createActiveTransmissionEntry(sessionKey, titleText, fieldData, eventType) {
+        const activeEntry = document.createElement('div');
+        activeEntry.className = 'active-transmission';
+        activeEntry.setAttribute('data-session-key', sessionKey);
+        
+        activeEntry.innerHTML = `
+            <div class="active-header">
+                <div class="active-title">${titleText}</div>
+                <div class="active-status">🔴 LIVE</div>
+            </div>
+            <div class="active-identity">
+                ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
+                ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
+            </div>
+        `;
+        
+        return activeEntry;
+    }
+
     getDurationClass(duration) {
         if (duration < 2) return 'duration-brief';
         if (duration < 10) return 'duration-short';
@@ -746,30 +826,41 @@ class BrandmeisterMonitor {
     }
 
     updateLogEntryFields(logEntry, titleText, fieldData, event) {
-        // Update title and event
-        logEntry.querySelector('.log-title').textContent = titleText;
-        logEntry.querySelector('.log-event').textContent = event;
+        // Update title and event - handle both old and new structures
+        const titleElement = logEntry.querySelector('.log-title') || logEntry.querySelector('.log-callsign');
+        if (titleElement) {
+            titleElement.textContent = titleText;
+        }
+        
+        const eventElement = logEntry.querySelector('.log-event');
+        if (eventElement) {
+            eventElement.textContent = event;
+        }
         
         // Update or create the identity section
         const identityContainer = logEntry.querySelector('.log-identity');
-        identityContainer.innerHTML = `
-            ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
-            ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
-        `;
+        if (identityContainer) {
+            identityContainer.innerHTML = `
+                ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
+                ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
+            `;
+        }
         
         // Update or create the fields container
         const fieldsContainer = logEntry.querySelector('.log-fields');
-        fieldsContainer.innerHTML = this.config.verbose ? `
-            <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
-            ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
-            ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
-            ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
-            ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
-            ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
-            ${fieldData.duration !== null ? `<span class="field duration ${fieldData.durationClass}" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
-            ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
-            ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
-        ` : '';
+        if (fieldsContainer) {
+            fieldsContainer.innerHTML = this.config.verbose ? `
+                <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
+                ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
+                ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
+                ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
+                ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
+                ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
+                ${fieldData.duration !== null ? `<span class="field duration ${fieldData.durationClass}" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
+                ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
+                ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
+            ` : '';
+        }
     }
 
     addLogEntry(type, callsign, details, event, durationClass = '') {
@@ -855,6 +946,22 @@ class BrandmeisterMonitor {
         } catch (error) {
             console.log('Audio notification not supported');
         }
+    }
+}
+
+// Global function for collapsible activity log
+function toggleActivityLog() {
+    const logContainer = document.getElementById('logContainer');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (logContainer.classList.contains('collapsed')) {
+        logContainer.classList.remove('collapsed');
+        toggleIcon.textContent = '▼';
+        logContainer.style.maxHeight = '500px';
+    } else {
+        logContainer.classList.add('collapsed');
+        toggleIcon.textContent = '▶';
+        logContainer.style.maxHeight = '0';
     }
 }
 

@@ -36,9 +36,18 @@
             <p>Monitoring TG: <span id="currentTg">None</span></p>
         </div>
 
+        <div class="active-transmissions">
+            <h3>🔴 Active Transmissions</h3>
+            <div id="activeContainer">
+                <p class="no-activity">No active transmissions</p>
+            </div>
+        </div>
+
         <div class="activity-log">
-            <h3>Activity Log</h3>
-            <div id="logContainer">
+            <h3 class="collapsible-header" onclick="toggleActivityLog()">
+                📋 Activity Log <span class="toggle-icon" id="toggleIcon">▼</span>
+            </h3>
+            <div id="logContainer" class="collapsible-content">
                 <p class="no-activity">No activity yet. Configure a talkgroup and connect to start monitoring.</p>
             </div>
         </div>
