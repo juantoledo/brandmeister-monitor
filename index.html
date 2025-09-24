@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brandmeister Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔊 Brandmeister Monitor</h1>
+            <p class="subtitle">Real-time DMR Talkgroup Activity Monitor</p>
+        </header>
+
+        <div class="config-section">
+            <div class="tg-input-group">
+                <label for="talkgroup">Talkgroup ID:</label>
+                <input type="text" id="talkgroup" placeholder="Enter Talkgroup ID (e.g., 214) or 'all'" min="1">
+                <button id="saveTg">Save & Monitor</button>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot" id="connectionStatus"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+            <button id="clearLogs">Clear Logs</button>
+        </div>
+
+        <div class="current-tg">
+            <p>Monitoring TG: <span id="currentTg">None</span></p>
+        </div>
+
+        <div class="activity-log">
+            <h3>Activity Log</h3>
+            <div id="logContainer">
+                <p class="no-activity">No activity yet. Configure a talkgroup and connect to start monitoring.</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Calls:</span>
+                <span class="stat-value" id="totalCalls">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Last Activity:</span>
+                <span class="stat-value" id="lastActivity">Never</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
