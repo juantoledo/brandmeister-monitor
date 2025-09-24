@@ -47,7 +47,18 @@ class BrandmeisterMonitor {
             logContainer: document.getElementById('logContainer'),
             activeContainer: document.getElementById('activeContainer'),
             totalCalls: document.getElementById('totalCalls'),
-            lastActivity: document.getElementById('lastActivity')
+            lastActivity: document.getElementById('lastActivity'),
+            themeSelect: document.getElementById('themeSelect'),
+            // Settings elements
+            minDurationInput: document.getElementById('minDuration'),
+            minSilenceInput: document.getElementById('minSilence'),
+            verboseCheckbox: document.getElementById('verbose'),
+            showAliasStatusCheckbox: document.getElementById('showAliasStatus'),
+            aliasOnlyCheckbox: document.getElementById('aliasOnly'),
+            monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
+            saveSettingsBtn: document.getElementById('saveSettings'),
+            resetSettingsBtn: document.getElementById('resetSettings'),
+            settingsContainer: document.getElementById('settingsContainer')
         };
 
         // Bind event listeners
@@ -55,6 +66,25 @@ class BrandmeisterMonitor {
         this.elements.connectBtn.addEventListener('click', () => this.connect());
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
+        this.elements.themeSelect.addEventListener('change', (e) => this.switchTheme(e.target.value));
+        
+        // Settings event listeners
+        this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        this.elements.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+        
+        // Real-time settings updates for number inputs
+        this.elements.minDurationInput.addEventListener('input', () => this.updateConfigFromUI());
+        this.elements.minSilenceInput.addEventListener('input', () => this.updateConfigFromUI());
+        
+        // Real-time settings updates for checkboxes
+        this.elements.verboseCheckbox.addEventListener('change', () => this.updateConfigFromUI());
+        this.elements.showAliasStatusCheckbox.addEventListener('change', () => this.updateConfigFromUI());
+        this.elements.aliasOnlyCheckbox.addEventListener('change', () => this.updateConfigFromUI());
+        this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', () => this.updateConfigFromUI());
+        
+        // Load saved theme and settings
+        this.loadTheme();
+        this.loadSettings();
         
         // Allow Enter key to save talkgroup
         this.elements.talkgroupInput.addEventListener('keypress', (e) => {
@@ -126,7 +156,12 @@ class BrandmeisterMonitor {
             this.addLogEntry('system', 'System', `Monitoring talkgroup ${tgValue}`, 'Configuration Updated');
         } else {
             alert('Please enter a valid talkgroup ID or "all" to monitor all talkgroups');
+            return; // Exit early if invalid input
         }
+        
+        // Clear active transmissions when talkgroup changes
+        this.clearActiveTransmissions();
+        this.addLogEntry('system', 'System', 'Active transmissions cleared due to talkgroup change', 'Cleared Active');
     }
 
     connect() {
@@ -742,6 +777,23 @@ class BrandmeisterMonitor {
         }
     }
 
+    clearActiveTransmissions() {
+        // Clear the active container
+        this.elements.activeContainer.innerHTML = '<p class="no-activity">No active transmissions</p>';
+        
+        // Clean up any active transmission groups in memory
+        for (const sessionKey in this.transmissionGroups) {
+            const group = this.transmissionGroups[sessionKey];
+            if (group && group.status !== 'completed') {
+                // Mark incomplete transmissions as cleared
+                group.status = 'cleared';
+            }
+        }
+        
+        // Clear active calls tracking
+        this.activeCalls = {};
+    }
+
     createActiveTransmissionEntry(sessionKey, titleText, fieldData, eventType) {
         const activeEntry = document.createElement('div');
         activeEntry.className = 'active-transmission';
@@ -947,6 +999,101 @@ class BrandmeisterMonitor {
             console.log('Audio notification not supported');
         }
     }
+
+    // Theme Management Methods
+    switchTheme(themeName) {
+        document.body.className = `theme-${themeName}`;
+        localStorage.setItem('brandmeister-theme', themeName);
+        this.elements.themeSelect.value = themeName;
+    }
+
+    loadTheme() {
+        const savedTheme = localStorage.getItem('brandmeister-theme') || 'material';
+        this.switchTheme(savedTheme);
+    }
+
+    // Settings Management Methods
+    loadSettings() {
+        const savedSettings = localStorage.getItem('brandmeister-settings');
+        if (savedSettings) {
+            try {
+                const settings = JSON.parse(savedSettings);
+                
+                // Update config object
+                this.config.minDuration = settings.minDuration || 4;
+                this.config.minSilence = settings.minSilence || 10;
+                this.config.verbose = settings.verbose || false;
+                this.config.showAliasStatus = settings.showAliasStatus !== undefined ? settings.showAliasStatus : true;
+                this.config.aliasOnly = settings.aliasOnly !== undefined ? settings.aliasOnly : true;
+                this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
+                
+                // Update UI elements
+                this.updateUIFromConfig();
+                
+            } catch (error) {
+                console.log('Error loading settings from storage:', error);
+                this.resetSettings();
+            }
+        } else {
+            // First time - update UI with default values
+            this.updateUIFromConfig();
+        }
+    }
+
+    saveSettings() {
+        const settings = {
+            minDuration: this.config.minDuration,
+            minSilence: this.config.minSilence,
+            verbose: this.config.verbose,
+            showAliasStatus: this.config.showAliasStatus,
+            aliasOnly: this.config.aliasOnly,
+            monitorAllTalkgroups: this.config.monitorAllTalkgroups
+        };
+        
+        localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
+        this.addLogEntry('system', 'System', 'Settings saved successfully', 'Configuration Updated');
+    }
+
+    resetSettings() {
+        // Reset to default values
+        this.config.minDuration = 4;
+        this.config.minSilence = 10;
+        this.config.verbose = false;
+        this.config.showAliasStatus = true;
+        this.config.aliasOnly = true;
+        this.config.monitorAllTalkgroups = false;
+        
+        // Update UI
+        this.updateUIFromConfig();
+        
+        // Save to localStorage
+        this.saveSettings();
+        
+        this.addLogEntry('system', 'System', 'Settings reset to defaults', 'Configuration Reset');
+    }
+
+    updateConfigFromUI() {
+        // Update config from UI elements
+        this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 4;
+        this.config.minSilence = parseInt(this.elements.minSilenceInput.value) || 10;
+        this.config.verbose = this.elements.verboseCheckbox.checked;
+        this.config.showAliasStatus = this.elements.showAliasStatusCheckbox.checked;
+        this.config.aliasOnly = this.elements.aliasOnlyCheckbox.checked;
+        this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
+        
+        // Auto-save settings when changed
+        this.saveSettings();
+    }
+
+    updateUIFromConfig() {
+        // Update UI elements from config
+        this.elements.minDurationInput.value = this.config.minDuration;
+        this.elements.minSilenceInput.value = this.config.minSilence;
+        this.elements.verboseCheckbox.checked = this.config.verbose;
+        this.elements.showAliasStatusCheckbox.checked = this.config.showAliasStatus;
+        this.elements.aliasOnlyCheckbox.checked = this.config.aliasOnly;
+        this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
+    }
 }
 
 // Global function for collapsible activity log
@@ -962,6 +1109,22 @@ function toggleActivityLog() {
         logContainer.classList.add('collapsed');
         toggleIcon.textContent = '▶';
         logContainer.style.maxHeight = '0';
+    }
+}
+
+// Global function for collapsible settings panel
+function toggleSettings() {
+    const settingsContainer = document.getElementById('settingsContainer');
+    const toggleIcon = document.getElementById('settingsToggleIcon');
+    
+    if (settingsContainer.classList.contains('collapsed')) {
+        settingsContainer.classList.remove('collapsed');
+        toggleIcon.textContent = '▼';
+        settingsContainer.style.maxHeight = '800px';
+    } else {
+        settingsContainer.classList.add('collapsed');
+        toggleIcon.textContent = '▶';
+        settingsContainer.style.maxHeight = '0';
     }
 }
 
