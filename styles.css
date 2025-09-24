@@ -852,6 +852,7 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    gap: 12px;
 }
 
 .active-title {
@@ -859,6 +860,19 @@ button:disabled {
     font-weight: 500;
     color: var(--md-on-surface);
     letter-spacing: 0.25px;
+    flex: 1;
+}
+
+.active-tg {
+    background: var(--md-primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
 }
 
 .active-status {

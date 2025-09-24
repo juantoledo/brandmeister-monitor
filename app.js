@@ -3,7 +3,7 @@ class BrandmeisterMonitor {
     constructor() {
         this.socket = null;
         this.isConnected = false;
-        this.monitoredTalkgroup = null;
+        this.monitoredTalkgroups = []; // Array of monitored talkgroup IDs
         this.lastTGActivity = {};
         this.totalCalls = 0;
         this.lastActivityTime = null;
@@ -16,8 +16,6 @@ class BrandmeisterMonitor {
             minDuration: 4, // minimum duration in seconds
             minSilence: 10, // minimum silence in seconds
             verbose: false,
-            showAliasStatus: true, // show when alias is/isn't available
-            aliasOnly: true, // only show messages with talker alias
             monitorAllTalkgroups: false // if true, monitor all TGs; if false, use monitoredTalkgroup
         };
 
@@ -46,8 +44,6 @@ class BrandmeisterMonitor {
             minDurationInput: document.getElementById('minDuration'),
             minSilenceInput: document.getElementById('minSilence'),
             verboseCheckbox: document.getElementById('verbose'),
-            showAliasStatusCheckbox: document.getElementById('showAliasStatus'),
-            aliasOnlyCheckbox: document.getElementById('aliasOnly'),
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
@@ -71,8 +67,6 @@ class BrandmeisterMonitor {
         
         // Real-time settings updates for checkboxes
         this.elements.verboseCheckbox.addEventListener('change', () => this.updateConfigFromUI());
-        this.elements.showAliasStatusCheckbox.addEventListener('change', () => this.updateConfigFromUI());
-        this.elements.aliasOnlyCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         
         // Load saved theme and settings
@@ -93,15 +87,21 @@ class BrandmeisterMonitor {
         
         if (savedTg) {
             if (savedTg === 'all' || monitorAll) {
-                this.monitoredTalkgroup = null;
+                this.monitoredTalkgroups = [];
                 this.config.monitorAllTalkgroups = true;
                 this.elements.talkgroupInput.value = 'all';
                 this.elements.currentTg.textContent = 'All Talkgroups';
             } else {
-                this.monitoredTalkgroup = parseInt(savedTg);
+                // Parse comma-separated list of talkgroup IDs
+                const tgList = savedTg.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id) && id > 0);
+                this.monitoredTalkgroups = tgList;
                 this.config.monitorAllTalkgroups = false;
                 this.elements.talkgroupInput.value = savedTg;
-                this.elements.currentTg.textContent = savedTg;
+                
+                const displayText = tgList.length === 1 ? 
+                    `TG ${tgList[0]}` : 
+                    `TGs: ${tgList.join(', ')}`;
+                this.elements.currentTg.textContent = displayText;
             }
         }
     }
@@ -133,22 +133,48 @@ class BrandmeisterMonitor {
         const tgValue = this.elements.talkgroupInput.value.trim();
         if (tgValue === '' || tgValue.toLowerCase() === 'all') {
             // Monitor all talkgroups
-            this.monitoredTalkgroup = null;
+            this.monitoredTalkgroups = [];
             this.config.monitorAllTalkgroups = true;
             localStorage.setItem('brandmeister_talkgroup', 'all');
             localStorage.setItem('brandmeister_monitor_all', 'true');
             this.elements.currentTg.textContent = 'All Talkgroups';
             this.addLogEntry('system', 'System', `Monitoring all talkgroups`, 'Configuration Updated');
-        } else if (tgValue && !isNaN(tgValue)) {
-            // Monitor specific talkgroup
-            this.monitoredTalkgroup = parseInt(tgValue);
+        } else if (tgValue) {
+            // Parse comma-separated list of talkgroup IDs
+            const tgList = tgValue.split(',').map(id => id.trim()).filter(id => id !== '');
+            const validTalkgroups = [];
+            
+            for (const tgStr of tgList) {
+                if (!isNaN(tgStr) && parseInt(tgStr) > 0) {
+                    validTalkgroups.push(parseInt(tgStr));
+                } else {
+                    alert(`Invalid talkgroup ID: "${tgStr}". Please enter valid numeric talkgroup IDs separated by commas (e.g., "214,220,235") or "all" to monitor all talkgroups`);
+                    return; // Exit early if invalid input
+                }
+            }
+            
+            if (validTalkgroups.length === 0) {
+                alert('Please enter at least one valid talkgroup ID or "all" to monitor all talkgroups');
+                return;
+            }
+            
+            // Monitor specific talkgroups
+            this.monitoredTalkgroups = validTalkgroups;
             this.config.monitorAllTalkgroups = false;
-            localStorage.setItem('brandmeister_talkgroup', tgValue);
+            localStorage.setItem('brandmeister_talkgroup', validTalkgroups.join(','));
             localStorage.setItem('brandmeister_monitor_all', 'false');
-            this.elements.currentTg.textContent = tgValue;
-            this.addLogEntry('system', 'System', `Monitoring talkgroup ${tgValue}`, 'Configuration Updated');
+            
+            const displayText = validTalkgroups.length === 1 ? 
+                `TG ${validTalkgroups[0]}` : 
+                `TGs: ${validTalkgroups.join(', ')}`;
+            this.elements.currentTg.textContent = displayText;
+            
+            const logText = validTalkgroups.length === 1 ? 
+                `Monitoring talkgroup ${validTalkgroups[0]}` : 
+                `Monitoring talkgroups: ${validTalkgroups.join(', ')}`;
+            this.addLogEntry('system', 'System', logText, 'Configuration Updated');
         } else {
-            alert('Please enter a valid talkgroup ID or "all" to monitor all talkgroups');
+            alert('Please enter valid talkgroup IDs separated by commas (e.g., "214,220,235") or "all" to monitor all talkgroups');
             return; // Exit early if invalid input
         }
         
@@ -233,9 +259,9 @@ class BrandmeisterMonitor {
             
             
             // Only proceed if we should monitor this talkgroup
-            if (!this.config.monitorAllTalkgroups && this.monitoredTalkgroup && tg !== this.monitoredTalkgroup) {
+            if (!this.config.monitorAllTalkgroups && this.monitoredTalkgroups.length > 0 && !this.monitoredTalkgroups.includes(tg)) {
                 if (this.config.verbose) {
-                    //console.log(`Skipping TG ${tg} - only monitoring TG ${this.monitoredTalkgroup}`);
+                    //console.log(`Skipping TG ${tg} - only monitoring TGs: ${this.monitoredTalkgroups.join(', ')}`);
                 }
                 return;
             }
@@ -387,7 +413,7 @@ class BrandmeisterMonitor {
         const eventType = group.status === 'completed' ? 'Transmission Complete' : 'Transmission Active';
         
         if (group.logEntry) {
-            // Update existing entry
+            // Update existing log entry (for completed transmissions)
             this.updateLogEntryFields(group.logEntry, titleText, fieldData, eventType);
             
             // Update CSS classes for duration
@@ -395,23 +421,28 @@ class BrandmeisterMonitor {
                 group.logEntry.className = `log-entry transmission-complete`;
                 // Remove from active transmissions
                 this.removeActiveTransmission(callKey);
-            } else {
-                // Update active transmission
-                this.updateActiveTransmission(callKey, titleText, fieldData, eventType);
             }
+        } else if (group.status === 'completed') {
+            // Completed transmissions go to main log
+            const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType);
+            group.logEntry = logEntry;
+            // Remove from active transmissions (in case it was there)
+            this.removeActiveTransmission(callKey);
         } else {
-            // Create new entry based on status
-            if (group.status === 'completed') {
-                // Completed transmissions go to main log
-                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType);
-                group.logEntry = logEntry;
-                // Remove from active transmissions (in case it was there)
-                this.removeActiveTransmission(callKey);
+            // Handle active transmissions
+            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${callKey}"]`);
+            if (existingActiveEntry) {
+                // Update existing active transmission
+                if (this.config.verbose) {
+                    console.log(`Updating existing active transmission for SessionID: ${callKey}`);
+                }
+                this.updateActiveTransmission(callKey, titleText, fieldData, eventType);
             } else {
-                // Active transmissions only go to active section, not main log
+                // Create new active transmission
+                if (this.config.verbose) {
+                    console.log(`Creating new active transmission for SessionID: ${callKey}`);
+                }
                 this.addActiveTransmission(callKey, titleText, fieldData, eventType);
-                // We don't create a main log entry yet for active transmissions
-                group.logEntry = null;
             }
         }
     }
@@ -451,16 +482,6 @@ class BrandmeisterMonitor {
                 status: 'started',
                 logEntry: null
             };
-
-            // Check if we should display this session start
-            const sessionEffectiveAlias = this.getStoredAlias(callsign);
-            
-            if (this.config.aliasOnly && !sessionEffectiveAlias) {
-                if (this.config.verbose) {
-                    console.log(`Session-Start from ${callsign} (SessionID: ${call.SessionID}) - waiting for alias in subsequent messages`);
-                }
-                return; // Don't display yet, but keep tracking
-            }
 
             // Create a grouped transmission entry
             this.createOrUpdateTransmissionGroup(sessionKey, call);
@@ -620,11 +641,9 @@ class BrandmeisterMonitor {
             details += ` | Radio ID: ${sourceID}`;
         }
         
-        // Add alias information or note when not available
+        // Add alias information if available
         if (effectiveAlias) {
             details += ` | Alias: ${effectiveAlias}`;
-        } else if (this.config.showAliasStatus) {
-            details += ` | Alias: Not provided`;
         }
         
         // Add link/repeater information
@@ -712,17 +731,29 @@ class BrandmeisterMonitor {
     updateActiveTransmission(sessionKey, titleText, fieldData, eventType) {
         const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
         if (activeEntry) {
-            // Update the existing active entry
+            // Update the existing active entry completely
             const titleElement = activeEntry.querySelector('.active-title');
+            const tgElement = activeEntry.querySelector('.active-tg');
             const identityElement = activeEntry.querySelector('.active-identity');
             
             if (titleElement) titleElement.textContent = titleText;
+            if (tgElement) tgElement.textContent = `TG ${fieldData.tg || 'Unknown'}`;
             if (identityElement) {
                 identityElement.innerHTML = `
                     ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
                     ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
                 `;
             }
+            
+            if (this.config.verbose) {
+                console.log(`Updated active transmission for SessionID: ${sessionKey}, Title: ${titleText}`);
+            }
+        } else {
+            if (this.config.verbose) {
+                console.log(`No existing active transmission found for SessionID: ${sessionKey}, creating new one`);
+            }
+            // If we can't find the existing entry, create a new one
+            this.addActiveTransmission(sessionKey, titleText, fieldData, eventType);
         }
     }
 
@@ -761,13 +792,13 @@ class BrandmeisterMonitor {
         existingActiveEntries.forEach(entry => {
             const sessionKey = entry.getAttribute('data-session-key');
             const group = this.transmissionGroups[sessionKey];
-            // Remove if it's the same talkgroup or if we're in single TG mode (clear all)
-            if (!group || group.tg === talkgroup || !this.config.monitorAllTalkgroups) {
+            // Remove if it's the same talkgroup (DMR half-duplex rule)
+            if (group && group.tg === talkgroup) {
                 entry.remove();
             }
         });
         
-        // Mark any incomplete transmission groups as cleared for this talkgroup
+        // Mark any incomplete transmission groups as cleared for this specific talkgroup only
         for (const sessionKey in this.transmissionGroups) {
             const group = this.transmissionGroups[sessionKey];
             if (group && group.tg === talkgroup && group.status !== 'completed') {
@@ -789,6 +820,7 @@ class BrandmeisterMonitor {
         activeEntry.innerHTML = `
             <div class="active-header">
                 <div class="active-title">${titleText}</div>
+                <div class="active-tg">TG ${fieldData.tg || 'Unknown'}</div>
                 <div class="active-status">🔴 LIVE</div>
             </div>
             <div class="active-identity">
@@ -1003,8 +1035,6 @@ class BrandmeisterMonitor {
                 this.config.minDuration = settings.minDuration || 4;
                 this.config.minSilence = settings.minSilence || 10;
                 this.config.verbose = settings.verbose || false;
-                this.config.showAliasStatus = settings.showAliasStatus !== undefined ? settings.showAliasStatus : true;
-                this.config.aliasOnly = settings.aliasOnly !== undefined ? settings.aliasOnly : true;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
                 
                 // Update UI elements
@@ -1025,8 +1055,6 @@ class BrandmeisterMonitor {
             minDuration: this.config.minDuration,
             minSilence: this.config.minSilence,
             verbose: this.config.verbose,
-            showAliasStatus: this.config.showAliasStatus,
-            aliasOnly: this.config.aliasOnly,
             monitorAllTalkgroups: this.config.monitorAllTalkgroups
         };
         
@@ -1039,8 +1067,6 @@ class BrandmeisterMonitor {
         this.config.minDuration = 4;
         this.config.minSilence = 10;
         this.config.verbose = false;
-        this.config.showAliasStatus = true;
-        this.config.aliasOnly = true;
         this.config.monitorAllTalkgroups = false;
         
         // Update UI
@@ -1057,8 +1083,6 @@ class BrandmeisterMonitor {
         this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 4;
         this.config.minSilence = parseInt(this.elements.minSilenceInput.value) || 10;
         this.config.verbose = this.elements.verboseCheckbox.checked;
-        this.config.showAliasStatus = this.elements.showAliasStatusCheckbox.checked;
-        this.config.aliasOnly = this.elements.aliasOnlyCheckbox.checked;
         this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
         
         // Auto-save settings when changed
@@ -1070,8 +1094,6 @@ class BrandmeisterMonitor {
         this.elements.minDurationInput.value = this.config.minDuration;
         this.elements.minSilenceInput.value = this.config.minSilence;
         this.elements.verboseCheckbox.checked = this.config.verbose;
-        this.elements.showAliasStatusCheckbox.checked = this.config.showAliasStatus;
-        this.elements.aliasOnlyCheckbox.checked = this.config.aliasOnly;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
     }
 }
