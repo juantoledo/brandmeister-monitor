@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brandmeister Monitor</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -44,13 +43,28 @@
                     <div class="control-buttons">
                         <button id="connectBtn">Connect</button>
                         <button id="disconnectBtn" disabled>Disconnect</button>
-                        <button id="clearLogs">Clear Logs</button>
+                        <button id="clearLogs">Clear Transmission Log</button>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
                     <h3>⚙️ Settings</h3>
                     <div class="settings-content">
+                        <div class="setting-group">
+                            <label for="colorPalette">Primary Color:</label>
+                            <div class="color-palette" id="colorPalette">
+                                <div class="color-option" data-color="#2563eb" style="background-color: #2563eb" title="Blue (Default)"></div>
+                                <div class="color-option" data-color="#dc2626" style="background-color: #dc2626" title="Red"></div>
+                                <div class="color-option" data-color="#16a34a" style="background-color: #16a34a" title="Green"></div>
+                                <div class="color-option" data-color="#ea580c" style="background-color: #ea580c" title="Orange"></div>
+                                <div class="color-option" data-color="#9333ea" style="background-color: #9333ea" title="Purple"></div>
+                                <div class="color-option" data-color="#0891b2" style="background-color: #0891b2" title="Cyan"></div>
+                                <div class="color-option" data-color="#be123c" style="background-color: #be123c" title="Rose"></div>
+                                <div class="color-option" data-color="#65a30d" style="background-color: #65a30d" title="Lime"></div>
+                            </div>
+                            <span class="setting-description">Choose your preferred accent color</span>
+                        </div>
+                        
                         <div class="setting-group">
                             <label for="minDuration">Min Duration (sec):</label>
                             <input type="number" id="minDuration" min="0" max="60" step="1" value="4">
@@ -115,7 +129,7 @@
             <div class="console-content" id="consoleContent">
                 <div class="console-pane active" id="activityPane">
                     <div id="logContainer" class="activity-log">
-                        <p class="no-activity">No activity yet. Configure a talkgroup and connect to start monitoring.</p>
+                        <p class="no-activity">No transmissions yet. Configure a talkgroup and connect to start monitoring.</p>
                     </div>
                 </div>
                 <div class="console-pane" id="statsPane">
@@ -125,7 +139,7 @@
                             <span class="stat-value" id="totalCalls">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Last Activity:</span>
+                            <span class="stat-label">Last Transmission:</span>
                             <span class="stat-value" id="lastActivity">Never</span>
                         </div>
                         <div class="stat-item">

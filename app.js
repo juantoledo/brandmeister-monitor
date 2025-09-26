@@ -18,6 +18,7 @@ class BrandmeisterMonitor {
             minSilence: 10, // minimum silence in seconds
             verbose: true, // TEMPORARY: Enable for debugging short transmission issues
             monitorAllTalkgroups: false, // if true, monitor all TGs; if false, use monitoredTalkgroup
+            primaryColor: '#2563eb', // Primary color for the interface
             // Memory optimization settings
             maxTransmissionGroups: 200, // Maximum transmission groups to keep in memory
             maxLogEntries: 50, // Maximum activity log entries
@@ -67,6 +68,7 @@ class BrandmeisterMonitor {
             minSilenceInput: document.getElementById('minSilence'),
             verboseCheckbox: document.getElementById('verbose'),
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
+            colorPalette: document.getElementById('colorPalette'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
             settingsContainer: document.getElementById('settingsContainer')
@@ -81,6 +83,14 @@ class BrandmeisterMonitor {
         // Settings event listeners
         this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
         this.elements.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+        
+        // Color palette event listeners
+        if (this.elements.colorPalette) {
+            const colorOptions = this.elements.colorPalette.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', () => this.selectColor(option.dataset.color));
+            });
+        }
         
         // Real-time settings updates for number inputs
         this.elements.minDurationInput.addEventListener('input', () => this.updateConfigFromUI());
@@ -129,7 +139,7 @@ class BrandmeisterMonitor {
         statusLive: '<div class="active-status">🔴 LIVE</div>',
         statusCompleted: '<div class="active-status" style="color: #4CAF50;">✅ COMPLETED</div>',
         noActivityActive: 'No active transmissions',
-        noActivityLog: 'No activity yet. Configure a talkgroup and connect to start monitoring.'
+        noActivityLog: 'No transmissions yet. Configure a talkgroup and connect to start monitoring.'
     };
 
     startMemoryCleanupTimer() {
@@ -623,7 +633,7 @@ class BrandmeisterMonitor {
             localStorage.setItem('brandmeister_talkgroup', 'all');
             localStorage.setItem('brandmeister_monitor_all', 'true');
             this.elements.currentTg.textContent = 'All Talkgroups';
-            this.addLogEntry('system', 'System', `Monitoring all talkgroups`, 'Configuration Updated');
+            // System message removed - only log transmissions
         } else if (tgValue) {
             // Parse comma-separated list of talkgroup IDs
             const tgList = tgValue.split(',').map(id => id.trim()).filter(id => id !== '');
@@ -657,7 +667,7 @@ class BrandmeisterMonitor {
             const logText = validTalkgroups.length === 1 ? 
                 `Monitoring talkgroup ${validTalkgroups[0]}` : 
                 `Monitoring talkgroups: ${validTalkgroups.join(', ')}`;
-            this.addLogEntry('system', 'System', logText, 'Configuration Updated');
+            // System message removed - only log transmissions
         } else {
             alert('Please enter valid talkgroup IDs separated by commas (e.g., "214,220,235") or "all" to monitor all talkgroups');
             return; // Exit early if invalid input
@@ -665,7 +675,7 @@ class BrandmeisterMonitor {
         
         // Clear active transmissions when talkgroup changes
         this.clearActiveTransmissions();
-        this.addLogEntry('system', 'System', 'Active transmissions cleared due to talkgroup change', 'Cleared Active');
+        // System message removed - only log transmissions
         
         // Auto-save settings to ensure consistency
         this.saveSettings();
@@ -681,7 +691,7 @@ class BrandmeisterMonitor {
     connect() {
         if (this.isConnected) return;
 
-        this.addLogEntry('system', 'System', 'Connecting to Brandmeister network...', 'Connection');
+        // System message removed - only log transmissions
         
         try {
             // Initialize Socket.IO connection
@@ -706,14 +716,14 @@ class BrandmeisterMonitor {
             this.socket.on('connect_error', (error) => {
                 const timestamp = new Date().toLocaleString();
                 console.error(`[${timestamp}] Connection error:`, error);
-                this.addLogEntry('error', 'System', `Connection failed: ${error.message}`, 'Error');
+                // System error message removed - only log transmissions
                 this.updateConnectionStatus(false);
             });
 
         } catch (error) {
             const timestamp = new Date().toLocaleString();
             console.error(`[${timestamp}] Socket initialization error:`, error);
-            this.addLogEntry('error', 'System', `Failed to initialize connection: ${error.message}`, 'Error');
+            // System error message removed - only log transmissions
         }
     }
 
@@ -728,7 +738,7 @@ class BrandmeisterMonitor {
         this.logInfo('Connected to Brandmeister network', { connectionStatus: 'established' });
         this.isConnected = true;
         this.updateConnectionStatus(true);
-        this.addLogEntry('system', 'System', 'Connected to Brandmeister network', 'Connection Established');
+        // System message removed - only log transmissions
         
         this.elements.connectBtn.disabled = true;
         this.elements.disconnectBtn.disabled = false;
@@ -738,7 +748,7 @@ class BrandmeisterMonitor {
         this.logInfo('Disconnected from Brandmeister network', { connectionStatus: 'lost' });
         this.isConnected = false;
         this.updateConnectionStatus(false);
-        this.addLogEntry('system', 'System', 'Disconnected from Brandmeister network', 'Connection Lost');
+        // System message removed - only log transmissions
         
         // Cleanup memory when disconnected
         this.performMemoryCleanup();
@@ -1884,6 +1894,13 @@ class BrandmeisterMonitor {
     }
 
     addLogEntryWithFields(type, callsign, fieldData, event) {
+        // Only log actual transmissions, filter out system messages
+        const transmissionTypes = ['session-start', 'session-stop', 'transmission-complete'];
+        
+        if (!transmissionTypes.includes(type)) {
+            return; // Skip system messages
+        }
+        
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type} new`;
         
@@ -1892,12 +1909,8 @@ class BrandmeisterMonitor {
         // Create structured HTML with new layout
         logEntry.innerHTML = `
             <div class="log-header">
-                <div class="log-title">${callsign}</div>
+                <div class="log-title">${callsign}${fieldData.sourceName ? ` (${fieldData.sourceName})` : ''}${fieldData.alias ? ` • ${fieldData.alias}` : ''}</div>
                 <span class="log-timestamp">${timestamp}</span>
-            </div>
-            <div class="log-identity">
-                ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
-                ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
             </div>
             ${this.config.verbose ? `<div class="log-fields">
                 <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
@@ -1907,10 +1920,8 @@ class BrandmeisterMonitor {
                 ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
                 ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
                 ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
-                ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
-                ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
             </div>` : ''}
-            <div class="log-event">${event}</div>
+            <div class="log-event" style="margin-top: 2px;">${event}</div>
         `;
 
         // Remove "no activity" message if it exists
@@ -1973,6 +1984,13 @@ class BrandmeisterMonitor {
     }
 
     addLogEntry(type, callsign, details, event) {
+        // Only log actual transmissions, filter out system messages
+        const transmissionTypes = ['session-start', 'session-stop', 'transmission-complete'];
+        
+        if (!transmissionTypes.includes(type)) {
+            return; // Skip system messages
+        }
+        
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type} new`;
         
@@ -1983,8 +2001,7 @@ class BrandmeisterMonitor {
                 <span class="log-callsign">${callsign}</span>
                 <span class="log-timestamp">${timestamp}</span>
             </div>
-            <div class="log-details">${details}</div>
-            <div class="log-event">${event}</div>
+            <div class="log-details">${details} • ${event}</div>
         `;
 
         // Remove "no activity" message if it exists
@@ -2118,6 +2135,10 @@ class BrandmeisterMonitor {
                 this.config.minSilence = settings.minSilence || 10;
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
+                this.config.primaryColor = settings.primaryColor || '#2563eb';
+                
+                // Apply the primary color
+                this.applyPrimaryColor(this.config.primaryColor);
                 
                 // Update UI elements
                 this.updateUIFromConfig();
@@ -2128,7 +2149,8 @@ class BrandmeisterMonitor {
                 this.resetSettings();
             }
         } else {
-            // First time - update UI with default values
+            // First time - update UI with default values and apply default color
+            this.applyPrimaryColor(this.config.primaryColor);
             this.updateUIFromConfig();
         }
     }
@@ -2138,14 +2160,15 @@ class BrandmeisterMonitor {
             minDuration: this.config.minDuration,
             minSilence: this.config.minSilence,
             verbose: this.config.verbose,
-            monitorAllTalkgroups: this.config.monitorAllTalkgroups
+            monitorAllTalkgroups: this.config.monitorAllTalkgroups,
+            primaryColor: this.config.primaryColor
         };
         
         localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
         
         // Add visual feedback for manual saves
         if (this.elements.saveSettingsBtn && this.elements.saveSettingsBtn.style.pointerEvents !== 'none') {
-            this.addLogEntry('system', 'System', 'Settings saved successfully', 'Configuration Updated');
+            // System message removed - only log transmissions
         }
         
         // Structured logging for settings changes
@@ -2164,6 +2187,10 @@ class BrandmeisterMonitor {
         this.config.minSilence = 10;
         this.config.verbose = false;
         this.config.monitorAllTalkgroups = false;
+        this.config.primaryColor = '#2563eb';
+        
+        // Apply default color
+        this.applyPrimaryColor(this.config.primaryColor);
         
         // Update UI
         this.updateUIFromConfig();
@@ -2171,7 +2198,7 @@ class BrandmeisterMonitor {
         // Save to localStorage
         this.saveSettings();
         
-        this.addLogEntry('system', 'System', 'Settings reset to defaults', 'Configuration Reset');
+        // System message removed - only log transmissions
     }
 
     updateConfigFromUI() {
@@ -2190,7 +2217,7 @@ class BrandmeisterMonitor {
             const modeText = this.config.monitorAllTalkgroups ? 
                 'Monitor all talkgroups enabled' : 
                 'Monitor all talkgroups disabled - now monitoring specific talkgroups';
-            this.addLogEntry('system', 'System', `${modeText} - Active transmissions cleared`, 'Configuration Updated');
+            // System message removed - only log transmissions
             
             this.logInfo('Monitoring mode changed - active transmissions cleared', {
                 newMode: this.config.monitorAllTalkgroups ? 'all_talkgroups' : 'specific_talkgroups',
@@ -2208,6 +2235,63 @@ class BrandmeisterMonitor {
         this.elements.minSilenceInput.value = this.config.minSilence;
         this.elements.verboseCheckbox.checked = this.config.verbose;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
+        this.updateColorSelection();
+    }
+
+    selectColor(color) {
+        this.config.primaryColor = color;
+        this.applyPrimaryColor(color);
+        this.updateColorSelection();
+        this.saveSettings();
+        
+        // System message removed - only log transmissions
+    }
+
+    updateColorSelection() {
+        if (this.elements.colorPalette) {
+            const colorOptions = this.elements.colorPalette.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                if (option.dataset.color === this.config.primaryColor) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+    }
+
+    applyPrimaryColor(color) {
+        // Apply the color to CSS custom property
+        document.documentElement.style.setProperty('--primary', color);
+        
+        // Derive related colors for consistency
+        const primaryRgb = this.hexToRgb(color);
+        const primaryLight = `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.1)`;
+        const primaryDark = this.darkenColor(color, 20);
+        
+        document.documentElement.style.setProperty('--primary-light', primaryLight);
+        document.documentElement.style.setProperty('--primary-dark', primaryDark);
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    darkenColor(color, percent) {
+        const rgb = this.hexToRgb(color);
+        if (!rgb) return color;
+        
+        const factor = (100 - percent) / 100;
+        const r = Math.round(rgb.r * factor);
+        const g = Math.round(rgb.g * factor);
+        const b = Math.round(rgb.b * factor);
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 }
 
