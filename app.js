@@ -62,7 +62,6 @@ class BrandmeisterMonitor {
             lastActivity: document.getElementById('lastActivity'),
             sessionDuration: document.getElementById('sessionDuration'),
             activeTGs: document.getElementById('activeTGs'),
-            themeSelect: document.getElementById('themeSelect'),
             // Settings elements
             minDurationInput: document.getElementById('minDuration'),
             minSilenceInput: document.getElementById('minSilence'),
@@ -78,7 +77,6 @@ class BrandmeisterMonitor {
         this.elements.connectBtn.addEventListener('click', () => this.connect());
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
-        this.elements.themeSelect.addEventListener('change', (e) => this.switchTheme(e.target.value));
         
         // Settings event listeners
         this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
@@ -92,8 +90,7 @@ class BrandmeisterMonitor {
         this.elements.verboseCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         
-        // Load saved theme and settings
-        this.loadTheme();
+        // Load saved settings
         this.loadSettings();
         
         // Allow Enter key to save talkgroup
@@ -2107,28 +2104,6 @@ class BrandmeisterMonitor {
         setTimeout(() => {
             indicator.style.opacity = '0';
         }, 2000);
-    }
-
-    // Theme Management Methods
-    switchTheme(themeName) {
-        const previousTheme = document.body.className.replace('theme-', '');
-        document.body.className = `theme-${themeName}`;
-        localStorage.setItem('brandmeister-theme', themeName);
-        this.elements.themeSelect.value = themeName;
-        
-        // Log theme change if it's actually different
-        if (previousTheme !== themeName && previousTheme !== '') {
-            this.logInfo('Theme changed', {
-                previousTheme: previousTheme || 'default',
-                newTheme: themeName,
-                autoSave: 'enabled'
-            });
-        }
-    }
-
-    loadTheme() {
-        const savedTheme = localStorage.getItem('brandmeister-theme') || 'material';
-        this.switchTheme(savedTheme);
     }
 
     // Settings Management Methods
