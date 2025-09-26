@@ -21,11 +21,23 @@ class BrandmeisterMonitor {
             maxTransmissionGroups: 200, // Maximum transmission groups to keep in memory
             maxLogEntries: 50, // Maximum activity log entries
             cleanupInterval: 60000, // Cleanup interval in milliseconds (1 minute)
-            maxTransmissionAge: 3600000 // Maximum age for completed transmissions (1 hour)
+            maxTransmissionAge: 3600000, // Maximum age for completed transmissions (1 hour)
+            // Performance monitoring settings
+            performanceMonitoringInterval: 30000, // Monitor every 30 seconds
+            performanceHistoryLimit: 200, // Keep last 200 performance snapshots (100 minutes)
+            slowOperationThreshold: 100 // Log operations taking longer than 100ms
         };
 
         // Memory cleanup timer
         this.cleanupTimer = null;
+        
+        // Performance monitoring
+        this.performanceMonitor = {
+            history: [],
+            operationTimes: {},
+            startTimes: {},
+            timer: null
+        };
 
         this.initializeUI();
         this.loadTalkgroupFromStorage();
@@ -90,6 +102,9 @@ class BrandmeisterMonitor {
 
         // Initialize cleanup timer
         this.startMemoryCleanupTimer();
+        
+        // Initialize performance monitoring
+        this.startPerformanceMonitoring();
     }
 
     // Helper methods for HTML generation to reduce string operations
@@ -149,12 +164,384 @@ class BrandmeisterMonitor {
         return usage;
     }
 
+    // Structured logging method with Session ID attribute support
+    logWithAttributes(level, message, attributes = {}) {
+        const timestamp = new Date().toLocaleString();
+        const logEntry = {
+            timestamp,
+            level: level.toUpperCase(),
+            message,
+            ...attributes
+        };
+
+        // Format as JSON-like string for console output
+        const formattedMessage = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+        const attributeString = Object.keys(attributes).length > 0 
+            ? ` | ${Object.entries(attributes).map(([key, value]) => `${key}=${value}`).join(', ')}`
+            : '';
+        
+        if (level === 'error') {
+            console.error(formattedMessage + attributeString);
+        } else {
+            console.log(formattedMessage + attributeString);
+        }
+    }
+
+    // Convenience methods for different log levels
+    logDebug(message, attributes = {}) {
+        if (this.config.verbose) {
+            this.logWithAttributes('debug', message, attributes);
+        }
+    }
+
+    logInfo(message, attributes = {}) {
+        this.logWithAttributes('info', message, attributes);
+    }
+
+    logError(message, attributes = {}) {
+        this.logWithAttributes('error', message, attributes);
+    }
+
+    // Performance monitoring methods
+    startPerformanceTimer(operationName) {
+        this.performanceMonitor.startTimes[operationName] = performance.now();
+    }
+
+    endPerformanceTimer(operationName, metadata = {}) {
+        const startTime = this.performanceMonitor.startTimes[operationName];
+        if (startTime) {
+            const duration = performance.now() - startTime;
+            delete this.performanceMonitor.startTimes[operationName];
+            
+            // Track operation times for trending
+            if (!this.performanceMonitor.operationTimes[operationName]) {
+                this.performanceMonitor.operationTimes[operationName] = [];
+            }
+            this.performanceMonitor.operationTimes[operationName].push({
+                duration,
+                timestamp: Date.now(),
+                metadata
+            });
+            
+            // Limit history per operation
+            if (this.performanceMonitor.operationTimes[operationName].length > 100) {
+                this.performanceMonitor.operationTimes[operationName].shift();
+            }
+            
+            // Log slow operations
+            if (duration > this.config.slowOperationThreshold) {
+                this.logDebug('Slow operation detected', {
+                    operation: operationName,
+                    duration: `${duration.toFixed(2)}ms`,
+                    threshold: `${this.config.slowOperationThreshold}ms`,
+                    ...metadata
+                });
+            }
+            
+            return duration;
+        }
+        return null;
+    }
+
+    startPerformanceMonitoring() {
+        // Clear any existing timer
+        if (this.performanceMonitor.timer) {
+            clearInterval(this.performanceMonitor.timer);
+        }
+        
+        // Start periodic performance monitoring
+        this.performanceMonitor.timer = setInterval(() => {
+            this.capturePerformanceSnapshot();
+        }, this.config.performanceMonitoringInterval);
+    }
+
+    capturePerformanceSnapshot() {
+        const usage = this.getMemoryUsage();
+        const snapshot = {
+            timestamp: Date.now(),
+            memory: usage,
+            performance: {
+                jsHeapSizeUsed: performance.memory ? performance.memory.usedJSHeapSize : null,
+                jsHeapSizeTotal: performance.memory ? performance.memory.totalJSHeapSize : null,
+                jsHeapSizeLimit: performance.memory ? performance.memory.jsHeapSizeLimit : null
+            },
+            domElements: {
+                activeTransmissions: document.querySelectorAll('.active-transmission').length,
+                logEntries: document.querySelectorAll('.log-entry').length,
+                totalElements: document.getElementsByTagName('*').length
+            },
+            operationStats: this.getOperationStats()
+        };
+        
+        this.performanceMonitor.history.push(snapshot);
+        
+        // Limit history size
+        if (this.performanceMonitor.history.length > this.config.performanceHistoryLimit) {
+            this.performanceMonitor.history.shift();
+        }
+        
+        // Check for performance degradation
+        this.checkPerformanceTrends(snapshot);
+    }
+
+    getOperationStats() {
+        const stats = {};
+        for (const [operation, times] of Object.entries(this.performanceMonitor.operationTimes)) {
+            if (times.length > 0) {
+                const recentTimes = times.slice(-10); // Last 10 operations
+                const avg = recentTimes.reduce((sum, t) => sum + t.duration, 0) / recentTimes.length;
+                const max = Math.max(...recentTimes.map(t => t.duration));
+                const min = Math.min(...recentTimes.map(t => t.duration));
+                
+                stats[operation] = {
+                    count: times.length,
+                    recentAvg: avg,
+                    recentMax: max,
+                    recentMin: min
+                };
+            }
+        }
+        return stats;
+    }
+
+    checkPerformanceTrends(currentSnapshot) {
+        if (this.performanceMonitor.history.length < 10) return;
+        
+        const history = this.performanceMonitor.history;
+        const oldSnapshot = history[Math.max(0, history.length - 10)]; // 10 snapshots ago
+        
+        // Emergency resource limits - prevent runaway memory usage
+        this.enforceEmergencyLimits(currentSnapshot);
+        
+        // Check memory growth
+        if (currentSnapshot.memory.transmissionGroups > oldSnapshot.memory.transmissionGroups + 20) {
+            this.logDebug('Memory growth detected', {
+                component: 'transmissionGroups',
+                oldCount: oldSnapshot.memory.transmissionGroups,
+                newCount: currentSnapshot.memory.transmissionGroups,
+                growth: currentSnapshot.memory.transmissionGroups - oldSnapshot.memory.transmissionGroups
+            });
+        }
+        
+        // Check DOM element growth
+        if (currentSnapshot.domElements.totalElements > oldSnapshot.domElements.totalElements + 50) {
+            this.logDebug('DOM growth detected', {
+                component: 'totalElements',
+                oldCount: oldSnapshot.domElements.totalElements,
+                newCount: currentSnapshot.domElements.totalElements,
+                growth: currentSnapshot.domElements.totalElements - oldSnapshot.domElements.totalElements
+            });
+        }
+        
+        // Check heap size growth
+        if (currentSnapshot.performance.jsHeapSizeUsed && oldSnapshot.performance.jsHeapSizeUsed) {
+            const heapGrowth = currentSnapshot.performance.jsHeapSizeUsed - oldSnapshot.performance.jsHeapSizeUsed;
+            if (heapGrowth > 10 * 1024 * 1024) { // 10MB growth
+                this.logDebug('Heap memory growth detected', {
+                    component: 'jsHeapSize',
+                    oldSize: `${(oldSnapshot.performance.jsHeapSizeUsed / 1024 / 1024).toFixed(2)}MB`,
+                    newSize: `${(currentSnapshot.performance.jsHeapSizeUsed / 1024 / 1024).toFixed(2)}MB`,
+                    growth: `${(heapGrowth / 1024 / 1024).toFixed(2)}MB`
+                });
+            }
+        }
+    }
+
+    getPerformanceReport() {
+        const history = this.performanceMonitor.history;
+        if (history.length === 0) return null;
+        
+        const current = history[history.length - 1];
+        const start = history[0];
+        const duration = current.timestamp - start.timestamp;
+        
+        return {
+            monitoring: {
+                duration: `${(duration / 1000 / 60).toFixed(1)} minutes`,
+                snapshots: history.length
+            },
+            current: current,
+            trends: {
+                memoryGrowth: this.calculateTrend(history, 'memory.transmissionGroups'),
+                domGrowth: this.calculateTrend(history, 'domElements.totalElements'),
+                heapGrowth: this.calculateTrend(history, 'performance.jsHeapSizeUsed')
+            },
+            operations: this.getOperationStats()
+        };
+    }
+
+    calculateTrend(history, path) {
+        if (history.length < 2) return null;
+        
+        const getValue = (obj, path) => {
+            return path.split('.').reduce((o, p) => o && o[p], obj);
+        };
+        
+        const values = history.map(h => getValue(h, path)).filter(v => v != null);
+        if (values.length < 2) return null;
+        
+        const first = values[0];
+        const last = values[values.length - 1];
+        const change = last - first;
+        const percentChange = first > 0 ? ((change / first) * 100) : 0;
+        
+        return {
+            initial: first,
+            current: last,
+            change,
+            percentChange: percentChange.toFixed(2) + '%'
+        };
+    }
+
     // Log memory usage for debugging (only in verbose mode)
     logMemoryUsage() {
         if (!this.config.verbose) return;
         
         const usage = this.getMemoryUsage();
-        console.log('Memory Usage:', usage);
+        this.logInfo('Memory Usage Report', {
+            transmissionGroups: usage.transmissionGroups,
+            activeCalls: usage.activeCalls,
+            callsignAliases: usage.callsignAliases,
+            activeTransmissions: usage.activeTransmissions,
+            logEntries: usage.logEntries,
+            heapUsedMB: usage.heapUsed,
+            heapTotalMB: usage.heapTotal,
+            heapLimitMB: usage.heapLimit
+        });
+    }
+
+    enforceEmergencyLimits(snapshot) {
+        let emergencyCleanup = false;
+        
+        // Emergency limit: Too many transmission groups (potential memory leak)
+        if (snapshot.memory.transmissionGroups > this.config.maxTransmissionGroups * 2) {
+            this.logError('Emergency: Excessive transmission groups detected', {
+                count: snapshot.memory.transmissionGroups,
+                limit: this.config.maxTransmissionGroups * 2,
+                action: 'forcing aggressive cleanup'
+            });
+            this.performEmergencyCleanup('transmissionGroups');
+            emergencyCleanup = true;
+        }
+        
+        // Emergency limit: Too many DOM elements
+        if (snapshot.domElements.totalElements > 5000) {
+            this.logError('Emergency: Excessive DOM elements detected', {
+                count: snapshot.domElements.totalElements,
+                limit: 5000,
+                action: 'forcing DOM cleanup'
+            });
+            this.performEmergencyCleanup('dom');
+            emergencyCleanup = true;
+        }
+        
+        // Emergency limit: Heap size approaching limit
+        if (snapshot.performance.jsHeapSizeUsed && snapshot.performance.jsHeapSizeLimit) {
+            const heapUsagePercent = (snapshot.performance.jsHeapSizeUsed / snapshot.performance.jsHeapSizeLimit) * 100;
+            if (heapUsagePercent > 85) {
+                this.logError('Emergency: Heap usage critical', {
+                    usagePercent: heapUsagePercent.toFixed(2) + '%',
+                    usedMB: (snapshot.performance.jsHeapSizeUsed / 1024 / 1024).toFixed(2),
+                    limitMB: (snapshot.performance.jsHeapSizeLimit / 1024 / 1024).toFixed(2),
+                    action: 'forcing memory cleanup'
+                });
+                this.performEmergencyCleanup('memory');
+                emergencyCleanup = true;
+            }
+        }
+        
+        if (emergencyCleanup) {
+            // Force garbage collection if available (Chrome DevTools)
+            if (window.gc) {
+                try {
+                    window.gc();
+                    this.logDebug('Forced garbage collection executed');
+                } catch (e) {
+                    this.logDebug('Garbage collection not available');
+                }
+            }
+        }
+    }
+
+    performEmergencyCleanup(type) {
+        switch (type) {
+            case 'transmissionGroups':
+                // Keep only the most recent 50 transmission groups
+                const keys = Object.keys(this.transmissionGroups);
+                const sortedGroups = keys
+                    .map(key => ({ key, group: this.transmissionGroups[key] }))
+                    .sort((a, b) => (b.group.startTime || 0) - (a.group.startTime || 0));
+                
+                // Remove all but the 50 most recent
+                const toKeep = sortedGroups.slice(0, 50);
+                this.transmissionGroups = {};
+                toKeep.forEach(item => {
+                    this.transmissionGroups[item.key] = item.group;
+                });
+                
+                this.logInfo('Emergency cleanup: transmission groups', {
+                    originalCount: keys.length,
+                    keptCount: toKeep.length,
+                    removedCount: keys.length - toKeep.length
+                });
+                break;
+                
+            case 'dom':
+                // Remove oldest log entries aggressively
+                const logEntries = document.querySelectorAll('.log-entry');
+                const keepCount = Math.min(20, this.config.maxLogEntries);
+                for (let i = 0; i < logEntries.length - keepCount; i++) {
+                    logEntries[i].remove();
+                }
+                
+                // Remove any orphaned elements
+                this.performDOMCleanup();
+                
+                this.logInfo('Emergency cleanup: DOM elements', {
+                    removedLogEntries: Math.max(0, logEntries.length - keepCount),
+                    remainingLogEntries: keepCount
+                });
+                break;
+                
+            case 'memory':
+                // Comprehensive emergency cleanup
+                this.performEmergencyCleanup('transmissionGroups');
+                this.performEmergencyCleanup('dom');
+                this.activeCalls = {};
+                this.performanceMonitor.operationTimes = {};
+                this.performanceMonitor.history = this.performanceMonitor.history.slice(-20);
+                
+                this.logInfo('Emergency cleanup: comprehensive memory cleanup executed');
+                break;
+        }
+    }
+
+    // Console interface for debugging performance issues
+    getPerformanceDebugInfo() {
+        return {
+            report: this.getPerformanceReport(),
+            config: {
+                maxTransmissionGroups: this.config.maxTransmissionGroups,
+                maxLogEntries: this.config.maxLogEntries,
+                cleanupInterval: this.config.cleanupInterval,
+                performanceMonitoringInterval: this.config.performanceMonitoringInterval,
+                slowOperationThreshold: this.config.slowOperationThreshold
+            },
+            currentState: {
+                transmissionGroups: Object.keys(this.transmissionGroups).length,
+                activeCalls: Object.keys(this.activeCalls).length,
+                callsignAliases: Object.keys(this.callsignAliases).length,
+                domElements: document.querySelectorAll('*').length,
+                activeTransmissions: document.querySelectorAll('.active-transmission').length,
+                logEntries: document.querySelectorAll('.log-entry').length
+            }
+        };
+    }
+
+    forceCleanup() {
+        this.logInfo('Manual cleanup forced');
+        this.performMemoryCleanup();
+        return this.getPerformanceDebugInfo();
     }
 
     // Cleanup method called before page unload
@@ -162,6 +549,11 @@ class BrandmeisterMonitor {
         if (this.cleanupTimer) {
             clearInterval(this.cleanupTimer);
             this.cleanupTimer = null;
+        }
+        
+        if (this.performanceMonitor.timer) {
+            clearInterval(this.performanceMonitor.timer);
+            this.performanceMonitor.timer = null;
         }
         
         if (this.socket) {
@@ -205,7 +597,7 @@ class BrandmeisterMonitor {
             try {
                 this.callsignAliases = JSON.parse(savedAliases);
             } catch (error) {
-                console.log('Error loading aliases from storage:', error);
+                this.logError('Error loading aliases from storage', { error: error.message });
                 this.callsignAliases = {};
             }
         }
@@ -302,13 +694,15 @@ class BrandmeisterMonitor {
             });
 
             this.socket.on('connect_error', (error) => {
-                console.error('Connection error:', error);
+                const timestamp = new Date().toLocaleString();
+                console.error(`[${timestamp}] Connection error:`, error);
                 this.addLogEntry('error', 'System', `Connection failed: ${error.message}`, 'Error');
                 this.updateConnectionStatus(false);
             });
 
         } catch (error) {
-            console.error('Socket initialization error:', error);
+            const timestamp = new Date().toLocaleString();
+            console.error(`[${timestamp}] Socket initialization error:`, error);
             this.addLogEntry('error', 'System', `Failed to initialize connection: ${error.message}`, 'Error');
         }
     }
@@ -321,7 +715,7 @@ class BrandmeisterMonitor {
     }
 
     onConnect() {
-        console.log('Connected to Brandmeister network');
+        this.logInfo('Connected to Brandmeister network', { connectionStatus: 'established' });
         this.isConnected = true;
         this.updateConnectionStatus(true);
         this.addLogEntry('system', 'System', 'Connected to Brandmeister network', 'Connection Established');
@@ -331,7 +725,7 @@ class BrandmeisterMonitor {
     }
 
     onDisconnect() {
-        console.log('Disconnected from Brandmeister network');
+        this.logInfo('Disconnected from Brandmeister network', { connectionStatus: 'lost' });
         this.isConnected = false;
         this.updateConnectionStatus(false);
         this.addLogEntry('system', 'System', 'Disconnected from Brandmeister network', 'Connection Lost');
@@ -344,6 +738,8 @@ class BrandmeisterMonitor {
     }
 
     onMqttMessage(data) {
+        this.startPerformanceTimer('messageProcessing');
+        
         try {
             const call = JSON.parse(data.payload);
             
@@ -359,12 +755,20 @@ class BrandmeisterMonitor {
                 if (this.config.verbose) {
                     //console.log(`Skipping TG ${tg} - only monitoring TGs: ${this.monitoredTalkgroups.join(', ')}`);
                 }
+                this.endPerformanceTimer('messageProcessing', { result: 'filtered_out', tg, sessionID });
                 return;
             }
 
             if (this.config.verbose) {
-                console.log('Received call data:', call);
-                console.log(`Processing event: ${event} | SessionID: ${sessionID} | TG: ${tg} | Callsign: ${callsign}`);
+                this.logDebug('Received call data', { 
+                    sessionID, 
+                    event, 
+                    tg, 
+                    callsign, 
+                    startTime: call.Start, 
+                    stopTime: call.Stop 
+                });
+                console.log(`[${new Date().toLocaleString()}] Raw call data:`, call);
             }
 
 
@@ -382,7 +786,12 @@ class BrandmeisterMonitor {
             if (talkerAlias && talkerAlias.trim() !== '') {
                 this.saveAliasToStorage(callsign, talkerAlias.trim());
                 if (this.config.verbose) {
-                    console.log(`Received alias for ${callsign}: ${talkerAlias.trim()}`);
+                    this.logDebug('Received alias', {
+                        sessionID,
+                        callsign,
+                        tg,
+                        alias: talkerAlias.trim()
+                    });
                 }
             }
 
@@ -397,8 +806,25 @@ class BrandmeisterMonitor {
 
                 // Log duration info for debugging
                 if (this.config.verbose) {
-                    console.log(`Call duration: ${duration.toFixed(1)}s from ${callsign} on TG ${tg}`);
-                    console.log(`DEBUG: Session-Stop received - IMMEDIATELY removing from active display`);
+                    this.logDebug('Session-Stop received - IMMEDIATELY removing from active display', {
+                        sessionID,
+                        callsign,
+                        tg,
+                        duration: duration.toFixed(1) + 's'
+                    });
+                }
+
+                // Cancel any pending display timer for this session to prevent race conditions
+                if (this.transmissionGroups[sessionKey] && this.transmissionGroups[sessionKey].displayTimer) {
+                    clearTimeout(this.transmissionGroups[sessionKey].displayTimer);
+                    this.transmissionGroups[sessionKey].displayTimer = null;
+                    if (this.config.verbose) {
+                        this.logDebug('Cancelled pending display timer', {
+                            sessionID,
+                            callsign,
+                            reason: 'Session-Stop received'
+                        });
+                    }
                 }
 
                 // IMMEDIATELY remove from active display on Session-Stop (regardless of duration)
@@ -413,19 +839,41 @@ class BrandmeisterMonitor {
                     this.createOrUpdateTransmissionSession(sessionKey, call, 'stop');
                     
                     if (this.config.verbose) {
-                        console.log(`DEBUG: Session-Stop for ${callsign} (SessionID: ${sessionID}), duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s - PROCESSING NORMALLY and adding to activity log`);
+                        this.logDebug('Session-Stop processing normally', {
+                            sessionID,
+                            callsign,
+                            tg,
+                            duration: duration.toFixed(1) + 's',
+                            minDuration: this.config.minDuration + 's',
+                            action: 'adding to activity log'
+                        });
                     }
                 } else {
                     // Just clean up short transmissions without logging them
                     if (this.transmissionGroups[sessionKey]) {
                         if (this.config.verbose) {
-                            console.log(`DEBUG: Session-Stop for ${callsign} (SessionID: ${sessionID}), duration ${duration.toFixed(1)}s < ${this.config.minDuration}s - DELETING group, current status was: ${this.transmissionGroups[sessionKey].status}`);
+                            this.logDebug('Session-Stop deleting short transmission', {
+                                sessionID,
+                                callsign,
+                                tg,
+                                duration: duration.toFixed(1) + 's',
+                                minDuration: this.config.minDuration + 's',
+                                previousStatus: this.transmissionGroups[sessionKey].status,
+                                action: 'deleting group'
+                            });
                         }
                         delete this.transmissionGroups[sessionKey];
                     }
                     
                     if (this.config.verbose) {
-                        console.log(`Ignored short transmission (${duration.toFixed(1)}s) from ${callsign} - minimum is ${this.config.minDuration}s, removed from active display`);
+                        this.logInfo('Ignored short transmission', {
+                            sessionID,
+                            callsign,
+                            tg,
+                            duration: duration.toFixed(1) + 's',
+                            minDuration: this.config.minDuration + 's',
+                            action: 'removed from active display'
+                        });
                     }
                 }
             } else if (event === 'Session-Start') {
@@ -437,24 +885,75 @@ class BrandmeisterMonitor {
                 const delayMs = this.config.minDuration * 1000;
                 
                 if (this.config.verbose) {
-                    console.log(`DEBUG: Session-Start for ${callsign} (SessionID: ${sessionID}), delaying display by ${this.config.minDuration}s`);
+                    this.logDebug('Session-Start delaying display', {
+                        sessionID,
+                        callsign,
+                        tg,
+                        delaySeconds: this.config.minDuration,
+                        reason: 'avoid displaying very short transmissions'
+                    });
                 }
                 
-                setTimeout(() => {
+                // Store timer reference for potential cancellation
+                const displayTimer = setTimeout(() => {
                     // Only show if transmission is still active (not completed/cleared)
                     const group = this.transmissionGroups[sessionKey];
                     if (group && group.status === 'started') {
-                        if (this.config.verbose) {
-                            console.log(`DEBUG: Delayed display triggered for ${callsign} (SessionID: ${sessionID}), transmission still active - showing in UI`);
+                        // Double-check that this SessionID is still the active one for this talkgroup
+                        // (prevents showing old transmissions if multiple rapid starts occurred)
+                        const currentActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
+                        let talkgroupHasActiveTransmission = false;
+                        
+                        for (const entry of currentActiveEntries) {
+                            const activeSessionKey = entry.getAttribute('data-session-key');
+                            const activeGroup = this.transmissionGroups[activeSessionKey];
+                            if (activeGroup && activeGroup.tg === tg) {
+                                talkgroupHasActiveTransmission = true;
+                                break;
+                            }
                         }
-                        this.createOrUpdateTransmissionGroup(sessionKey, call);
+                        
+                        // Only show if no other transmission is already active on this talkgroup
+                        if (!talkgroupHasActiveTransmission) {
+                            if (this.config.verbose) {
+                                this.logDebug('Delayed display triggered - showing in UI', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    status: 'transmission still active',
+                                    action: 'showing in UI'
+                                });
+                            }
+                            this.createOrUpdateTransmissionGroup(sessionKey, call);
+                        } else {
+                            if (this.config.verbose) {
+                                this.logDebug('Delayed display triggered - NOT showing', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    reason: 'another transmission already active on talkgroup',
+                                    action: 'not showing'
+                                });
+                            }
+                        }
                     } else {
                         if (this.config.verbose) {
                             const statusInfo = group ? `status: ${group.status}` : 'group deleted';
-                            console.log(`DEBUG: Delayed display triggered for ${callsign} (SessionID: ${sessionID}), but transmission no longer active (${statusInfo}) - NOT showing in UI`);
+                            this.logDebug('Delayed display triggered - transmission no longer active', {
+                                sessionID,
+                                callsign,
+                                tg,
+                                currentStatus: statusInfo,
+                                action: 'not showing in UI'
+                            });
                         }
                     }
                 }, delayMs);
+                
+                // Store timer reference in the group for potential cancellation
+                if (this.transmissionGroups[sessionKey]) {
+                    this.transmissionGroups[sessionKey].displayTimer = displayTimer;
+                }
                 
             } else if (event === 'Session-Update') {
                 // Update the transmission session
@@ -467,8 +966,14 @@ class BrandmeisterMonitor {
                 // If this message just provided an alias and we have a SessionID-based transmission waiting for it
                 if (talkerAlias && talkerAlias.trim() !== '' && sessionID && this.transmissionGroups[sessionKey]) {
                     if (this.config.verbose) {
-                        console.log(`DEBUG: Alias update for SessionID-based transmission ${callsign} (SessionID: ${sessionID}) with alias: ${talkerAlias.trim()}`);
-                        console.log(`DEBUG: Group status: ${this.transmissionGroups[sessionKey].status}, startTime: ${this.transmissionGroups[sessionKey].startTime}`);
+                        this.logDebug('Alias update for SessionID-based transmission', {
+                            sessionID,
+                            callsign,
+                            tg,
+                            alias: talkerAlias.trim(),
+                            groupStatus: this.transmissionGroups[sessionKey].status,
+                            startTime: this.transmissionGroups[sessionKey].startTime
+                        });
                     }
                     
                     // Update the transmission group with alias info
@@ -483,12 +988,26 @@ class BrandmeisterMonitor {
                         const elapsedTime = now - group.startTime;
                         if (elapsedTime >= this.config.minDuration) {
                             if (this.config.verbose) {
-                                console.log(`DEBUG: Showing alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s >= ${this.config.minDuration}s`);
+                                this.logDebug('Showing alias-updated transmission', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    elapsedTime: elapsedTime + 's',
+                                    minDuration: this.config.minDuration + 's',
+                                    action: 'displaying in UI'
+                                });
                             }
                             this.createOrUpdateTransmissionGroup(sessionKey, call);
                         } else {
                             if (this.config.verbose) {
-                                console.log(`DEBUG: NOT showing alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s < ${this.config.minDuration}s`);
+                                this.logDebug('NOT showing alias-updated transmission', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    elapsedTime: elapsedTime + 's',
+                                    minDuration: this.config.minDuration + 's',
+                                    reason: 'transmission too short'
+                                });
                             }
                         }
                     } else if (group && group.status === 'completed') {
@@ -496,12 +1015,28 @@ class BrandmeisterMonitor {
                         const duration = group.stopTime - group.startTime;
                         if (duration >= this.config.minDuration) {
                             if (this.config.verbose) {
-                                console.log(`DEBUG: Showing alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s`);
+                                this.logDebug('Showing alias-updated COMPLETED transmission', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    duration: duration.toFixed(1) + 's',
+                                    minDuration: this.config.minDuration + 's',
+                                    status: 'completed',
+                                    action: 'displaying in UI'
+                                });
                             }
                             this.createOrUpdateTransmissionGroup(sessionKey, call);
                         } else {
                             if (this.config.verbose) {
-                                console.log(`DEBUG: NOT showing alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s < ${this.config.minDuration}s`);
+                                this.logDebug('NOT showing alias-updated COMPLETED transmission', {
+                                    sessionID,
+                                    callsign,
+                                    tg,
+                                    duration: duration.toFixed(1) + 's',
+                                    minDuration: this.config.minDuration + 's',
+                                    status: 'completed',
+                                    reason: 'transmission too short'
+                                });
                             }
                         }
                     }
@@ -513,7 +1048,8 @@ class BrandmeisterMonitor {
                 // If this message just provided an alias and we have a tracked call waiting for it
                 if (talkerAlias && talkerAlias.trim() !== '' && this.activeCalls[callKey] && !this.activeCalls[callKey].initialLogEntry) {
                     if (this.config.verbose) {
-                        console.log(`DEBUG: Legacy alias update for callKey-based transmission ${callsign} with alias: ${talkerAlias.trim()}`);
+                        const timestamp = new Date().toLocaleString();
+                        console.log(`[${timestamp}] DEBUG: Legacy alias update for callKey-based transmission ${callsign} with alias: ${talkerAlias.trim()}`);
                     }
                     
                     // Update the transmission group with alias info
@@ -527,24 +1063,28 @@ class BrandmeisterMonitor {
                             const elapsedTime = now - group.startTime;
                             if (elapsedTime >= this.config.minDuration) {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: Showing legacy alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s >= ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: Showing legacy alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s >= ${this.config.minDuration}s`);
                                 }
                                 this.createOrUpdateTransmissionGroup(callKey, call);
                             } else {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: NOT showing legacy alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s < ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: NOT showing legacy alias-updated transmission for ${callsign} - elapsed time ${elapsedTime}s < ${this.config.minDuration}s`);
                                 }
                             }
                         } else if (group && group.status === 'completed') {
                             const duration = group.stopTime - group.startTime;
                             if (duration >= this.config.minDuration) {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: Showing legacy alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: Showing legacy alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s`);
                                 }
                                 this.createOrUpdateTransmissionGroup(callKey, call);
                             } else {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: NOT showing legacy alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s < ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: NOT showing legacy alias-updated COMPLETED transmission for ${callsign} - duration ${duration.toFixed(1)}s < ${this.config.minDuration}s`);
                                 }
                             }
                         }
@@ -561,12 +1101,14 @@ class BrandmeisterMonitor {
                             const duration = group.stopTime - group.startTime;
                             if (duration >= this.config.minDuration) {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: Updating display for completed transmission with alias - duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: Updating display for completed transmission with alias - duration ${duration.toFixed(1)}s >= ${this.config.minDuration}s`);
                                 }
                                 this.updateTransmissionGroupDisplay(callKey);
                             } else {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: NOT updating display for short completed transmission with alias - duration ${duration.toFixed(1)}s < ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: NOT updating display for short completed transmission with alias - duration ${duration.toFixed(1)}s < ${this.config.minDuration}s`);
                                 }
                             }
                         } else if (group.status === 'started') {
@@ -574,21 +1116,33 @@ class BrandmeisterMonitor {
                             const elapsedTime = now - group.startTime;
                             if (elapsedTime >= this.config.minDuration) {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: Updating display for active transmission with alias - elapsed ${elapsedTime}s >= ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: Updating display for active transmission with alias - elapsed ${elapsedTime}s >= ${this.config.minDuration}s`);
                                 }
                                 this.updateTransmissionGroupDisplay(callKey);
                             } else {
                                 if (this.config.verbose) {
-                                    console.log(`DEBUG: NOT updating display for short active transmission with alias - elapsed ${elapsedTime}s < ${this.config.minDuration}s`);
+                                    const timestamp = new Date().toLocaleString();
+                                    console.log(`[${timestamp}] DEBUG: NOT updating display for short active transmission with alias - elapsed ${elapsedTime}s < ${this.config.minDuration}s`);
                                 }
                             }
                         }
                     }
                 }
             }
+            
+            this.endPerformanceTimer('messageProcessing', { 
+                result: 'processed', 
+                event, 
+                sessionID, 
+                tg, 
+                callsign 
+            });
 
         } catch (error) {
-            console.error('Error processing MQTT message:', error);
+            this.endPerformanceTimer('messageProcessing', { result: 'error' });
+            const timestamp = new Date().toLocaleString();
+            console.error(`[${timestamp}] Error processing MQTT message:`, error);
         }
     }
 
@@ -596,7 +1150,8 @@ class BrandmeisterMonitor {
         const group = this.transmissionGroups[callKey];
         if (!group) {
             if (this.config.verbose) {
-                console.log(`DEBUG: createOrUpdateTransmissionGroup called for ${callKey} but no group found`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup called for ${callKey} but no group found`);
             }
             return;
         }
@@ -608,10 +1163,11 @@ class BrandmeisterMonitor {
         const alias = group.alias;
         
         if (this.config.verbose) {
-            console.log(`DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
             if (group.status === 'completed' && group.stopTime) {
                 const duration = group.stopTime - group.startTime;
-                console.log(`DEBUG: Completed transmission duration: ${duration.toFixed(1)}s, minDuration: ${this.config.minDuration}s`);
+                console.log(`[${timestamp}] DEBUG: Completed transmission duration: ${duration.toFixed(1)}s, minDuration: ${this.config.minDuration}s`);
             }
         }
         
@@ -669,13 +1225,23 @@ class BrandmeisterMonitor {
             if (existingActiveEntry) {
                 // Update existing active transmission
                 if (this.config.verbose) {
-                    console.log(`Updating existing active transmission for SessionID: ${callKey}`);
+                    this.logDebug('Updating existing active transmission', {
+                        sessionID: call.SessionID,
+                        callsign: call.SourceCall,
+                        tg: call.DestinationID,
+                        eventType
+                    });
                 }
                 this.updateActiveTransmission(callKey, titleText, fieldData, eventType);
             } else {
                 // Create new active transmission
                 if (this.config.verbose) {
-                    console.log(`Creating new active transmission for SessionID: ${callKey}`);
+                    this.logDebug('Creating new active transmission', {
+                        sessionID: call.SessionID,
+                        callsign: call.SourceCall,
+                        tg: call.DestinationID,
+                        eventType
+                    });
                 }
                 this.addActiveTransmission(callKey, titleText, fieldData, eventType);
             }
@@ -700,7 +1266,8 @@ class BrandmeisterMonitor {
             this.clearActiveTransmissionsForTalkgroup(tg);
             
             if (this.config.verbose) {
-                console.log(`DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - cleared existing transmissions, creating session in memory`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - cleared existing transmissions, creating session in memory`);
             }
             
             // Create new session entry
@@ -724,18 +1291,21 @@ class BrandmeisterMonitor {
 
             // Don't immediately show active transmission - this will be handled by delayed display logic
             if (this.config.verbose) {
-                console.log(`DEBUG: Session created for ${callsign}, status set to 'started', waiting for delayed display timeout`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: Session created for ${callsign}, status set to 'started', waiting for delayed display timeout`);
             }
 
         } else if (eventType === 'update') {
             if (this.config.verbose) {
-                console.log(`DEBUG: createOrUpdateTransmissionSession UPDATE for ${callsign} (SessionID: ${sessionKey})`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession UPDATE for ${callsign} (SessionID: ${sessionKey})`);
             }
             
             // Update existing session or create if not found
             if (!this.transmissionGroups[sessionKey]) {
                 if (this.config.verbose) {
-                    console.log(`DEBUG: Session-Update for ${callsign} but no existing session found - creating new one`);
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} but no existing session found - creating new one`);
                 }
                 // Create session if it doesn't exist (missed the start event)
                 this.transmissionGroups[sessionKey] = {
@@ -757,7 +1327,8 @@ class BrandmeisterMonitor {
                 };
             } else {
                 if (this.config.verbose) {
-                    console.log(`DEBUG: Session-Update for ${callsign} - updating existing session, current status: ${this.transmissionGroups[sessionKey].status}`);
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} - updating existing session, current status: ${this.transmissionGroups[sessionKey].status}`);
                 }
                 // Update existing session with any new information
                 const existingGroup = this.transmissionGroups[sessionKey];
@@ -786,7 +1357,8 @@ class BrandmeisterMonitor {
                 }
                 
                 if (this.config.verbose) {
-                    console.log(`Updated SessionID ${call.SessionID} attributes for ${callsign}`);
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] Updated SessionID ${call.SessionID} attributes for ${callsign}`);
                 }
             }
 
@@ -798,12 +1370,14 @@ class BrandmeisterMonitor {
                 const elapsedTime = now - group.startTime;
                 if (elapsedTime >= this.config.minDuration) {
                     if (this.config.verbose) {
-                        console.log(`DEBUG: Showing updated transmission for ${callsign} - elapsed time ${elapsedTime}s >= ${this.config.minDuration}s`);
+                        const timestamp = new Date().toLocaleString();
+                        console.log(`[${timestamp}] DEBUG: Showing updated transmission for ${callsign} - elapsed time ${elapsedTime}s >= ${this.config.minDuration}s`);
                     }
                     this.createOrUpdateTransmissionGroup(sessionKey, call);
                 } else {
                     if (this.config.verbose) {
-                        console.log(`DEBUG: NOT showing updated transmission for ${callsign} - elapsed time ${elapsedTime}s < ${this.config.minDuration}s (need to wait ${(this.config.minDuration - elapsedTime).toFixed(1)}s more)`);
+                        const timestamp = new Date().toLocaleString();
+                        console.log(`[${timestamp}] DEBUG: NOT showing updated transmission for ${callsign} - elapsed time ${elapsedTime}s < ${this.config.minDuration}s (need to wait ${(this.config.minDuration - elapsedTime).toFixed(1)}s more)`);
                     }
                 }
             }
@@ -819,7 +1393,8 @@ class BrandmeisterMonitor {
         // Skip processing if duration is invalid (negative or zero)
         if (duration <= 0) {
             if (this.config.verbose) {
-                console.log(`Skipping transmission with invalid duration: ${duration}s`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] Skipping transmission with invalid duration: ${duration}s`);
             }
             // Clean up invalid transmission
             const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
@@ -858,8 +1433,11 @@ class BrandmeisterMonitor {
     }
 
     performMemoryCleanup() {
+        this.startPerformanceTimer('memoryCleanup');
+        
         const now = Date.now();
         const transmissionKeys = Object.keys(this.transmissionGroups);
+        let cleanedItems = 0;
         
         // Clean up old transmission groups if we exceed limits
         if (transmissionKeys.length > this.config.maxTransmissionGroups) {
@@ -872,16 +1450,40 @@ class BrandmeisterMonitor {
             const toRemove = completedGroups.slice(0, Math.max(0, transmissionKeys.length - this.config.maxTransmissionGroups));
             toRemove.forEach(item => {
                 delete this.transmissionGroups[item.key];
+                cleanedItems++;
             });
         }
         
-        // Clean up very old transmissions
+        // Clean up very old transmissions (more aggressive than before)
+        const maxAge = this.config.maxTransmissionAge;
+        const veryOldThreshold = maxAge / 2; // Start cleaning at half the max age
+        
         transmissionKeys.forEach(key => {
             const group = this.transmissionGroups[key];
             if (group && group.status === 'completed' && group.stopTime) {
-                const age = now - group.stopTime;
-                if (age > this.config.maxTransmissionAge) {
+                const age = now - (group.stopTime * 1000); // Convert to milliseconds
+                if (age > maxAge) {
                     delete this.transmissionGroups[key];
+                    cleanedItems++;
+                } else if (age > veryOldThreshold && Object.keys(this.transmissionGroups).length > this.config.maxTransmissionGroups * 0.8) {
+                    // More aggressive cleanup when approaching limits
+                    delete this.transmissionGroups[key];
+                    cleanedItems++;
+                }
+            }
+            
+            // Clean up stuck sessions (sessions that never completed)
+            if (group && (group.status === 'started' || group.status === 'updated')) {
+                const sessionAge = now - (group.startTime * 1000);
+                if (sessionAge > 600000) { // 10 minutes
+                    this.logDebug('Cleaning up stuck session', {
+                        sessionID: key,
+                        callsign: group.callsign,
+                        status: group.status,
+                        ageMinutes: (sessionAge / 60000).toFixed(1)
+                    });
+                    delete this.transmissionGroups[key];
+                    cleanedItems++;
                 }
             }
         });
@@ -894,11 +1496,77 @@ class BrandmeisterMonitor {
                 return group && key === `${group.callsign}_${group.startTime}`;
             })) {
                 delete this.activeCalls[key];
+                cleanedItems++;
             }
         });
         
+        // Enhanced DOM cleanup
+        this.performDOMCleanup();
+        
+        // Clean up performance monitoring data
+        this.cleanupPerformanceData();
+        
         // Limit activity log entries
         this.limitActivityLogEntries();
+        
+        const duration = this.endPerformanceTimer('memoryCleanup', {
+            itemsCleaned: cleanedItems,
+            transmissionGroups: Object.keys(this.transmissionGroups).length,
+            activeCalls: Object.keys(this.activeCalls).length
+        });
+        
+        if (cleanedItems > 0 && this.config.verbose) {
+            this.logDebug('Memory cleanup completed', {
+                itemsCleaned: cleanedItems,
+                cleanupTime: `${duration?.toFixed(2)}ms`,
+                remainingTransmissions: Object.keys(this.transmissionGroups).length,
+                remainingActiveCalls: Object.keys(this.activeCalls).length
+            });
+        }
+    }
+
+    performDOMCleanup() {
+        // Remove orphaned DOM elements that might not have been cleaned up
+        const activeTransmissionElements = document.querySelectorAll('.active-transmission');
+        const logEntryElements = document.querySelectorAll('.log-entry');
+        
+        // Check for and remove duplicate elements
+        const seenSessionKeys = new Set();
+        activeTransmissionElements.forEach(element => {
+            const sessionKey = element.getAttribute('data-session-key');
+            if (seenSessionKeys.has(sessionKey)) {
+                element.remove(); // Remove duplicate
+            } else {
+                seenSessionKeys.add(sessionKey);
+                
+                // Remove elements for sessions that no longer exist
+                if (!this.transmissionGroups[sessionKey]) {
+                    element.remove();
+                }
+            }
+        });
+        
+        // Limit log entries more aggressively if we have too many
+        if (logEntryElements.length > this.config.maxLogEntries * 1.2) {
+            const excessCount = logEntryElements.length - this.config.maxLogEntries;
+            for (let i = 0; i < excessCount; i++) {
+                logEntryElements[i].remove();
+            }
+        }
+    }
+
+    cleanupPerformanceData() {
+        // Clean up old operation timing data
+        for (const [operation, times] of Object.entries(this.performanceMonitor.operationTimes)) {
+            if (times.length > 200) { // Increased limit but still bounded
+                this.performanceMonitor.operationTimes[operation] = times.slice(-100);
+            }
+        }
+        
+        // Clean up performance history if it gets too large
+        if (this.performanceMonitor.history.length > this.config.performanceHistoryLimit * 1.2) {
+            this.performanceMonitor.history = this.performanceMonitor.history.slice(-this.config.performanceHistoryLimit);
+        }
     }
 
     limitActivityLogEntries() {
@@ -1050,7 +1718,8 @@ class BrandmeisterMonitor {
 
     addActiveTransmission(sessionKey, titleText, fieldData, eventType) {
         if (this.config.verbose) {
-            console.log(`DEBUG: addActiveTransmission called for ${titleText} (SessionID: ${sessionKey}), TG: ${fieldData.tg}`);
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] DEBUG: addActiveTransmission called for ${titleText} (SessionID: ${sessionKey}), TG: ${fieldData.tg}`);
         }
         
         // Remove "no activity" message if it exists
@@ -1066,7 +1735,8 @@ class BrandmeisterMonitor {
         this.elements.activeContainer.appendChild(activeEntry);
         
         if (this.config.verbose) {
-            console.log(`DEBUG: addActiveTransmission COMPLETED for ${titleText} - active transmission now visible in UI`);
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] DEBUG: addActiveTransmission COMPLETED for ${titleText} - active transmission now visible in UI`);
         }
     }
 
@@ -1088,11 +1758,13 @@ class BrandmeisterMonitor {
             }
             
             if (this.config.verbose) {
-                console.log(`Updated active transmission for SessionID: ${sessionKey}, Title: ${titleText}`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] Updated active transmission for SessionID: ${sessionKey}, Title: ${titleText}`);
             }
         } else {
             if (this.config.verbose) {
-                console.log(`No existing active transmission found for SessionID: ${sessionKey}, creating new one`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] No existing active transmission found for SessionID: ${sessionKey}, creating new one`);
             }
             // If we can't find the existing entry, create a new one
             this.addActiveTransmission(sessionKey, titleText, fieldData, eventType);
@@ -1103,12 +1775,14 @@ class BrandmeisterMonitor {
         const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
         if (activeEntry) {
             if (this.config.verbose) {
-                console.log(`DEBUG: removeActiveTransmission - removing active transmission for SessionID: ${sessionKey}`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: removeActiveTransmission - removing active transmission for SessionID: ${sessionKey}`);
             }
             activeEntry.remove();
         } else {
             if (this.config.verbose) {
-                console.log(`DEBUG: removeActiveTransmission - no active transmission found for SessionID: ${sessionKey}`);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: removeActiveTransmission - no active transmission found for SessionID: ${sessionKey}`);
             }
         }
 
@@ -1137,6 +1811,11 @@ class BrandmeisterMonitor {
     }
 
     clearActiveTransmissionsForTalkgroup(talkgroup) {
+        if (this.config.verbose) {
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] DEBUG: clearActiveTransmissionsForTalkgroup(${talkgroup}) - clearing active transmissions for DMR half-duplex rule`);
+        }
+        
         // Clear active transmissions for the specified talkgroup
         const existingActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
         existingActiveEntries.forEach(entry => {
@@ -1144,14 +1823,28 @@ class BrandmeisterMonitor {
             const group = this.transmissionGroups[sessionKey];
             // Remove if it's the same talkgroup (DMR half-duplex rule)
             if (group && group.tg === talkgroup) {
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Removing active transmission for SessionID: ${sessionKey} (TG ${talkgroup})`);
+                }
                 entry.remove();
             }
         });
         
         // Mark any incomplete transmission groups as cleared for this specific talkgroup only
+        // Also cancel any pending display timers
         for (const sessionKey in this.transmissionGroups) {
             const group = this.transmissionGroups[sessionKey];
             if (group && group.tg === talkgroup && group.status !== 'completed') {
+                // Cancel pending display timer if it exists
+                if (group.displayTimer) {
+                    clearTimeout(group.displayTimer);
+                    group.displayTimer = null;
+                    if (this.config.verbose) {
+                        const timestamp = new Date().toLocaleString();
+                        console.log(`[${timestamp}] DEBUG: Cancelled pending display timer for SessionID: ${sessionKey} due to talkgroup clear`);
+                    }
+                }
                 group.status = 'cleared';
             }
         }
@@ -1186,7 +1879,7 @@ class BrandmeisterMonitor {
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type} new`;
         
-        const timestamp = new Date().toLocaleTimeString();
+        const timestamp = new Date().toLocaleString();
         
         // Create structured HTML with new layout
         logEntry.innerHTML = `
@@ -1275,7 +1968,7 @@ class BrandmeisterMonitor {
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${type} new`;
         
-        const timestamp = new Date().toLocaleTimeString();
+        const timestamp = new Date().toLocaleString();
         
         logEntry.innerHTML = `
             <div class="log-header">
@@ -1321,11 +2014,11 @@ class BrandmeisterMonitor {
     }
 
     formatTime(date) {
-        return date.toLocaleTimeString();
+        return date.toLocaleString();
     }
 
     formatTimestamp(timestamp) {
-        return new Date(timestamp * 1000).toLocaleTimeString();
+        return new Date(timestamp * 1000).toLocaleString();
     }
 
     playNotificationSound() {
@@ -1347,7 +2040,8 @@ class BrandmeisterMonitor {
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
         } catch (error) {
-            console.log('Audio notification not supported');
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] Audio notification not supported`);
         }
     }
 
@@ -1380,7 +2074,8 @@ class BrandmeisterMonitor {
                 this.updateUIFromConfig();
                 
             } catch (error) {
-                console.log('Error loading settings from storage:', error);
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] Error loading settings from storage:`, error);
                 this.resetSettings();
             }
         } else {
@@ -1472,6 +2167,23 @@ function toggleSettings() {
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.brandmeisterMonitor = new BrandmeisterMonitor();
+    
+    // Expose performance debugging functions to console
+    window.getPerformanceInfo = () => window.brandmeisterMonitor.getPerformanceDebugInfo();
+    window.forceCleanup = () => window.brandmeisterMonitor.forceCleanup();
+    window.showMemoryTrends = () => {
+        const report = window.brandmeisterMonitor.getPerformanceReport();
+        if (report && report.trends) {
+            console.table(report.trends);
+            console.log('Operation Stats:', report.operations);
+        }
+        return report;
+    };
+    
+    console.log('🔧 Performance debugging commands available:');
+    console.log('- getPerformanceInfo() - Get detailed performance report');
+    console.log('- forceCleanup() - Force memory cleanup and get status');
+    console.log('- showMemoryTrends() - Display memory usage trends');
 });
 
 // Cleanup on page unload to prevent memory leaks
