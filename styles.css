@@ -69,6 +69,7 @@ body {
     grid-template-rows: var(--header-height) 1fr var(--console-height);
     height: 100vh;
     overflow: hidden;
+    transition: grid-template-rows 0.3s ease, grid-template-columns 0.3s ease;
 }
 
 /* HEADER */
@@ -118,11 +119,10 @@ body {
 .status-dot {
     width: 10px;
     height: 10px;
-    border-radius: 0;
+    border-radius: 50%;
     background: var(--gray-400);
     transition: background-color 0.3s ease;
     position: relative;
-    transform: rotate(45deg); /* Diamond shape for better visual impact */
 }
 
 .status-dot.connected {
@@ -130,24 +130,46 @@ body {
 }
 
 .sidebar-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    font-size: 1.25rem;
+    color: var(--primary);
     cursor: pointer;
     padding: 8px;
-    border-radius: var(--radius);
-    transition: background-color 0.2s;
+    border-radius: 0;
+    transition: all 0.2s;
+    min-width: 40px;
+    font-weight: 600;
 }
 
 .sidebar-toggle:hover {
-    background: var(--gray-100);
+    background: rgba(37, 99, 235, 0.2);
+    border-color: rgba(37, 99, 235, 0.4);
+    transform: scale(1.1);
 }
 
 .hamburger-icon {
     display: inline-block;
     line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+/* Rotate hamburger icon when sidebar is collapsed */
+.app-layout.sidebar-collapsed .hamburger-icon {
+    transform: rotate(90deg);
+}
+
+.app-layout.sidebar-collapsed .sidebar-toggle {
+    background: rgba(37, 99, 235, 0.2);
+    animation: collapsedPulse 2s infinite;
+}
+
+@keyframes collapsedPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
 /* SIDEBAR */
@@ -156,8 +178,26 @@ body {
     background: var(--surface);
     border-right: 3px solid var(--border);
     overflow-y: auto;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
     box-shadow: var(--shadow);
+}
+
+.sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    border-right-width: 0;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+/* Update grid when sidebar is collapsed */
+.app-layout:has(.sidebar.collapsed) {
+    grid-template-columns: 0 1fr;
+}
+
+/* Fallback for browsers without :has() support */
+.app-layout.sidebar-collapsed {
+    grid-template-columns: 0 1fr;
 }
 
 .sidebar-content {
@@ -281,31 +321,6 @@ button:disabled {
 }
 
 /* Settings */
-.collapsible-header {
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    transition: color 0.2s;
-}
-
-.collapsible-header:hover {
-    color: var(--primary);
-}
-
-.toggle-icon {
-    transition: transform 0.3s ease;
-    font-size: 0.75rem;
-    color: var(--text-light);
-}
-
-.collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
-
 .setting-group {
     margin-bottom: 24px; /* Increased spacing between setting groups */
 }
@@ -371,19 +386,18 @@ button:disabled {
     width: 44px;
     height: 24px;
     background: var(--gray-300);
-    border-radius: 0;
+    border-radius: 12px;
     position: relative;
     transition: background-color 0.3s;
     flex-shrink: 0; /* Prevent shrinking */
-    border: 1px solid var(--border);
 }
 
 .toggle-slider::before {
     content: '';
     position: absolute;
-    width: 18px;
-    height: 18px;
-    border-radius: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
     background: var(--white);
     top: 2px;
     left: 2px;
@@ -397,7 +411,7 @@ button:disabled {
 }
 
 .toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
-    transform: translateX(22px); /* Adjusted for square slider */
+    transform: translateX(20px); /* Restored for circular slider */
 }
 
 .setting-actions {
@@ -427,7 +441,7 @@ button:disabled {
     display: flex;
     flex-direction: column;
     border: 2px solid var(--border);
-    border-left: 4px solid var(--primary);
+
 }
 
 .active-transmissions h2 {
@@ -465,12 +479,9 @@ button:disabled {
     background: var(--gray-50);
     border: 2px dashed var(--border);
     border-radius: 0;
-    margin: 24px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    border-left: 4px solid var(--text-light);
 }
 
 .no-activity::before {
@@ -487,12 +498,39 @@ button:disabled {
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    transition: height 0.3s ease;
+    transition: height 0.3s ease, border-top-width 0.3s ease;
     border-left: 4px solid var(--primary);
+    overflow: hidden;
 }
 
 .console-panel.minimized {
-    height: 40px;
+    height: 44px; /* Height for just the header */
+    overflow: hidden;
+}
+
+.console-panel.minimized .console-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-bottom: 2px solid var(--border);
+}
+
+.console-panel.minimized .console-minimize {
+    background: rgba(255, 255, 255, 0.2);
+    animation: minimizedPulse 2s infinite;
+}
+
+@keyframes minimizedPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Update grid when console is minimized */
+.app-layout:has(.console-panel.minimized) {
+    grid-template-rows: var(--header-height) 1fr 44px;
+}
+
+/* Fallback for browsers without :has() support */
+.app-layout.console-minimized {
+    grid-template-rows: var(--header-height) 1fr 44px;
 }
 
 .console-header {
@@ -541,18 +579,25 @@ button:disabled {
 }
 
 .console-minimize {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: var(--white);
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: var(--radius);
-    transition: background-color 0.2s;
+    padding: 6px 12px;
+    border-radius: 0;
+    transition: all 0.2s;
     font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .console-minimize:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
 }
 
 .console-content {
@@ -586,7 +631,6 @@ button:disabled {
     background: var(--gray-100);
     border-radius: var(--radius);
     font-size: 0.875rem;
-    border-left: 4px solid var(--primary);
 }
 
 .log-entry.error {
@@ -678,14 +722,11 @@ button:disabled {
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
-    border-left: 6px solid var(--success);
 }
 
 .active-transmission:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-left-color: var(--primary);
-    border-width: 8px 2px 2px 8px;
+    transform: translateY(-1px);
+    border-width: 6px 1px 1px 6px;
 }
 
 .active-transmission::before {
@@ -740,7 +781,7 @@ button:disabled {
     background: var(--success);
     color: var(--white);
     padding: 8px 16px;
-    border-radius: 0;
+    border-radius: 20px;
     font-size: 0.8125rem;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -757,7 +798,7 @@ button:disabled {
     background: var(--error);
     color: var(--white);
     padding: 8px 16px;
-    border-radius: 0;
+    border-radius: 20px;
     font-size: 0.8125rem;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -883,7 +924,7 @@ button:disabled {
             "header"
             "main"
             "console";
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important; /* Override desktop collapsed state */
         grid-template-rows: var(--header-height) 1fr var(--console-height);
     }
     
@@ -896,10 +937,20 @@ button:disabled {
         z-index: 999;
         transform: translateX(-100%);
         box-shadow: var(--shadow-lg);
+        /* Override desktop collapsed styles on mobile */
+        border-right: 3px solid var(--border);
     }
     
     .sidebar.open {
         transform: translateX(0);
+    }
+    
+    .sidebar.collapsed {
+        /* Reset collapsed styles on mobile */
+        width: var(--sidebar-width);
+        border-right-width: 3px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
     }
     
     .sidebar-toggle {

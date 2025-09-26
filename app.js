@@ -2227,22 +2227,6 @@ function toggleActivityLog() {
     }
 }
 
-// Global function for collapsible settings panel
-function toggleSettings() {
-    const settingsContainer = document.getElementById('settingsContainer');
-    const toggleIcon = document.getElementById('settingsToggleIcon');
-    
-    if (settingsContainer.classList.contains('collapsed')) {
-        settingsContainer.classList.remove('collapsed');
-        toggleIcon.textContent = '▼';
-        settingsContainer.style.maxHeight = '800px';
-    } else {
-        settingsContainer.classList.add('collapsed');
-        toggleIcon.textContent = '▶';
-        settingsContainer.style.maxHeight = '0';
-    }
-}
-
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.brandmeisterMonitor = new BrandmeisterMonitor();
@@ -2296,15 +2280,18 @@ function initializeNewInterface() {
     // Console minimize/maximize toggle
     const consoleToggle = document.getElementById('consoleToggle');
     const consolePanel = document.getElementById('consolePanel');
+    const appLayout = document.querySelector('.app-layout');
     
     consoleToggle.addEventListener('click', () => {
         const isMinimized = consolePanel.classList.contains('minimized');
         
         if (isMinimized) {
             consolePanel.classList.remove('minimized');
+            appLayout.classList.remove('console-minimized');
             consoleToggle.textContent = '▼';
         } else {
             consolePanel.classList.add('minimized');
+            appLayout.classList.add('console-minimized');
             consoleToggle.textContent = '▲';
         }
         
@@ -2314,16 +2301,40 @@ function initializeNewInterface() {
         });
     });
     
-    // Sidebar toggle for mobile
+    // Initialize console panel as collapsed by default
+    consolePanel.classList.add('minimized');
+    appLayout.classList.add('console-minimized');
+    consoleToggle.textContent = '▲';
+    
+    // Sidebar toggle for desktop collapse and mobile
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
     
     sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // Mobile behavior: toggle open/closed
+            sidebar.classList.toggle('open');
+        } else {
+            // Desktop behavior: toggle collapsed/expanded
+            if (isCollapsed) {
+                sidebar.classList.remove('collapsed');
+                appLayout.classList.remove('sidebar-collapsed');
+                sidebarToggle.innerHTML = '<span class="hamburger-icon">☰</span>';
+            } else {
+                sidebar.classList.add('collapsed');
+                appLayout.classList.add('sidebar-collapsed');
+                sidebarToggle.innerHTML = '<span class="hamburger-icon">☰</span>';
+            }
+        }
         
         window.brandmeisterMonitor.logWithAttributes('Sidebar toggled', {
             sessionID: window.brandmeisterMonitor.sessionID,
-            open: sidebar.classList.contains('open')
+            collapsed: sidebar.classList.contains('collapsed'),
+            open: sidebar.classList.contains('open'),
+            mobile: isMobile
         });
     });
     
