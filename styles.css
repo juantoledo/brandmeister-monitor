@@ -670,6 +670,21 @@ button:disabled {
     height: 100%;
 }
 
+/* Session state visual indicators */
+.active-transmission.state-live {
+    border-left: 4px solid var(--success);
+}
+
+.active-transmission.state-stale {
+    border-left: 4px solid var(--warning);
+    opacity: 0.8;
+}
+
+.active-transmission.state-orphaned {
+    border-left: 4px solid var(--gray-400);
+    opacity: 0.6;
+}
+
 .log-entry {
     padding: 8px 12px;
     margin-bottom: 4px;
