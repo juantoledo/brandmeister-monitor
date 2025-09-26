@@ -10,6 +10,7 @@ class BrandmeisterMonitor {
         this.callsignAliases = {}; // Store callsign to alias mappings
         this.activeCalls = {}; // Track active calls by SourceCall to update with new info
         this.transmissionGroups = {}; // Group related transmission events
+        this.connectionStartTime = Date.now(); // Track session start time
         
         // Configuration (can be made user-configurable later)
         this.config = {
@@ -59,6 +60,8 @@ class BrandmeisterMonitor {
             activeContainer: document.getElementById('activeContainer'),
             totalCalls: document.getElementById('totalCalls'),
             lastActivity: document.getElementById('lastActivity'),
+            sessionDuration: document.getElementById('sessionDuration'),
+            activeTGs: document.getElementById('activeTGs'),
             themeSelect: document.getElementById('themeSelect'),
             // Settings elements
             minDurationInput: document.getElementById('minDuration'),
@@ -1423,8 +1426,7 @@ class BrandmeisterMonitor {
         // Update statistics
         this.totalCalls++;
         this.lastActivityTime = new Date();
-        this.elements.totalCalls.textContent = this.totalCalls;
-        this.elements.lastActivity.textContent = this.formatTime(this.lastActivityTime);
+        this.updateStats();
 
         // Update the display
         this.createOrUpdateTransmissionGroup(sessionKey, call);
@@ -1624,8 +1626,7 @@ class BrandmeisterMonitor {
         this.lastActivityTime = new Date();
 
         // Update statistics
-        this.elements.totalCalls.textContent = this.totalCalls;
-        this.elements.lastActivity.textContent = this.formatTime(this.lastActivityTime);
+        this.updateStats();
 
         // Get effective alias (from current transmission or stored)
         let effectiveAlias = talkerAlias && talkerAlias.trim() !== '' ? talkerAlias.trim() : this.getStoredAlias(callsign);
@@ -2014,8 +2015,8 @@ class BrandmeisterMonitor {
         this.elements.logContainer.innerHTML = '';
         this.elements.logContainer.appendChild(this.createNoActivityElement(this._htmlFragments.noActivityLog));
         this.totalCalls = 0;
-        this.elements.totalCalls.textContent = '0';
-        this.elements.lastActivity.textContent = 'Never';
+        this.lastActivityTime = null;
+        this.updateStats();
     }
 
     updateConnectionStatus(connected) {
@@ -2029,6 +2030,27 @@ class BrandmeisterMonitor {
 
     formatTimestamp(timestamp) {
         return new Date(timestamp * 1000).toLocaleString();
+    }
+
+    // Update all statistics displays
+    updateStats() {
+        if (this.elements.totalCalls) {
+            this.elements.totalCalls.textContent = this.totalCalls;
+        }
+        if (this.elements.lastActivity) {
+            this.elements.lastActivity.textContent = this.lastActivityTime ? 
+                this.formatTime(this.lastActivityTime) : 'Never';
+        }
+        if (this.elements.activeTGs) {
+            const activeTransmissions = Object.keys(this.activeCalls).length;
+            const uniqueTGs = new Set();
+            Object.values(this.transmissionGroups).forEach(group => {
+                if (group.status === 'active') {
+                    uniqueTGs.add(group.talkgroup);
+                }
+            });
+            this.elements.activeTGs.textContent = uniqueTGs.size;
+        }
     }
 
     playNotificationSound() {
@@ -2250,6 +2272,9 @@ function toggleSettings() {
 document.addEventListener('DOMContentLoaded', () => {
     window.brandmeisterMonitor = new BrandmeisterMonitor();
     
+    // Initialize new UI components
+    initializeNewInterface();
+    
     // Expose performance debugging functions to console
     window.getPerformanceInfo = () => window.brandmeisterMonitor.getPerformanceDebugInfo();
     window.forceCleanup = () => window.brandmeisterMonitor.forceCleanup();
@@ -2267,6 +2292,96 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('- forceCleanup() - Force memory cleanup and get status');
     console.log('- showMemoryTrends() - Display memory usage trends');
 });
+
+// Initialize new UI interface components
+function initializeNewInterface() {
+    // Console tab switching
+    const consoleTabs = document.querySelectorAll('.console-tab');
+    const consolePanes = document.querySelectorAll('.console-pane');
+    
+    consoleTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+            
+            // Remove active from all tabs and panes
+            consoleTabs.forEach(t => t.classList.remove('active'));
+            consolePanes.forEach(p => p.classList.remove('active'));
+            
+            // Add active to clicked tab and corresponding pane
+            tab.classList.add('active');
+            document.getElementById(targetTab + 'Pane').classList.add('active');
+            
+            window.brandmeisterMonitor.logWithAttributes('Console tab switched', {
+                sessionID: window.brandmeisterMonitor.sessionID,
+                tab: targetTab
+            });
+        });
+    });
+    
+    // Console minimize/maximize toggle
+    const consoleToggle = document.getElementById('consoleToggle');
+    const consolePanel = document.getElementById('consolePanel');
+    
+    consoleToggle.addEventListener('click', () => {
+        const isMinimized = consolePanel.classList.contains('minimized');
+        
+        if (isMinimized) {
+            consolePanel.classList.remove('minimized');
+            consoleToggle.textContent = '▼';
+        } else {
+            consolePanel.classList.add('minimized');
+            consoleToggle.textContent = '▲';
+        }
+        
+        window.brandmeisterMonitor.logWithAttributes('Console panel toggled', {
+            sessionID: window.brandmeisterMonitor.sessionID,
+            minimized: !isMinimized
+        });
+    });
+    
+    // Sidebar toggle for mobile
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        
+        window.brandmeisterMonitor.logWithAttributes('Sidebar toggled', {
+            sessionID: window.brandmeisterMonitor.sessionID,
+            open: sidebar.classList.contains('open')
+        });
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && 
+            !sidebar.contains(e.target) && 
+            !sidebarToggle.contains(e.target) && 
+            sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+    
+    // Update session duration in stats
+    updateSessionDuration();
+    setInterval(updateSessionDuration, 1000);
+}
+
+// Update session duration display
+function updateSessionDuration() {
+    const sessionDurationElement = document.getElementById('sessionDuration');
+    if (sessionDurationElement && window.brandmeisterMonitor) {
+        const startTime = window.brandmeisterMonitor.connectionStartTime || Date.now();
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const seconds = duration % 60;
+        
+        sessionDurationElement.textContent = 
+            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
 
 // Cleanup on page unload to prevent memory leaks
 window.addEventListener('beforeunload', () => {

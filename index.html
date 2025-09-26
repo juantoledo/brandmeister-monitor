@@ -8,112 +8,160 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔊 Brandmeister Monitor</h1>
-            <p class="subtitle">Real-time DMR Talkgroup Activity Monitor</p>
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🔊 Brandmeister Monitor</h1>
+                <p class="subtitle">Real-time DMR Talkgroup Activity Monitor</p>
+                <div class="header-status">
+                    <span class="status-dot" id="connectionStatus"></span>
+                    <span id="statusText">Disconnected</span>
+                </div>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <span class="hamburger-icon">☰</span>
+            </button>
         </header>
 
-        <div class="config-section">
-            <div class="tg-input-group">
-                <label for="talkgroup">Talkgroup ID(s):</label>
-                <input type="text" id="talkgroup" placeholder="Enter TG IDs (e.g., 214,220,235) or 'all'" min="1">
-                <button id="saveTg">Save & Monitor</button>
-            </div>
-            <div class="theme-selector">
-                <label for="themeSelect">Theme:</label>
-                <select id="themeSelect">
-                    <option value="material">Material Design</option>
-                    <option value="clean">Clean Minimal</option>
-                    <option value="glassmorphism">Glassmorphism</option>
-                    <option value="neumorphism">Neumorphism</option>
-                    <option value="dark-brutalist">Dark Brutalist</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="ios-modern">iOS Modern</option>
-                </select>
-            </div>
-            <div class="status-indicator">
-                <span class="status-dot" id="connectionStatus"></span>
-                <span id="statusText">Disconnected</span>
-            </div>
-        </div>
-
-        <div class="settings-section">
-            <h3 class="collapsible-header" onclick="toggleSettings()">
-                ⚙️ Settings <span class="toggle-icon" id="settingsToggleIcon">▼</span>
-            </h3>
-            <div id="settingsContainer" class="collapsible-content settings-content">
-                <div class="setting-group">
-                    <label for="minDuration">Minimum Duration (seconds):</label>
-                    <input type="number" id="minDuration" min="0" max="60" step="1" value="4">
-                    <span class="setting-description">Ignore transmissions shorter than this</span>
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <h3>Quick Setup</h3>
+                    <div class="tg-input-group">
+                        <label for="talkgroup">Talkgroup ID(s):</label>
+                        <input type="text" id="talkgroup" placeholder="Enter TG IDs (e.g., 214,220,235) or 'all'" min="1">
+                        <button id="saveTg">Save & Monitor</button>
+                    </div>
+                    <div class="current-tg">
+                        <p>Monitoring: <span id="currentTg">None</span></p>
+                    </div>
                 </div>
-                
-                <div class="setting-group">
-                    <label for="minSilence">Minimum Silence (seconds):</label>
-                    <input type="number" id="minSilence" min="0" max="300" step="1" value="10">
-                    <span class="setting-description">Minimum gap between transmissions</span>
+
+                <div class="sidebar-section">
+                    <h3>Controls</h3>
+                    <div class="control-buttons">
+                        <button id="connectBtn">Connect</button>
+                        <button id="disconnectBtn" disabled>Disconnect</button>
+                        <button id="clearLogs">Clear Logs</button>
+                    </div>
                 </div>
-                
-                <div class="setting-group">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="verbose">
-                        <span class="toggle-slider"></span>
-                        Verbose Mode
-                    </label>
-                    <span class="setting-description">Show detailed technical information</span>
+
+                <div class="sidebar-section">
+                    <h3 class="collapsible-header" onclick="toggleSettings()">
+                        ⚙️ Settings <span class="toggle-icon" id="settingsToggleIcon">▼</span>
+                    </h3>
+                    <div id="settingsContainer" class="collapsible-content settings-content">
+                        <div class="setting-group">
+                            <label for="minDuration">Min Duration (sec):</label>
+                            <input type="number" id="minDuration" min="0" max="60" step="1" value="4">
+                            <span class="setting-description">Ignore transmissions shorter than this</span>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="minSilence">Min Silence (sec):</label>
+                            <input type="number" id="minSilence" min="0" max="300" step="1" value="10">
+                            <span class="setting-description">Minimum gap between transmissions</span>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="verbose">
+                                <span class="toggle-slider"></span>
+                                Verbose Mode
+                            </label>
+                            <span class="setting-description">Show detailed technical information</span>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="monitorAllTalkgroups">
+                                <span class="toggle-slider"></span>
+                                Monitor All Talkgroups
+                            </label>
+                            <span class="setting-description">Override specific TG and monitor all activity</span>
+                        </div>
+                        
+                        <div class="setting-actions">
+                            <button id="saveSettings" class="setting-btn">Save Settings</button>
+                            <button id="resetSettings" class="setting-btn secondary">Reset to Defaults</button>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="setting-group">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="monitorAllTalkgroups">
-                        <span class="toggle-slider"></span>
-                        Monitor All Talkgroups
-                    </label>
-                    <span class="setting-description">Override specific TG and monitor all activity</span>
-                </div>
-                
-                <div class="setting-actions">
-                    <button id="saveSettings" class="setting-btn">Save Settings</button>
-                    <button id="resetSettings" class="setting-btn secondary">Reset to Defaults</button>
+
+                <div class="sidebar-section">
+                    <h3>Appearance</h3>
+                    <div class="theme-selector">
+                        <label for="themeSelect">Theme:</label>
+                        <select id="themeSelect">
+                            <option value="material">Material Design</option>
+                            <option value="clean">Clean Minimal</option>
+                            <option value="glassmorphism">Glassmorphism</option>
+                            <option value="neumorphism">Neumorphism</option>
+                            <option value="dark-brutalist">Dark Brutalist</option>
+                            <option value="cyberpunk">Cyberpunk</option>
+                            <option value="ios-modern">iOS Modern</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <div class="controls">
-            <button id="connectBtn">Connect</button>
-            <button id="disconnectBtn" disabled>Disconnect</button>
-            <button id="clearLogs">Clear Logs</button>
-        </div>
-
-        <div class="current-tg">
-            <p>Monitoring TG: <span id="currentTg">None</span></p>
-        </div>
-
-        <div class="active-transmissions">
-            <h3>🔴 Active Transmissions</h3>
-            <div id="activeContainer">
-                <p class="no-activity">No active transmissions</p>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="active-transmissions">
+                <h2>🔴 Active Transmissions</h2>
+                <div id="activeContainer" class="transmission-container">
+                    <p class="no-activity">No active transmissions</p>
+                </div>
             </div>
-        </div>
+        </main>
 
-        <div class="activity-log">
-            <h3 class="collapsible-header" onclick="toggleActivityLog()">
-                📋 Activity Log <span class="toggle-icon" id="toggleIcon">▼</span>
-            </h3>
-            <div id="logContainer" class="collapsible-content">
-                <p class="no-activity">No activity yet. Configure a talkgroup and connect to start monitoring.</p>
+        <!-- Console Panel -->
+        <div class="console-panel" id="consolePanel">
+            <div class="console-header">
+                <div class="console-tabs">
+                    <button class="console-tab active" data-tab="activity">Activity Log</button>
+                    <button class="console-tab" data-tab="stats">Statistics</button>
+                    <button class="console-tab" data-tab="debug">Debug</button>
+                </div>
+                <div class="console-controls">
+                    <button class="console-minimize" id="consoleToggle">▼</button>
+                </div>
             </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Total Calls:</span>
-                <span class="stat-value" id="totalCalls">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Last Activity:</span>
-                <span class="stat-value" id="lastActivity">Never</span>
+            <div class="console-content" id="consoleContent">
+                <div class="console-pane active" id="activityPane">
+                    <div id="logContainer" class="activity-log">
+                        <p class="no-activity">No activity yet. Configure a talkgroup and connect to start monitoring.</p>
+                    </div>
+                </div>
+                <div class="console-pane" id="statsPane">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Calls:</span>
+                            <span class="stat-value" id="totalCalls">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Last Activity:</span>
+                            <span class="stat-value" id="lastActivity">Never</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Session Duration:</span>
+                            <span class="stat-value" id="sessionDuration">0:00:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Active TGs:</span>
+                            <span class="stat-value" id="activeTGs">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="console-pane" id="debugPane">
+                    <div class="debug-info">
+                        <p>Debug information and system logs will appear here</p>
+                        <div id="debugContainer"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
