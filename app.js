@@ -666,6 +666,16 @@ class BrandmeisterMonitor {
         // Clear active transmissions when talkgroup changes
         this.clearActiveTransmissions();
         this.addLogEntry('system', 'System', 'Active transmissions cleared due to talkgroup change', 'Cleared Active');
+        
+        // Auto-save settings to ensure consistency
+        this.saveSettings();
+        
+        // Log the talkgroup change with structured logging
+        this.logInfo('Talkgroup configuration updated', {
+            monitorAllTalkgroups: this.config.monitorAllTalkgroups,
+            talkgroups: this.config.monitorAllTalkgroups ? 'all' : this.monitoredTalkgroups.join(','),
+            action: 'active_transmissions_cleared'
+        });
     }
 
     connect() {
@@ -2045,11 +2055,53 @@ class BrandmeisterMonitor {
         }
     }
 
+    // Show subtle autosave indicator
+    showAutosaveIndicator() {
+        // Create or update autosave indicator
+        let indicator = document.getElementById('autosave-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'autosave-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(76, 175, 80, 0.9);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            `;
+            indicator.textContent = '✓ Autosaved';
+            document.body.appendChild(indicator);
+        }
+        
+        // Show and hide the indicator
+        indicator.style.opacity = '1';
+        setTimeout(() => {
+            indicator.style.opacity = '0';
+        }, 2000);
+    }
+
     // Theme Management Methods
     switchTheme(themeName) {
+        const previousTheme = document.body.className.replace('theme-', '');
         document.body.className = `theme-${themeName}`;
         localStorage.setItem('brandmeister-theme', themeName);
         this.elements.themeSelect.value = themeName;
+        
+        // Log theme change if it's actually different
+        if (previousTheme !== themeName && previousTheme !== '') {
+            this.logInfo('Theme changed', {
+                previousTheme: previousTheme || 'default',
+                newTheme: themeName,
+                autoSave: 'enabled'
+            });
+        }
     }
 
     loadTheme() {
@@ -2093,7 +2145,20 @@ class BrandmeisterMonitor {
         };
         
         localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
-        this.addLogEntry('system', 'System', 'Settings saved successfully', 'Configuration Updated');
+        
+        // Add visual feedback for manual saves
+        if (this.elements.saveSettingsBtn && this.elements.saveSettingsBtn.style.pointerEvents !== 'none') {
+            this.addLogEntry('system', 'System', 'Settings saved successfully', 'Configuration Updated');
+        }
+        
+        // Structured logging for settings changes
+        this.logDebug('Settings saved', {
+            minDuration: settings.minDuration,
+            minSilence: settings.minSilence,
+            verbose: settings.verbose,
+            monitorAllTalkgroups: settings.monitorAllTalkgroups,
+            autoSave: 'enabled'
+        });
     }
 
     resetSettings() {
@@ -2113,11 +2178,28 @@ class BrandmeisterMonitor {
     }
 
     updateConfigFromUI() {
+        // Store previous monitoring state to detect changes
+        const previousMonitorAllTalkgroups = this.config.monitorAllTalkgroups;
+        
         // Update config from UI elements
         this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 4;
         this.config.minSilence = parseInt(this.elements.minSilenceInput.value) || 10;
         this.config.verbose = this.elements.verboseCheckbox.checked;
         this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
+        
+        // Clear active transmissions if monitoring scope changed
+        if (previousMonitorAllTalkgroups !== this.config.monitorAllTalkgroups) {
+            this.clearActiveTransmissions();
+            const modeText = this.config.monitorAllTalkgroups ? 
+                'Monitor all talkgroups enabled' : 
+                'Monitor all talkgroups disabled - now monitoring specific talkgroups';
+            this.addLogEntry('system', 'System', `${modeText} - Active transmissions cleared`, 'Configuration Updated');
+            
+            this.logInfo('Monitoring mode changed - active transmissions cleared', {
+                newMode: this.config.monitorAllTalkgroups ? 'all_talkgroups' : 'specific_talkgroups',
+                action: 'cleared_active_transmissions'
+            });
+        }
         
         // Auto-save settings when changed
         this.saveSettings();
