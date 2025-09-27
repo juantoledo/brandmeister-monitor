@@ -870,6 +870,17 @@ button:disabled {
     padding: 0 16px;
     margin: 2px 0;
     opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Flag icons in log cards */
+.log-card-location .fi {
+    width: 18px;
+    height: 14px;
+    box-shadow: 1px 1px 0px rgba(0,0,0,0.15);
+    flex-shrink: 0;
 }
 
 /* Log Card Details */
@@ -1214,6 +1225,48 @@ button:disabled {
     font-weight: 500;
     margin: 2px 0 4px 0;
     opacity: 0.9;
+}
+
+/* Card content layout with left content and right flag */
+.card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.card-left {
+    flex: 1;
+}
+
+/* Large flag display in middle-right area */
+.card-flag-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    opacity: 0.8;
+}
+
+.card-flag-display .fi {
+    width: 48px;
+    height: 36px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+/* Remove old flag styling */
+.card-flag {
+    display: none;
+}
+
+/* Flag icons styling (legacy for log cards) */
+.card-location .fi {
+    width: 20px;
+    height: 15px;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    flex-shrink: 0;
 }
 
 /* Card Details - Alias and Phonetic */

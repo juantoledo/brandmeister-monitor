@@ -1157,6 +1157,7 @@ class BrandmeisterMonitor {
                 // Lookup RadioID information
                 const radioIdInfo = this.lookupRadioID(group.sourceID);
                 let locationInfo = '';
+                let flagElement = '';
                 if (radioIdInfo) {
                     const city = radioIdInfo.city;
                     const state = radioIdInfo.state;
@@ -1164,7 +1165,9 @@ class BrandmeisterMonitor {
                     
                     const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
                     if (locationParts.length > 0) {
-                        locationInfo = `<div class="card-location">📍 ${locationParts.join(', ')}</div>`;
+                        const countryCode = this.getCountryCode(country);
+                        flagElement = countryCode ? `<div class="card-flag-display"><span class="fi fi-${countryCode}" title="${country}"></span></div>` : '';
+                        locationInfo = `<div class="card-location">${locationParts.join(', ')}</div>`;
                     }
                 }
                 
@@ -1181,11 +1184,16 @@ class BrandmeisterMonitor {
                                 <span class="card-status live">🔴 LIVE</span>
                             </div>
                         </div>
-                        ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
-                        ${locationInfo}
-                        <div class="card-details">
-                            ${alias ? `<div class="card-alias">${alias}</div>` : ''}
-                            ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
+                        <div class="card-content">
+                            <div class="card-left">
+                                ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
+                                ${locationInfo}
+                                <div class="card-details">
+                                    ${alias ? `<div class="card-alias">${alias}</div>` : ''}
+                                    ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
+                                </div>
+                            </div>
+                            ${flagElement}
                         </div>
                     </div>
                 `;
@@ -2092,7 +2100,9 @@ class BrandmeisterMonitor {
             
             const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
             if (locationParts.length > 0) {
-                locationInfo = `<div class="log-card-location">📍 ${locationParts.join(', ')}</div>`;
+                const countryCode = this.getCountryCode(country);
+                const flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '🌍';
+                locationInfo = `<div class="log-card-location">${flagIcon} ${locationParts.join(', ')}</div>`;
             }
         }
         
@@ -2779,6 +2789,77 @@ class BrandmeisterMonitor {
         localStorage.removeItem('radioIDLastUpdate');
         
         this.updateRadioIDStatus('Cache cleared');
+    }
+
+    // Map country names to ISO 3166-1 alpha-2 codes for flag-icons
+    getCountryCode(countryName) {
+        if (!countryName) return null;
+        
+        const countryMap = {
+            'United States': 'us',
+            'USA': 'us',
+            'US': 'us',
+            'Canada': 'ca',
+            'United Kingdom': 'gb',
+            'UK': 'gb',
+            'Germany': 'de',
+            'France': 'fr',
+            'Spain': 'es',
+            'Italy': 'it',
+            'Netherlands': 'nl',
+            'Belgium': 'be',
+            'Switzerland': 'ch',
+            'Austria': 'at',
+            'Sweden': 'se',
+            'Norway': 'no',
+            'Denmark': 'dk',
+            'Finland': 'fi',
+            'Poland': 'pl',
+            'Czech Republic': 'cz',
+            'Slovakia': 'sk',
+            'Hungary': 'hu',
+            'Romania': 'ro',
+            'Bulgaria': 'bg',
+            'Greece': 'gr',
+            'Portugal': 'pt',
+            'Ireland': 'ie',
+            'Australia': 'au',
+            'New Zealand': 'nz',
+            'Japan': 'jp',
+            'South Korea': 'kr',
+            'China': 'cn',
+            'India': 'in',
+            'Brazil': 'br',
+            'Argentina': 'ar',
+            'Chile': 'cl',
+            'Mexico': 'mx',
+            'Russia': 'ru',
+            'Ukraine': 'ua',
+            'Turkey': 'tr',
+            'Israel': 'il',
+            'South Africa': 'za',
+            'Egypt': 'eg',
+            'Thailand': 'th',
+            'Singapore': 'sg',
+            'Malaysia': 'my',
+            'Indonesia': 'id',
+            'Philippines': 'ph',
+            'Vietnam': 'vn'
+        };
+        
+        // Try exact match first
+        const exactMatch = countryMap[countryName];
+        if (exactMatch) return exactMatch;
+        
+        // Try case-insensitive match
+        const lowerCountry = countryName.toLowerCase();
+        for (const [country, code] of Object.entries(countryMap)) {
+            if (country.toLowerCase() === lowerCountry) {
+                return code;
+            }
+        }
+        
+        return null;
     }
 }
 
