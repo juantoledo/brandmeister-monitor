@@ -1211,11 +1211,11 @@ button:disabled {
 
 /* Source Name - Prominently displayed */
 .card-source-name {
-    font-size: 1.1rem;
+    font-size: 2.1rem;
     font-weight: 600;
     color: var(--primary);
     line-height: 1.2;
-    margin: -4px 0 4px 0;
+    margin: -8px 0px -12px 0;
 }
 
 /* Location Info from RadioID database */
@@ -1246,6 +1246,8 @@ button:disabled {
     justify-content: center;
     padding: 8px;
     opacity: 0.8;
+    cursor: pointer;
+    border-radius: 8px;
 }
 
 .card-flag-display .fi {

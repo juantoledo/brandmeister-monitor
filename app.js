@@ -1166,7 +1166,7 @@ class BrandmeisterMonitor {
                     const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
                     if (locationParts.length > 0) {
                         const countryCode = this.getCountryCode(country);
-                        flagElement = countryCode ? `<div class="card-flag-display"><span class="fi fi-${countryCode}" title="${country}"></span></div>` : '';
+                        flagElement = countryCode ? `<div class="card-flag-display" title="Click to search ${locationParts.join(', ')} on Google"><span class="fi fi-${countryCode}" title="${country}"></span></div>` : '';
                         locationInfo = `<div class="card-location">${locationParts.join(', ')}</div>`;
                     }
                 }
@@ -1200,6 +1200,22 @@ class BrandmeisterMonitor {
                 
                 // Add to active container
                 this.elements.activeContainer.appendChild(activeEntry);
+                
+                // Add click handler for flag if it exists
+                if (flagElement && radioIdInfo) {
+                    const flagDisplay = activeEntry.querySelector('.card-flag-display');
+                    if (flagDisplay) {
+                        flagDisplay.addEventListener('click', () => {
+                            const city = radioIdInfo.city;
+                            const state = radioIdInfo.state;
+                            const country = radioIdInfo.country;
+                            const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
+                            const searchQuery = locationParts.join(' ');
+                            const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                            window.open(googleUrl, '_blank');
+                        });
+                    }
+                }
                 
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
@@ -2595,17 +2611,18 @@ class BrandmeisterMonitor {
                 this.radioIDLastUpdate = parseInt(lastUpdate);
                 this.updateRadioIDStatus();
                 
-                // Only mention if cache is expired, don't auto-download
+                // Auto-download if cache is expired
                 if (cacheAge >= cacheExpiry) {
-                    console.log('⏰ Cache is expired - manual refresh recommended');
-                    this.updateRadioIDStatus('Cache expired - refresh recommended');
+                    console.log('⏰ Cache expired - downloading fresh RadioID database...');
+                    await this.downloadRadioIDDatabase();
                 }
                 return;
             }
 
             // No cached data exists
             console.log('� No cached RadioID database found - use Download button to fetch data');
-            this.updateRadioIDStatus('Not downloaded - click Download button');
+            this.updateRadioIDStatus('Not downloaded - downloading initial data...');
+            await this.downloadRadioIDDatabase();
             
         } catch (error) {
             console.error('❌ Failed to initialize RadioID database:', error);
