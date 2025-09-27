@@ -875,10 +875,9 @@ class BrandmeisterMonitor {
                 // Always update UI and session state on Session-Stop
                 this.createOrUpdateTransmissionSession(sessionKey, call, 'stop');
                 
-                // Only log if duration meets minimum (but always clean up UI)
+                // Only log if duration meets minimum (UI cleanup handled by 'stop' handler above)
                 if (duration >= this.config.minDuration) {
                     notify = true;
-                    this.updateTransmissionGroupComplete(sessionKey, call);
                     
                     if (this.config.verbose) {
                         this.logDebug('Session-Stop logging completed transmission', {
@@ -890,9 +889,9 @@ class BrandmeisterMonitor {
                         });
                     }
                 } else {
-                    // Short transmission - clean up UI but don't log
+                    // Short transmission - UI cleanup already handled by 'stop' handler above
                     if (this.config.verbose) {
-                        this.logDebug('Session-Stop short transmission - UI cleanup only', {
+                        this.logDebug('Session-Stop short transmission - UI cleanup completed', {
                             sessionID,
                             callsign,
                             tg,
@@ -1020,7 +1019,7 @@ class BrandmeisterMonitor {
         };
         
         // Add status and timing info
-        if (group.status === 'started') {
+        if (group.status === 'active') {
             fieldData.status = 'Active';
         } else if (group.status === 'completed') {
             const duration = group.duration || (group.stopTime - group.startTime);
@@ -1046,6 +1045,17 @@ class BrandmeisterMonitor {
             const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
             if (activeEntry) {
                 activeEntry.remove();
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Successfully removed active transmission from UI (SessionID: ${callKey})`);
+                }
+            } else if (this.config.verbose) {
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: Active transmission not found in UI for removal (SessionID: ${callKey}), selector: [data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+                // List all active entries for debugging
+                const allActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
+                const sessionKeys = Array.from(allActiveEntries).map(entry => entry.getAttribute('data-session-key')).filter(Boolean);
+                console.log(`[${timestamp}] DEBUG: Current active transmission session keys:`, sessionKeys);
             }
             
             // Check if active container is empty
@@ -1203,8 +1213,11 @@ class BrandmeisterMonitor {
             // Don't immediately show active transmission - this will be handled by delayed display logic
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: Session created for ${callsign}, status set to 'started', waiting for delayed display timeout`);
+                console.log(`[${timestamp}] DEBUG: Session created for ${callsign}, status set to 'active', will display immediately`);
             }
+            
+            // Immediately display the active transmission
+            this.createOrUpdateTransmissionGroup(sessionKey, call);
 
         } else if (eventType === 'update') {
             if (this.config.verbose) {
@@ -1432,6 +1445,32 @@ class BrandmeisterMonitor {
             } else if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
                 console.log(`[${timestamp}] DEBUG: Skipping UI update for Session-Update - group status: ${group ? group.status : 'null'}, sessionKey: ${sessionKey}`);
+            }
+        } else if (eventType === 'stop') {
+            // Handle Session-Stop events - mark session as completed and update UI
+            const group = this.transmissionGroups[sessionKey];
+            if (group) {
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession STOP for ${callsign} (SessionID: ${sessionKey}), ContextID: ${group.contextID || 'N/A'}`);
+                }
+                
+                // Mark session as completed
+                group.status = 'completed';
+                group.stopTime = stopTime;
+                group.duration = stopTime - group.startTime;
+                group.lastUpdateTime = Date.now();
+                
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Session marked as completed - duration: ${group.duration.toFixed(1)}s, will remove from active UI`);
+                }
+                
+                // Update UI to remove from active display and move to completed log
+                this.createOrUpdateTransmissionGroup(sessionKey, call);
+            } else if (this.config.verbose) {
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}] DEBUG: Session-Stop for ${callsign} but no existing session found (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
             }
         }
     }
