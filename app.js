@@ -837,7 +837,8 @@ class BrandmeisterMonitor {
             }
 
             // Use SessionID as the primary key for tracking transmissions
-            const sessionKey = sessionID;
+            // Sanitize sessionID to ensure valid CSS selector characters only
+            const sessionKey = sessionID ? String(sessionID).replace(/[^\w-]/g, '_') : `unknown_${Date.now()}`;
             let notify = false;
 
             if (event === 'Session-Stop' && callsign !== '') {
@@ -989,7 +990,7 @@ class BrandmeisterMonitor {
         
         if (this.config.verbose) {
             const timestamp = new Date().toLocaleString();
-            console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
+            console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), ContextID: ${group.contextID || 'N/A'}, status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
             if (group.status === 'completed' && group.stopTime) {
                 const duration = group.stopTime - group.startTime;
                 console.log(`[${timestamp}] DEBUG: Completed transmission duration: ${duration.toFixed(1)}s, minDuration: ${this.config.minDuration}s`);
@@ -1042,7 +1043,7 @@ class BrandmeisterMonitor {
             }
             
             // Remove from active display
-            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${callKey}"]`);
+            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
             if (activeEntry) {
                 activeEntry.remove();
             }
@@ -1054,13 +1055,14 @@ class BrandmeisterMonitor {
             
         } else {
             // Handle active/started transmissions
-            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${callKey}"]`);
+            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
             
             if (existingActiveEntry) {
                 // Update existing active transmission UI
                 const titleElement = existingActiveEntry.querySelector('.active-title');
                 const tgElement = existingActiveEntry.querySelector('.active-tg');
                 const identityElement = existingActiveEntry.querySelector('.active-identity');
+                const activeRightElement = existingActiveEntry.querySelector('.active-right');
                 
                 if (titleElement) titleElement.textContent = titleText;
                 if (tgElement) tgElement.textContent = `TG ${tg || 'Unknown'}`;
@@ -1071,16 +1073,27 @@ class BrandmeisterMonitor {
                     `;
                 }
                 
+                // Update QRZ link if callsign changed
+                if (activeRightElement) {
+                    const callsign = this.extractCallsignFromTitle(titleText);
+                    const qrzLink = this.createQRZLogbookLink(callsign);
+                    activeRightElement.innerHTML = `
+                        ${qrzLink}
+                        <div class="active-tg">TG ${tg || 'Unknown'}</div>
+                        <div class="active-status">🔴 LIVE</div>
+                    `;
+                }
+                
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] Updated active transmission UI for SessionID: ${callKey}, Title: ${titleText}`);
+                    console.log(`[${timestamp}] Updated active transmission UI for SessionID: ${callKey}, ContextID: ${group.contextID || 'N/A'}, Title: ${titleText}`);
                 }
                 
             } else {
                 // Create new active transmission UI
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] Creating new active transmission UI for ${titleText} (SessionID: ${callKey}), TG: ${tg}`);
+                    console.log(`[${timestamp}] Creating new active transmission UI for ${titleText} (SessionID: ${callKey}), ContextID: ${group.contextID || 'N/A'}, TG: ${tg}`);
                 }
                 
                 // Remove "no activity" message if it exists
@@ -1092,13 +1105,20 @@ class BrandmeisterMonitor {
                 // Create new active entry
                 const activeEntry = document.createElement('div');
                 activeEntry.className = 'active-transmission';
-                activeEntry.setAttribute('data-session-key', callKey);
+                activeEntry.setAttribute('data-session-key', this.escapeCSSSelector(callKey));
+                
+                // Extract callsign for QRZ link
+                const callsign = this.extractCallsignFromTitle(titleText);
+                const qrzLink = this.createQRZLogbookLink(callsign);
                 
                 activeEntry.innerHTML = `
                     <div class="active-header">
                         <div class="active-title">${titleText}</div>
-                        <div class="active-tg">TG ${tg || 'Unknown'}</div>
-                        <div class="active-status">🔴 LIVE</div>
+                        <div class="active-right">
+                            ${qrzLink}
+                            <div class="active-tg">TG ${tg || 'Unknown'}</div>
+                            <div class="active-status">🔴 LIVE</div>
+                        </div>
                     </div>
                     <div class="active-identity">
                         ${sourceName ? `<div class="source-name">${sourceName}</div>` : ''}
@@ -1133,7 +1153,7 @@ class BrandmeisterMonitor {
         if (eventType === 'start') {
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - creating session in memory (SessionID: ${sessionKey})`);
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - creating session in memory (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
             }
             
             // Create new session entry
@@ -1167,13 +1187,14 @@ class BrandmeisterMonitor {
         } else if (eventType === 'update') {
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession UPDATE for ${callsign} (SessionID: ${sessionKey})`);
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession UPDATE for ${callsign} (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
                 console.log(`[${timestamp}] DEBUG: Session-Update incoming data:`, {
                     sessionID: call.SessionID,
                     event: 'Session-Update',
                     callsign: callsign || 'null',
                     sourceName: sourceName || 'null',
                     sourceID: sourceID || 'null',
+                    contextID: contextID || 'null',
                     tg: tg || 'null',
                     startTime: startTime || 'null',
                     stopTime: stopTime || 'null',
@@ -1189,12 +1210,13 @@ class BrandmeisterMonitor {
             if (!this.transmissionGroups[sessionKey]) {
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} but no existing session found - creating new one`);
+                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} but no existing session found - creating new one, ContextID: ${contextID || 'N/A'}`);
                     console.log(`[${timestamp}] DEBUG: Creating new session from Session-Update with data:`, {
                         sessionID: call.SessionID,
                         reason: 'missed Session-Start event',
                         callsign,
                         sourceName,
+                        contextID: contextID || 'null',
                         tg,
                         startTime,
                         sourceID,
@@ -1230,6 +1252,7 @@ class BrandmeisterMonitor {
                         sessionID: call.SessionID,
                         callsign: this.transmissionGroups[sessionKey].callsign,
                         sourceName: this.transmissionGroups[sessionKey].sourceName,
+                        contextID: this.transmissionGroups[sessionKey].contextID || 'N/A',
                         tg: this.transmissionGroups[sessionKey].tg,
                         alias: this.transmissionGroups[sessionKey].alias,
                         status: this.transmissionGroups[sessionKey].status,
@@ -1242,7 +1265,7 @@ class BrandmeisterMonitor {
                 
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} - updating existing session, current status: ${existingGroup.status}`);
+                    console.log(`[${timestamp}] DEBUG: Session-Update for ${callsign} - updating existing session, ContextID: ${contextID || 'N/A'}, current status: ${existingGroup.status}`);
                     console.log(`[${timestamp}] DEBUG: Session-Update field comparison:`, {
                         sessionID: call.SessionID,
                         callsign: { incoming: callsign, existing: existingGroup.callsign },
@@ -1367,6 +1390,7 @@ class BrandmeisterMonitor {
                     console.log(`[${timestamp}] Session-Update processing complete for SessionID ${call.SessionID}:`, {
                         sessionID: call.SessionID,
                         callsign: existingGroup.callsign,
+                        contextID: existingGroup.contextID || 'N/A',
                         fieldsUpdated: updatedFields.length > 0 ? updatedFields : 'none',
                         fieldsPreserved: preservedFields.length > 0 ? preservedFields : 'none',
                         finalAlias: existingGroup.alias,
@@ -1403,7 +1427,7 @@ class BrandmeisterMonitor {
                 console.log(`[${timestamp}] Skipping transmission with invalid duration: ${duration}s`);
             }
             // Clean up invalid transmission
-            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
             if (activeEntry) {
                 activeEntry.remove();
             }
@@ -1596,7 +1620,7 @@ class BrandmeisterMonitor {
 
     updateSessionUI(sessionKey, session) {
         // Find the UI element for this session
-        const element = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+        const element = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
         if (!element) return;
         
         // Update visual state based on session state
@@ -1630,7 +1654,7 @@ class BrandmeisterMonitor {
     }
 
     removeSessionFromActiveUI(sessionKey) {
-        const element = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+        const element = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
         if (element) {
             element.remove();
         }
@@ -1720,7 +1744,9 @@ class BrandmeisterMonitor {
         const sessionType = call.SessionType || '';
 
         // Session-based tracking - no legacy activeCalls cleanup needed
-        const callKey = `${callsign}_${startTime}`;
+        // Sanitize callsign to ensure valid CSS selector characters only
+        const sanitizedCallsign = callsign.replace(/[^\w-]/g, '_');
+        const callKey = `${sanitizedCallsign}_${startTime}`;
         // Legacy activeCalls tracking removed
 
         this.totalCalls++;
@@ -1899,6 +1925,28 @@ class BrandmeisterMonitor {
 
     // Legacy createActiveTransmissionEntry removed - using session-based UI
 
+    // Helper function to safely escape strings for CSS selectors
+    escapeCSSSelector(str) {
+        if (!str) return '';
+        // Replace any characters that could cause issues in CSS selectors
+        return String(str).replace(/[^\w-]/g, '_');
+    }
+
+    // Helper function to extract callsign and create QRZ logbook URL
+    extractCallsignFromTitle(titleText) {
+        // titleText format: "RadioID Callsign" or just "Callsign"
+        // Extract the callsign (last part after space, or the whole string if no space)
+        const parts = titleText.trim().split(' ');
+        return parts[parts.length - 1]; // Get the last part (callsign)
+    }
+    
+    createQRZLogbookLink(callsign) {
+        if (!callsign) return '';
+        const cleanCallsign = callsign.toUpperCase().trim();
+        // Use & instead of ; for better URL compatibility
+        return `<a href="https://logbook.qrz.com/logbook/?op=add&addcall=${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Log ${cleanCallsign} in QRZ Logbook">📋 QRZ</a>`;
+    }
+
     addLogEntryWithFields(type, callsign, fieldData, event) {
         // Only log actual transmissions, filter out system messages
         const transmissionTypes = ['session-start', 'session-stop', 'transmission-complete'];
@@ -1912,11 +1960,18 @@ class BrandmeisterMonitor {
         
         const timestamp = new Date().toLocaleString();
         
+        // Extract callsign for QRZ link
+        const callsignForQRZ = this.extractCallsignFromTitle(callsign);
+        const qrzLink = this.createQRZLogbookLink(callsignForQRZ);
+        
         // Create structured HTML with new layout
         logEntry.innerHTML = `
             <div class="log-header">
                 <div class="log-title">${callsign}${fieldData.sourceName ? ` (${fieldData.sourceName})` : ''}${fieldData.alias ? ` • ${fieldData.alias}` : ''}</div>
-                <span class="log-timestamp">${timestamp}</span>
+                <div class="log-actions">
+                    ${qrzLink}
+                    <span class="log-timestamp">${timestamp}</span>
+                </div>
             </div>
             ${this.config.verbose ? `<div class="log-fields">
                 <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
