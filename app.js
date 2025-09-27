@@ -84,8 +84,6 @@ class BrandmeisterMonitor {
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
             enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
             radioIDSettings: document.getElementById('radioIDSettings'),
-            downloadRadioIDBtn: document.getElementById('downloadRadioIDBtn'),
-            clearRadioIDBtn: document.getElementById('clearRadioIDBtn'),
             colorPalette: document.getElementById('colorPalette'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
@@ -105,12 +103,6 @@ class BrandmeisterMonitor {
         // RadioID event listeners
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
-        }
-        if (this.elements.downloadRadioIDBtn) {
-            this.elements.downloadRadioIDBtn.addEventListener('click', () => this.downloadRadioIDDatabase());
-        }
-        if (this.elements.clearRadioIDBtn) {
-            this.elements.clearRadioIDBtn.addEventListener('click', () => this.clearRadioIDCache());
         }
         
         // Color palette event listeners
@@ -2496,8 +2488,17 @@ class BrandmeisterMonitor {
             this.elements.radioIDSettings.style.display = isEnabled ? 'block' : 'none';
             this.saveSettings();
             
-            if (isEnabled && !this.radioIDDatabase) {
-                this.loadRadioIDDatabase();
+            if (isEnabled) {
+                // Auto-download if no database exists
+                if (!this.radioIDDatabase) {
+                    this.updateRadioIDStatus('Downloading...');
+                    this.downloadRadioIDDatabase();
+                } else {
+                    this.loadRadioIDDatabase();
+                }
+            } else {
+                // Auto-clear cache when disabled
+                this.clearRadioIDCache();
             }
         }
     }
@@ -2566,11 +2567,12 @@ class BrandmeisterMonitor {
         
         if (!this.config.enableRadioIDLookup) {
             console.log('RadioID lookup disabled in settings');
+            this.updateRadioIDStatus('Disabled');
             return;
         }
 
         try {
-            // Check if we have cached data and if it's still valid
+            // Check if we have cached data
             const cachedData = localStorage.getItem('radioIDDatabase');
             const lastUpdate = localStorage.getItem('radioIDLastUpdate');
             
@@ -2578,18 +2580,22 @@ class BrandmeisterMonitor {
                 const cacheAge = Date.now() - parseInt(lastUpdate);
                 const cacheExpiry = this.config.radioIDCacheExpiry;
                 
-                if (cacheAge < cacheExpiry) {
-                    console.log(`📋 Loading RadioID database from cache (${Math.round(cacheAge / (1000 * 60 * 60))} hours old)`);
-                    this.radioIDDatabase = JSON.parse(cachedData);
-                    this.radioIDLastUpdate = parseInt(lastUpdate);
-                    this.updateRadioIDStatus();
-                    return;
+                console.log(`📋 Loading RadioID database from cache (${Math.round(cacheAge / (1000 * 60 * 60 * 24))} days old)`);
+                this.radioIDDatabase = JSON.parse(cachedData);
+                this.radioIDLastUpdate = parseInt(lastUpdate);
+                this.updateRadioIDStatus();
+                
+                // Only mention if cache is expired, don't auto-download
+                if (cacheAge >= cacheExpiry) {
+                    console.log('⏰ Cache is expired - manual refresh recommended');
+                    this.updateRadioIDStatus('Cache expired - refresh recommended');
                 }
+                return;
             }
 
-            // Cache is expired or doesn't exist, download fresh data
-            console.log('📥 Cache expired or missing, downloading fresh RadioID database...');
-            await this.downloadRadioIDDatabase();
+            // No cached data exists
+            console.log('� No cached RadioID database found - use Download button to fetch data');
+            this.updateRadioIDStatus('Not downloaded - click Download button');
             
         } catch (error) {
             console.error('❌ Failed to initialize RadioID database:', error);
@@ -2622,12 +2628,29 @@ class BrandmeisterMonitor {
             const parsedData = this.parseRadioIDCSV(csvText);
             console.log(`✅ Parsed ${Object.keys(parsedData).length} RadioID records`);
 
-            // Store in memory and localStorage
+            // Store in memory first
             this.radioIDDatabase = parsedData;
             this.radioIDLastUpdate = Date.now();
 
-            localStorage.setItem('radioIDDatabase', JSON.stringify(parsedData));
-            localStorage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
+            // Try to save to localStorage with quota error handling
+            try {
+                const dataToStore = JSON.stringify(parsedData);
+                const sizeInMB = (dataToStore.length / (1024 * 1024)).toFixed(2);
+                console.log(`💾 Attempting to store ${sizeInMB}MB of RadioID data...`);
+                
+                localStorage.setItem('radioIDDatabase', dataToStore);
+                localStorage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
+                console.log('✅ Successfully cached RadioID database to localStorage');
+                
+            } catch (storageError) {
+                if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
+                    console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only (will not persist)');
+                    this.updateRadioIDStatus(`${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`);
+                    return; // Still functional, just won't persist
+                } else {
+                    throw storageError; // Re-throw other storage errors
+                }
+            }
 
             this.updateRadioIDStatus();
             
@@ -2662,6 +2685,9 @@ class BrandmeisterMonitor {
 
         console.log(`📊 Column indices - ID:${radioIdIndex}, Call:${callsignIndex}, City:${cityIndex}, State:${stateIndex}, Country:${countryIndex}`);
 
+        let recordCount = 0;
+        let skippedCount = 0;
+
         // Parse data rows
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -2669,21 +2695,36 @@ class BrandmeisterMonitor {
 
             const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
             
-            if (columns.length < headers.length) continue;
+            if (columns.length < headers.length) {
+                skippedCount++;
+                continue;
+            }
 
             const radioId = columns[radioIdIndex];
-            if (!radioId || isNaN(radioId)) continue;
+            if (!radioId || isNaN(radioId)) {
+                skippedCount++;
+                continue;
+            }
 
-            database[radioId] = {
-                callsign: callsignIndex >= 0 ? columns[callsignIndex] : '',
-                firstName: firstNameIndex >= 0 ? columns[firstNameIndex] : '',
-                lastName: lastNameIndex >= 0 ? columns[lastNameIndex] : '',
-                city: cityIndex >= 0 ? columns[cityIndex] : '',
-                state: stateIndex >= 0 ? columns[stateIndex] : '',
-                country: countryIndex >= 0 ? columns[countryIndex] : ''
-            };
+            // Only store essential fields to save space
+            const city = cityIndex >= 0 ? columns[cityIndex] : '';
+            const state = stateIndex >= 0 ? columns[stateIndex] : '';
+            const country = countryIndex >= 0 ? columns[countryIndex] : '';
+
+            // Only store record if we have location data
+            if (city || state || country) {
+                database[radioId] = {
+                    c: city || '',      // Use short keys to save space
+                    s: state || '',     
+                    n: country || ''    // 'n' for nation/country
+                };
+                recordCount++;
+            } else {
+                skippedCount++;
+            }
         }
 
+        console.log(`✅ Parsed ${recordCount} RadioID records with location data, skipped ${skippedCount} records`);
         return database;
     }
 
@@ -2694,7 +2735,16 @@ class BrandmeisterMonitor {
         }
 
         const id = radioId.toString();
-        return this.radioIDDatabase[id] || null;
+        const record = this.radioIDDatabase[id];
+        
+        if (!record) return null;
+        
+        // Convert short keys back to full names
+        return {
+            city: record.c || '',
+            state: record.s || '',
+            country: record.n || ''
+        };
     }
 
     // Update RadioID status display
