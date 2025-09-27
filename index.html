@@ -89,6 +89,26 @@
                             <span class="setting-description">Override specific TG and monitor all activity</span>
                         </div>
                         
+                        <div class="setting-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="enableRadioIDLookup">
+                                <span class="toggle-slider"></span>
+                                Enable RadioID Database
+                            </label>
+                            <span class="setting-description">Download and cache user information from radioid.net</span>
+                        </div>
+                        
+                        <div class="setting-group" id="radioIDSettings" style="display: none;">
+                            <div class="radioID-status">
+                                <span id="radioIDStatus">Not loaded</span>
+                                <span id="radioIDLastUpdate"></span>
+                            </div>
+                            <div class="radioID-actions">
+                                <button id="downloadRadioIDBtn" class="setting-btn">Download Database</button>
+                                <button id="clearRadioIDBtn" class="setting-btn secondary">Clear Cache</button>
+                            </div>
+                        </div>
+                        
                         <div class="setting-actions">
                             <button id="saveSettings" class="setting-btn">Save Settings</button>
                             <button id="resetSettings" class="setting-btn secondary">Reset to Defaults</button>

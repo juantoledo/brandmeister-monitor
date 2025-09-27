@@ -12,6 +12,11 @@ class BrandmeisterMonitor {
         this.transmissionGroups = {}; // Group related transmission events
         this.connectionStartTime = Date.now(); // Track session start time
         
+        // RadioID Database for additional user information
+        this.radioIDDatabase = {};
+        this.radioIDLastUpdate = null;
+        this.radioIDUpdateInProgress = false;
+        
         // Configuration (can be made user-configurable later)
         this.config = {
             minDuration: 4, // minimum duration in seconds for activity log only
@@ -31,7 +36,11 @@ class BrandmeisterMonitor {
             // Performance monitoring settings
             performanceMonitoringInterval: 30000, // Monitor every 30 seconds
             performanceHistoryLimit: 200, // Keep last 200 performance snapshots (100 minutes)
-            slowOperationThreshold: 100 // Log operations taking longer than 100ms
+            slowOperationThreshold: 100, // Log operations taking longer than 100ms
+            // RadioID Database settings
+            radioIDDatabaseURL: 'https://radioid.net/static/user.csv',
+            radioIDCacheExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+            enableRadioIDLookup: true // Enable RadioID database features
         };
 
         // Memory cleanup timer
@@ -49,6 +58,7 @@ class BrandmeisterMonitor {
         this.initializeUI();
         this.loadTalkgroupFromStorage();
         this.loadAliasesFromStorage();
+        this.loadRadioIDDatabase();
     }
 
     initializeUI() {
@@ -72,6 +82,10 @@ class BrandmeisterMonitor {
             minDurationInput: document.getElementById('minDuration'),
             verboseCheckbox: document.getElementById('verbose'),
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
+            enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
+            radioIDSettings: document.getElementById('radioIDSettings'),
+            downloadRadioIDBtn: document.getElementById('downloadRadioIDBtn'),
+            clearRadioIDBtn: document.getElementById('clearRadioIDBtn'),
             colorPalette: document.getElementById('colorPalette'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
@@ -87,6 +101,17 @@ class BrandmeisterMonitor {
         // Settings event listeners
         this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
         this.elements.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+        
+        // RadioID event listeners
+        if (this.elements.enableRadioIDLookupCheckbox) {
+            this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
+        }
+        if (this.elements.downloadRadioIDBtn) {
+            this.elements.downloadRadioIDBtn.addEventListener('click', () => this.downloadRadioIDDatabase());
+        }
+        if (this.elements.clearRadioIDBtn) {
+            this.elements.clearRadioIDBtn.addEventListener('click', () => this.clearRadioIDCache());
+        }
         
         // Color palette event listeners
         if (this.elements.colorPalette) {
@@ -1137,6 +1162,20 @@ class BrandmeisterMonitor {
                 const qrzLink = this.createQRZLogbookLink(callsign);
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
+                // Lookup RadioID information
+                const radioIdInfo = this.lookupRadioID(group.sourceID);
+                let locationInfo = '';
+                if (radioIdInfo) {
+                    const city = radioIdInfo.city;
+                    const state = radioIdInfo.state;
+                    const country = radioIdInfo.country;
+                    
+                    const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
+                    if (locationParts.length > 0) {
+                        locationInfo = `<div class="card-location">📍 ${locationParts.join(', ')}</div>`;
+                    }
+                }
+                
                 activeEntry.innerHTML = `
                     <div class="card-main">
                         <div class="card-header">
@@ -1151,6 +1190,7 @@ class BrandmeisterMonitor {
                             </div>
                         </div>
                         ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
+                        ${locationInfo}
                         <div class="card-details">
                             ${alias ? `<div class="card-alias">${alias}</div>` : ''}
                             ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
@@ -2050,6 +2090,20 @@ class BrandmeisterMonitor {
         const actualCallsign = parts[parts.length - 1];
         const radioID = parts.length > 1 ? parts[0] : null;
         
+        // Lookup RadioID information
+        const radioIdInfo = radioID ? this.lookupRadioID(radioID) : null;
+        let locationInfo = '';
+        if (radioIdInfo) {
+            const city = radioIdInfo.city;
+            const state = radioIdInfo.state;
+            const country = radioIdInfo.country;
+            
+            const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
+            if (locationParts.length > 0) {
+                locationInfo = `<div class="log-card-location">📍 ${locationParts.join(', ')}</div>`;
+            }
+        }
+        
         // Determine status badge
         const isActive = fieldData.status === 'Active';
         const statusBadge = isActive 
@@ -2072,6 +2126,7 @@ class BrandmeisterMonitor {
                 </div>
             </div>
             ${fieldData.sourceName ? `<div class="log-card-source-name">${fieldData.sourceName}</div>` : ''}
+            ${locationInfo}
             <div class="log-card-details">
                 ${fieldData.alias ? `<div class="log-card-alias">💬 ${fieldData.alias}</div>` : ''}
                 ${this.config.verbose ? `<div class="log-card-fields">
@@ -2325,6 +2380,7 @@ class BrandmeisterMonitor {
                 this.config.minDuration = settings.minDuration || 4;
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
+                this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
                 this.config.primaryColor = settings.primaryColor || '#2563eb';
                 
                 // Apply the primary color
@@ -2350,6 +2406,7 @@ class BrandmeisterMonitor {
             minDuration: this.config.minDuration,
             verbose: this.config.verbose,
             monitorAllTalkgroups: this.config.monitorAllTalkgroups,
+            enableRadioIDLookup: this.config.enableRadioIDLookup,
             primaryColor: this.config.primaryColor
         };
         
@@ -2374,6 +2431,7 @@ class BrandmeisterMonitor {
         this.config.minDuration = 4;
         this.config.verbose = false;
         this.config.monitorAllTalkgroups = false;
+        this.config.enableRadioIDLookup = true;
         this.config.primaryColor = '#2563eb';
         
         // Apply default color
@@ -2396,6 +2454,9 @@ class BrandmeisterMonitor {
         this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 4;
         this.config.verbose = this.elements.verboseCheckbox.checked;
         this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
+        if (this.elements.enableRadioIDLookupCheckbox) {
+            this.config.enableRadioIDLookup = this.elements.enableRadioIDLookupCheckbox.checked;
+        }
         
         // Clear active transmissions if monitoring scope changed
         if (previousMonitorAllTalkgroups !== this.config.monitorAllTalkgroups) {
@@ -2420,7 +2481,25 @@ class BrandmeisterMonitor {
         this.elements.minDurationInput.value = this.config.minDuration;
         this.elements.verboseCheckbox.checked = this.config.verbose;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
+        if (this.elements.enableRadioIDLookupCheckbox) {
+            this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
+        }
         this.updateColorSelection();
+        this.toggleRadioIDSettings();
+        this.updateRadioIDStatus();
+    }
+
+    toggleRadioIDSettings() {
+        if (this.elements.radioIDSettings && this.elements.enableRadioIDLookupCheckbox) {
+            const isEnabled = this.elements.enableRadioIDLookupCheckbox.checked;
+            this.config.enableRadioIDLookup = isEnabled;
+            this.elements.radioIDSettings.style.display = isEnabled ? 'block' : 'none';
+            this.saveSettings();
+            
+            if (isEnabled && !this.radioIDDatabase) {
+                this.loadRadioIDDatabase();
+            }
+        }
     }
 
     selectColor(color) {
@@ -2477,6 +2556,179 @@ class BrandmeisterMonitor {
         const b = Math.round(rgb.b * factor);
         
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    // RadioID Database Functions
+    
+    // Initialize RadioID database
+    async loadRadioIDDatabase() {
+        console.log('🗂️ Initializing RadioID database...');
+        
+        if (!this.config.enableRadioIDLookup) {
+            console.log('RadioID lookup disabled in settings');
+            return;
+        }
+
+        try {
+            // Check if we have cached data and if it's still valid
+            const cachedData = localStorage.getItem('radioIDDatabase');
+            const lastUpdate = localStorage.getItem('radioIDLastUpdate');
+            
+            if (cachedData && lastUpdate) {
+                const cacheAge = Date.now() - parseInt(lastUpdate);
+                const cacheExpiry = this.config.radioIDCacheExpiry;
+                
+                if (cacheAge < cacheExpiry) {
+                    console.log(`📋 Loading RadioID database from cache (${Math.round(cacheAge / (1000 * 60 * 60))} hours old)`);
+                    this.radioIDDatabase = JSON.parse(cachedData);
+                    this.radioIDLastUpdate = parseInt(lastUpdate);
+                    this.updateRadioIDStatus();
+                    return;
+                }
+            }
+
+            // Cache is expired or doesn't exist, download fresh data
+            console.log('📥 Cache expired or missing, downloading fresh RadioID database...');
+            await this.downloadRadioIDDatabase();
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize RadioID database:', error);
+            this.updateRadioIDStatus('Error loading database');
+        }
+    }
+
+    // Download RadioID database from radioid.net
+    async downloadRadioIDDatabase() {
+        if (this.radioIDUpdateInProgress) {
+            console.log('RadioID download already in progress');
+            return;
+        }
+
+        this.radioIDUpdateInProgress = true;
+        this.updateRadioIDStatus('Downloading...');
+
+        try {
+            console.log(`📡 Downloading RadioID database from ${this.config.radioIDDatabaseURL}`);
+            
+            const response = await fetch(this.config.radioIDDatabaseURL);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const csvText = await response.text();
+            console.log(`📊 Downloaded ${csvText.length} characters of CSV data`);
+
+            // Parse the CSV data
+            const parsedData = this.parseRadioIDCSV(csvText);
+            console.log(`✅ Parsed ${Object.keys(parsedData).length} RadioID records`);
+
+            // Store in memory and localStorage
+            this.radioIDDatabase = parsedData;
+            this.radioIDLastUpdate = Date.now();
+
+            localStorage.setItem('radioIDDatabase', JSON.stringify(parsedData));
+            localStorage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
+
+            this.updateRadioIDStatus();
+            
+        } catch (error) {
+            console.error('❌ Failed to download RadioID database:', error);
+            this.updateRadioIDStatus(`Error: ${error.message}`);
+        } finally {
+            this.radioIDUpdateInProgress = false;
+        }
+    }
+
+    // Parse RadioID CSV data
+    parseRadioIDCSV(csvText) {
+        const database = {};
+        const lines = csvText.split('\n');
+        
+        if (lines.length < 2) {
+            throw new Error('Invalid CSV format: insufficient data');
+        }
+
+        // Parse header to get column indices
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        console.log('📋 CSV Headers:', headers);
+
+        const radioIdIndex = headers.findIndex(h => h.toLowerCase().includes('id'));
+        const callsignIndex = headers.findIndex(h => h.toLowerCase().includes('call'));
+        const firstNameIndex = headers.findIndex(h => h.toLowerCase().includes('fname') || h.toLowerCase().includes('first'));
+        const lastNameIndex = headers.findIndex(h => h.toLowerCase().includes('lname') || h.toLowerCase().includes('last'));
+        const cityIndex = headers.findIndex(h => h.toLowerCase().includes('city'));
+        const stateIndex = headers.findIndex(h => h.toLowerCase().includes('state'));
+        const countryIndex = headers.findIndex(h => h.toLowerCase().includes('country'));
+
+        console.log(`📊 Column indices - ID:${radioIdIndex}, Call:${callsignIndex}, City:${cityIndex}, State:${stateIndex}, Country:${countryIndex}`);
+
+        // Parse data rows
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+            
+            if (columns.length < headers.length) continue;
+
+            const radioId = columns[radioIdIndex];
+            if (!radioId || isNaN(radioId)) continue;
+
+            database[radioId] = {
+                callsign: callsignIndex >= 0 ? columns[callsignIndex] : '',
+                firstName: firstNameIndex >= 0 ? columns[firstNameIndex] : '',
+                lastName: lastNameIndex >= 0 ? columns[lastNameIndex] : '',
+                city: cityIndex >= 0 ? columns[cityIndex] : '',
+                state: stateIndex >= 0 ? columns[stateIndex] : '',
+                country: countryIndex >= 0 ? columns[countryIndex] : ''
+            };
+        }
+
+        return database;
+    }
+
+    // Lookup RadioID information
+    lookupRadioID(radioId) {
+        if (!this.config.enableRadioIDLookup || !this.radioIDDatabase) {
+            return null;
+        }
+
+        const id = radioId.toString();
+        return this.radioIDDatabase[id] || null;
+    }
+
+    // Update RadioID status display
+    updateRadioIDStatus(customStatus = null) {
+        const statusElement = document.getElementById('radioIDStatus');
+        const updateElement = document.getElementById('radioIDLastUpdate');
+        
+        if (!statusElement || !updateElement) return;
+
+        if (customStatus) {
+            statusElement.textContent = customStatus;
+            updateElement.textContent = '';
+        } else if (this.radioIDDatabase && this.radioIDLastUpdate) {
+            const count = Object.keys(this.radioIDDatabase).length;
+            const lastUpdate = new Date(this.radioIDLastUpdate);
+            statusElement.textContent = `${count.toLocaleString()} records loaded`;
+            updateElement.textContent = `Updated: ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
+        } else {
+            statusElement.textContent = 'Not loaded';
+            updateElement.textContent = '';
+        }
+    }
+
+    // Clear RadioID cache
+    clearRadioIDCache() {
+        console.log('🗑️ Clearing RadioID database cache...');
+        
+        this.radioIDDatabase = null;
+        this.radioIDLastUpdate = null;
+        
+        localStorage.removeItem('radioIDDatabase');
+        localStorage.removeItem('radioIDLastUpdate');
+        
+        this.updateRadioIDStatus('Cache cleared');
     }
 }
 
