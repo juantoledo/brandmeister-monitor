@@ -1157,7 +1157,8 @@ class BrandmeisterMonitor {
                 // Lookup RadioID information
                 const radioIdInfo = this.lookupRadioID(group.sourceID);
                 let locationInfo = '';
-                let flagElement = '';
+                let flagBackgroundUrl = '';
+                let countryCode = '';
                 if (radioIdInfo) {
                     const city = radioIdInfo.city;
                     const state = radioIdInfo.state;
@@ -1165,8 +1166,9 @@ class BrandmeisterMonitor {
                     
                     const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
                     if (locationParts.length > 0) {
-                        const countryCode = this.getCountryCode(country);
-                        flagElement = countryCode ? `<div class="card-flag-display" title="Click to search ${locationParts.join(', ')} on Google"><span class="fi fi-${countryCode}" title="${country}"></span></div>` : '';
+                        countryCode = this.getCountryCode(country);
+                        // Create flag background URL from flag-icons CDN
+                        flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
                         locationInfo = `<div class="card-location">${locationParts.join(', ')}</div>`;
                     }
                 }
@@ -1193,28 +1195,31 @@ class BrandmeisterMonitor {
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
                                 </div>
                             </div>
-                            ${flagElement}
                         </div>
                     </div>
                 `;
                 
+                // Apply flag background if available
+                if (flagBackgroundUrl) {
+                    activeEntry.style.backgroundImage = `url('${flagBackgroundUrl}')`;
+                    activeEntry.title = `Click to search location on Google`;
+                    activeEntry.style.cursor = 'pointer';
+                }
+                
                 // Add to active container
                 this.elements.activeContainer.appendChild(activeEntry);
                 
-                // Add click handler for flag if it exists
-                if (flagElement && radioIdInfo) {
-                    const flagDisplay = activeEntry.querySelector('.card-flag-display');
-                    if (flagDisplay) {
-                        flagDisplay.addEventListener('click', () => {
-                            const city = radioIdInfo.city;
-                            const state = radioIdInfo.state;
-                            const country = radioIdInfo.country;
-                            const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
-                            const searchQuery = locationParts.join(' ');
-                            const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                            window.open(googleUrl, '_blank');
-                        });
-                    }
+                // Add click handler for flag background if it exists
+                if (countryCode && radioIdInfo) {
+                    activeEntry.addEventListener('click', () => {
+                        const city = radioIdInfo.city;
+                        const state = radioIdInfo.state;
+                        const country = radioIdInfo.country;
+                        const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
+                        const searchQuery = locationParts.join(' ');
+                        const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                        window.open(googleUrl, '_blank');
+                    });
                 }
                 
                 if (this.config.verbose) {
@@ -2974,6 +2979,34 @@ function initializeNewInterface() {
     consolePanel.classList.add('minimized');
     appLayout.classList.add('console-minimized');
     consoleToggle.textContent = '▲';
+    
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = themeToggle.querySelector('.theme-icon');
+    
+    // Load saved theme or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+    
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+        
+        window.brandmeisterMonitor.logWithAttributes('Theme toggled', {
+            sessionID: window.brandmeisterMonitor.sessionID,
+            theme: newTheme
+        });
+    });
+    
+    function updateThemeIcon(theme) {
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        themeToggle.title = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
+    }
     
     // Sidebar toggle for desktop collapse and mobile
     const sidebarToggle = document.getElementById('sidebarToggle');

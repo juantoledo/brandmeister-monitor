@@ -49,6 +49,366 @@
     --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
+/* Dark Mode Variables */
+[data-theme="dark"] {
+    /* Dark Mode Colors */
+    --background: var(--gray-900);
+    --surface: var(--gray-800);
+    --border: var(--gray-700);
+    --text: var(--gray-100);
+    --text-muted: var(--gray-300);
+    --text-light: var(--gray-400);
+    
+    /* Dark mode shadows */
+    --shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3), 0 1px 3px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .header-status {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .no-activity {
+    background: var(--gray-800);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .active-transmission::after {
+    background: linear-gradient(135deg, 
+        rgba(30, 41, 59, 0.92) 0%, 
+        rgba(30, 41, 59, 0.88) 50%, 
+        rgba(30, 41, 59, 0.85) 100%);
+}
+
+[data-theme="dark"] .color-palette {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] button:hover {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+/* Dark mode input and form styles */
+[data-theme="dark"] .tg-input-group input {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+[data-theme="dark"] .tg-input-group input:focus {
+    border-color: var(--primary);
+    background: var(--gray-600);
+}
+
+[data-theme="dark"] .tg-input-group input::placeholder {
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .current-tg {
+    background: var(--gray-700);
+    color: var(--text);
+}
+
+
+[data-theme="dark"] .current-tg p {
+    color: var(--text);
+}
+
+/* Dark mode button styles */
+[data-theme="dark"] button {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+[data-theme="dark"] #saveTg,
+[data-theme="dark"] #connectBtn,
+[data-theme="dark"] #saveSettings {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+[data-theme="dark"] #saveTg:hover,
+[data-theme="dark"] #connectBtn:hover,
+[data-theme="dark"] #saveSettings:hover {
+    background: var(--primary-light);
+    border-color: var(--primary-light);
+}
+
+[data-theme="dark"] #disconnectBtn:not(:disabled),
+[data-theme="dark"] #resetSettings {
+    background: var(--gray-600);
+    color: var(--text-muted);
+    border-color: var(--gray-500);
+}
+
+[data-theme="dark"] #disconnectBtn:not(:disabled):hover,
+[data-theme="dark"] #resetSettings:hover {
+    background: var(--gray-500);
+    border-color: var(--gray-400);
+}
+
+/* Dark mode toggle slider */
+[data-theme="dark"] .toggle-slider {
+    background: var(--gray-600);
+}
+
+[data-theme="dark"] .toggle-slider::before {
+    background: var(--gray-300);
+    border-color: var(--gray-500);
+}
+
+/* Dark mode setting descriptions and labels */
+[data-theme="dark"] .setting-description {
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .setting-group label {
+    color: var(--text);
+}
+
+[data-theme="dark"] .tg-input-group label {
+    color: var(--text-muted);
+}
+
+/* Dark mode sidebar section headers and labels - better contrast */
+[data-theme="dark"] .sidebar-section h3 {
+    color: var(--text);
+}
+
+[data-theme="dark"] .setting-group > label {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .toggle-label {
+    color: var(--text) !important;
+}
+
+/* Make sure pale text is more readable */
+[data-theme="dark"] .subtitle {
+    color: var(--text-muted);
+}
+
+/* Dark mode number inputs */
+[data-theme="dark"] .setting-group input[type="number"] {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+[data-theme="dark"] .setting-group input[type="number"]:focus {
+    border-color: var(--primary);
+    background: var(--gray-600);
+}
+
+/* Dark mode radioID status */
+[data-theme="dark"] .radioID-status {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .radioID-status span:first-child {
+    color: var(--text);
+}
+
+[data-theme="dark"] .radioID-status span:last-child {
+    color: var(--text-muted);
+}
+
+/* Dark mode stats and field styles */
+[data-theme="dark"] .stat-item {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .stat-label {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .stat-value {
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .field {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+[data-theme="dark"] .field::before {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .callsign {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .talkgroup {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+[data-theme="dark"] .duration {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+}
+
+/* Dark mode log card field styles */
+[data-theme="dark"] .log-card-fields .field {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary-light);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .log-card-fields .field.duration {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .log-card-fields .field.session-id {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Dark mode debug container */
+[data-theme="dark"] #debugContainer {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+/* Dark mode log entries and card styles */
+[data-theme="dark"] .log-entry {
+    background: var(--gray-800);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .log-entry:hover {
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .log-entry.error {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .log-entry.warning {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="dark"] .log-card-header {
+    background: linear-gradient(135deg, var(--gray-700), var(--gray-600));
+    border-bottom-color: var(--gray-600);
+}
+
+[data-theme="dark"] .log-card-callsign {
+    color: var(--text);
+}
+
+[data-theme="dark"] .log-card-radio-id {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .log-card-phonetic {
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .log-card-source-name {
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .log-card-location {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .log-card-alias {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .log-card-details-text {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .log-card-event {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary-light);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .log-card-timestamp {
+    background: var(--gray-600);
+    color: var(--text-light);
+}
+
+/* Dark mode active transmission card styles */
+[data-theme="dark"] .card-callsign {
+    color: var(--text);
+}
+
+[data-theme="dark"] .card-radio-id {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .card-source-name {
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .card-location {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .card-alias {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .card-phonetic {
+    color: var(--text-light);
+}
+
+/* Dark mode QRZ links */
+[data-theme="dark"] .qrz-link {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .qrz-link:hover {
+    background: linear-gradient(135deg, var(--primary-light), #60a5fa);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    color: white;
+}
+
+/* Dark mode legacy log styles */
+[data-theme="dark"] .log-header {
+    background: var(--gray-700);
+    border-bottom-color: var(--gray-600);
+}
+
+[data-theme="dark"] .log-title,
+[data-theme="dark"] .log-callsign {
+    color: var(--text);
+}
+
+[data-theme="dark"] .log-timestamp {
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .log-details {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .log-event {
+    color: var(--primary-light);
+}
+
 /* Base Styles */
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -128,6 +488,45 @@ body {
 
 .status-dot.connected {
     background: var(--success);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    font-size: 1.25rem;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 0;
+    transition: all 0.2s;
+    min-width: 40px;
+    font-weight: 600;
+}
+
+.theme-toggle:hover {
+    background: rgba(37, 99, 235, 0.2);
+    border-color: rgba(37, 99, 235, 0.4);
+    transform: scale(1.1);
+}
+
+.theme-icon {
+    display: inline-block;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+/* Dark mode icon rotation */
+[data-theme="dark"] .theme-icon {
+    transform: rotate(180deg);
 }
 
 .sidebar-toggle {
@@ -1113,6 +1512,31 @@ button:disabled {
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Flag background overlay for better text readability */
+.active-transmission::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.92) 0%, 
+        rgba(255, 255, 255, 0.88) 50%, 
+        rgba(255, 255, 255, 0.85) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Ensure content appears above the overlay */
+.active-transmission > * {
+    position: relative;
+    z-index: 2;
 }
 
 .active-transmission::before {
@@ -1240,15 +1664,9 @@ button:disabled {
     flex: 1;
 }
 
-/* Large flag display in middle-right area */
+/* Large flag display in middle-right area - HIDDEN for background experiment */
 .card-flag-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    opacity: 0.8;
-    cursor: pointer;
-    border-radius: 8px;
+    display: none;
 }
 
 .card-flag-display .fi {
