@@ -681,299 +681,44 @@ button:disabled {
     opacity: 0.6;
 }
 
-/* TRANSMISSION LOG CARDS - New Card-Based Design */
-
 .log-entry {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
-    transition: all 0.2s ease;
-    overflow: hidden;
-    position: relative;
-}
-
-.log-entry:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
-
-/* Status-specific border colors */
-.log-entry.transmission-complete {
-    border-left: 4px solid var(--success);
-}
-
-.log-entry.session-start {
-    border-left: 4px solid var(--primary);
-}
-
-.log-entry.session-stop {
-    border-left: 4px solid var(--warning);
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
 }
 
 .log-entry.error {
-    border-left: 4px solid var(--error);
+    border-left-color: var(--error);
     background: rgba(239, 68, 68, 0.05);
 }
 
 .log-entry.warning {
-    border-left: 4px solid var(--warning);
+    border-left-color: var(--warning);
     background: rgba(245, 158, 11, 0.05);
 }
 
-/* Log Card Header - Callsign, Radio ID, and Controls */
-.log-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, var(--gray-50), var(--white));
-    border-bottom: 1px solid var(--border);
-    gap: 16px;
-}
-
-.log-card-identity {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-}
-
-.log-card-callsign {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-}
-
-.log-card-radio-id {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    opacity: 0.8;
-}
-
-.log-card-phonetic {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-style: italic;
-    opacity: 0.7;
-    line-height: 1.2;
-    margin-top: 1px;
-}
-
-.log-card-controls {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.log-card-tg {
-    background: var(--primary);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.log-card-status.live {
-    background: var(--error);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-.log-card-status.completed {
-    background: var(--success);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.log-card-timestamp {
-    font-size: 0.75rem;
-    color: var(--text-light);
-    white-space: nowrap;
-    background: var(--gray-100);
-    padding: 3px 6px;
-    border-radius: 3px;
-    font-weight: 500;
-}
-
-/* Log Card Source Name - Prominently displayed */
-.log-card-source-name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--primary);
-    padding: 0 16px;
-    margin-top: -2px;
-    line-height: 1.3;
-}
-
-/* Log Card Details */
-.log-card-details {
-    padding: 8px 16px 12px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.log-card-alias {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-style: italic;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.log-card-details-text {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-}
-
-.log-card-fields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 4px 0;
-}
-
-.log-card-event {
-    font-size: 0.8125rem;
-    color: var(--primary);
-    font-weight: 600;
-    background: rgba(37, 99, 235, 0.08);
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-    align-self: flex-start;
-    border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-/* Technical Fields Styling (for verbose mode) */
-.log-card-fields .field {
-    background: rgba(37, 99, 235, 0.1);
-    color: var(--primary);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    white-space: nowrap;
-}
-
-.log-card-fields .field.duration {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning);
-    border-color: rgba(245, 158, 11, 0.2);
-}
-
-.log-card-fields .field.session-id {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-    border-color: rgba(16, 185, 129, 0.2);
-}
-
-/* Animation for new entries */
+/* Dynamic classes added by JavaScript */
 .log-entry.new {
-    animation: slideInLogCard 0.4s ease-out;
+    animation: fadeInLog 0.3s ease-out;
 }
 
-@keyframes slideInLogCard {
-    from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+.log-entry.transmission-complete {
+    opacity: 0.8;
+    font-style: italic;
 }
 
-@keyframes pulse {
-    0%, 100% { 
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% { 
-        opacity: 0.8;
-        transform: scale(1.05);
-    }
-}
-
-/* Responsive adjustments for log cards */
-@media (max-width: 768px) {
-    .log-card-header {
-        padding: 10px 12px;
-        gap: 12px;
-    }
-    
-    .log-card-callsign {
-        font-size: 1rem;
-    }
-    
-    .log-card-controls {
-        gap: 6px;
-    }
-    
-    .log-card-details {
-        padding: 6px 12px 10px 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .log-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .log-card-controls {
-        align-self: stretch;
-        justify-content: space-between;
-    }
-    
-    .log-card-callsign {
-        font-size: 0.95rem;
-    }
-}
-
-/* Legacy compatibility for old log structure (in case of mixed entries) */
+/* Compact log entry styling */
 .log-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: var(--gray-50);
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-.log-title, .log-callsign {
+.log-callsign, .log-title {
     font-weight: 600;
     color: var(--text);
-    font-size: 0.9rem;
 }
 
 .log-timestamp {
@@ -983,24 +728,77 @@ button:disabled {
 }
 
 .log-details {
-    padding: 4px 12px 8px 12px;
     font-size: 0.8125rem;
-    color: var(--text-muted);
+    color: var(--text-light);
+    margin: 0;
     line-height: 1.3;
 }
 
+.log-event {
+    font-size: 0.75rem;
+    color: var(--primary);
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* Compact identity section */
+.log-identity {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 2px 0;
+    font-size: 0.8125rem;
+}
+
+.source-name {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.talker-alias {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.phonetic-callsign {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+    font-style: italic;
+    margin-top: 2px;
+    line-height: 1.2;
+    opacity: 0.8;
+}
+
+/* Compact field display */
 .log-fields {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 0 12px 8px 12px;
+    margin-top: 2px;
 }
 
-.log-event {
-    padding: 4px 12px;
-    font-size: 0.75rem;
+.field {
+    background: rgba(37, 99, 235, 0.1);
+    padding: 1px 4px;
+    border-radius: 2px;
     color: var(--primary);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.field::before {
     font-weight: 500;
+}
+
+@keyframes fadeInLog {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Statistics */
@@ -1210,6 +1008,107 @@ button:disabled {
     }
 }
 
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 12px 16px 10px; /* Left padding accounts for the accent bar */
+    background: linear-gradient(135deg, var(--gray-50), var(--white));
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+    background: var(--success);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    white-space: nowrap;
+    border: 1px solid var(--success);
+    text-transform: uppercase;
+}
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--error);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    animation: livePulse 2s infinite;
+    white-space: nowrap;
+    border: 1px solid var(--error);
+    text-transform: uppercase;
+}
+
+@keyframes livePulse {
+    0%, 100% { 
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        transform: scale(1); 
+    }
+    50% { 
+        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.5);
+        transform: scale(1.05); 
+    }
+}
+
+/* Active Transmission Identity */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.source-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.source-name::before {
+    font-size: 0.875rem;
+}
+
+.talker-alias {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.talker-alias::before {
+    font-size: 0.8125rem;
+}
+
+.active-transmission.active {
+    background: rgba(239, 68, 68, 0.02);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), var(--white));
+}
+
+    background: var(--warning);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
 /* Legacy Transmission Fields (for compatibility) */
 .field {
     display: inline-flex;
@@ -1334,11 +1233,15 @@ button:disabled {
 }
 
 /* QRZ Integration Styles */
-.active-right {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-left: auto;
+}
+
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
 .log-actions {
@@ -1388,6 +1291,9 @@ button:disabled {
         padding: 4px 8px;
     }
     
+        gap: 8px;
+    }
+    
     .log-actions {
         gap: 6px;
         margin-left: 6px;
@@ -1395,6 +1301,11 @@ button:disabled {
 }
 
 @media (max-width: 480px) {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+    }
+    
     .qrz-link {
         padding: 3px 6px;
         font-size: 0.625rem;

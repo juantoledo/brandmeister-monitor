@@ -140,8 +140,8 @@ class BrandmeisterMonitor {
 
     // Reusable HTML fragments stored to reduce template creation
     _htmlFragments = {
-        statusLive: '<div class="active-status">🔴 LIVE</div>',
-        statusCompleted: '<div class="active-status" style="color: #4CAF50;">✅ COMPLETED</div>',
+        statusLive: '<span class="card-status live">🔴 LIVE</span>',
+        statusCompleted: '<span class="card-status completed">✅ COMPLETED</span>',
         noActivityActive: 'No active transmissions',
         noActivityLog: 'No transmissions yet. Configure a talkgroup and connect to start monitoring.'
     };
@@ -1059,28 +1059,43 @@ class BrandmeisterMonitor {
             
             if (existingActiveEntry) {
                 // Update existing active transmission UI
-                const titleElement = existingActiveEntry.querySelector('.active-title');
-                const tgElement = existingActiveEntry.querySelector('.active-tg');
-                const identityElement = existingActiveEntry.querySelector('.active-identity');
-                const activeRightElement = existingActiveEntry.querySelector('.active-right');
+                const callsignElement = existingActiveEntry.querySelector('.card-callsign');
+                const radioIdElement = existingActiveEntry.querySelector('.card-radio-id');
+                const sourceNameElement = existingActiveEntry.querySelector('.card-source-name');
+                const tgElement = existingActiveEntry.querySelector('.card-tg');
+                const detailsElement = existingActiveEntry.querySelector('.card-details');
+                const controlsElement = existingActiveEntry.querySelector('.card-controls');
                 
-                if (titleElement) titleElement.textContent = titleText;
-                if (tgElement) tgElement.textContent = `TG ${tg || 'Unknown'}`;
-                if (identityElement) {
-                    identityElement.innerHTML = `
-                        ${sourceName ? `<div class="source-name">${sourceName}</div>` : ''}
-                        ${alias ? `<div class="talker-alias">${alias}</div>` : ''}
+                const callsign = this.extractCallsignFromTitle(titleText);
+                const phoneticCallsign = this.callsignToPhonetic(callsign);
+                
+                if (callsignElement) callsignElement.textContent = callsign;
+                if (radioIdElement) radioIdElement.textContent = group.sourceID || 'Unknown ID';
+                if (sourceNameElement && sourceName) {
+                    sourceNameElement.textContent = sourceName;
+                } else if (sourceNameElement && !sourceName) {
+                    sourceNameElement.remove();
+                } else if (!sourceNameElement && sourceName) {
+                    const newSourceNameEl = document.createElement('div');
+                    newSourceNameEl.className = 'card-source-name';
+                    newSourceNameEl.textContent = sourceName;
+                    existingActiveEntry.querySelector('.card-header').insertAdjacentElement('afterend', newSourceNameEl);
+                }
+                if (tgElement) tgElement.textContent = `TG ${tg || '?'}`;
+                if (detailsElement) {
+                    detailsElement.innerHTML = `
+                        ${alias ? `<div class="card-alias">${alias}</div>` : ''}
+                        ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
                     `;
                 }
                 
                 // Update QRZ link if callsign changed
-                if (activeRightElement) {
-                    const callsign = this.extractCallsignFromTitle(titleText);
+                if (controlsElement) {
                     const qrzLink = this.createQRZLogbookLink(callsign);
-                    activeRightElement.innerHTML = `
+                    controlsElement.innerHTML = `
                         ${qrzLink}
-                        <div class="active-tg">TG ${tg || 'Unknown'}</div>
-                        <div class="active-status">🔴 LIVE</div>
+                        <span class="card-tg">TG ${tg || '?'}</span>
+                        <span class="card-status live">🔴 LIVE</span>
                     `;
                 }
                 
@@ -1110,19 +1125,26 @@ class BrandmeisterMonitor {
                 // Extract callsign for QRZ link
                 const callsign = this.extractCallsignFromTitle(titleText);
                 const qrzLink = this.createQRZLogbookLink(callsign);
+                const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
                 activeEntry.innerHTML = `
-                    <div class="active-header">
-                        <div class="active-title">${titleText}</div>
-                        <div class="active-right">
-                            ${qrzLink}
-                            <div class="active-tg">TG ${tg || 'Unknown'}</div>
-                            <div class="active-status">🔴 LIVE</div>
+                    <div class="card-main">
+                        <div class="card-header">
+                            <div class="card-identity">
+                                <div class="card-callsign">${callsign}</div>
+                                <div class="card-radio-id">${group.sourceID || 'Unknown ID'}</div>
+                            </div>
+                            <div class="card-controls">
+                                ${qrzLink}
+                                <span class="card-tg">TG ${tg || '?'}</span>
+                                <span class="card-status live">🔴 LIVE</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="active-identity">
-                        ${sourceName ? `<div class="source-name">${sourceName}</div>` : ''}
-                        ${alias ? `<div class="talker-alias">${alias}</div>` : ''}
+                        ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
+                        <div class="card-details">
+                            ${alias ? `<div class="card-alias">${alias}</div>` : ''}
+                            ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
+                        </div>
                     </div>
                 `;
                 
@@ -1628,7 +1650,7 @@ class BrandmeisterMonitor {
         element.classList.add(`state-${session.state}`);
         
         // Update status indicator
-        const statusElement = element.querySelector('.active-status');
+        const statusElement = element.querySelector('.card-status');
         if (statusElement) {
             switch (session.state) {
                 case 'stale':
@@ -1932,6 +1954,25 @@ class BrandmeisterMonitor {
         return String(str).replace(/[^\w-]/g, '_');
     }
 
+    // Helper function to convert callsign to phonetic alphabet
+    callsignToPhonetic(callsign) {
+        if (!callsign) return '';
+        
+        const phoneticMap = {
+            'A': 'Alpha', 'B': 'Bravo', 'C': 'Charlie', 'D': 'Delta', 'E': 'Echo',
+            'F': 'Foxtrot', 'G': 'Golf', 'H': 'Hotel', 'I': 'India', 'J': 'Juliet',
+            'K': 'Kilo', 'L': 'Lima', 'M': 'Mike', 'N': 'November', 'O': 'Oscar',
+            'P': 'Papa', 'Q': 'Quebec', 'R': 'Romeo', 'S': 'Sierra', 'T': 'Tango',
+            'U': 'Uniform', 'V': 'Victor', 'W': 'Whiskey', 'X': 'X-Ray', 'Y': 'Yankee',
+            'Z': 'Zulu', '0': 'Zero', '1': 'One', '2': 'Two', '3': 'Three', '4': 'Four',
+            '5': 'Five', '6': 'Six', '7': 'Seven', '8': 'Eight', '9': 'Nine'
+        };
+        
+        return callsign.toUpperCase().split('').map(char => {
+            return phoneticMap[char] || char;
+        }).join('-');
+    }
+
     // Helper function to extract callsign and create QRZ logbook URL
     extractCallsignFromTitle(titleText) {
         // titleText format: "RadioID Callsign" or just "Callsign"
@@ -1960,29 +2001,51 @@ class BrandmeisterMonitor {
         
         const timestamp = new Date().toLocaleString();
         
-        // Extract callsign for QRZ link
+        // Extract callsign for QRZ link and phonetic
         const callsignForQRZ = this.extractCallsignFromTitle(callsign);
         const qrzLink = this.createQRZLogbookLink(callsignForQRZ);
+        const phoneticCallsign = this.callsignToPhonetic(callsignForQRZ);
         
-        // Create structured HTML with new layout
+        // Parse radio ID and callsign if in "RadioID Callsign" format
+        const parts = callsign.trim().split(' ');
+        const actualCallsign = parts[parts.length - 1];
+        const radioID = parts.length > 1 ? parts[0] : null;
+        
+        // Determine status badge
+        const isActive = fieldData.status === 'Active';
+        const statusBadge = isActive 
+            ? '<div class="log-card-status live">🔴 LIVE</div>'
+            : '<div class="log-card-status completed">✅ COMPLETED</div>';
+        
+        // Create structured HTML with new card-based layout
         logEntry.innerHTML = `
-            <div class="log-header">
-                <div class="log-title">${callsign}${fieldData.sourceName ? ` (${fieldData.sourceName})` : ''}${fieldData.alias ? ` • ${fieldData.alias}` : ''}</div>
-                <div class="log-actions">
+            <div class="log-card-header">
+                <div class="log-card-identity">
+                    <div class="log-card-callsign">${actualCallsign}</div>
+                    ${radioID ? `<div class="log-card-radio-id">Radio ID: ${radioID}</div>` : ''}
+                    <div class="log-card-phonetic">${phoneticCallsign}</div>
+                </div>
+                <div class="log-card-controls">
                     ${qrzLink}
-                    <span class="log-timestamp">${timestamp}</span>
+                    <div class="log-card-tg">TG ${fieldData.tg}</div>
+                    ${statusBadge}
+                    <div class="log-card-timestamp">${timestamp}</div>
                 </div>
             </div>
-            ${this.config.verbose ? `<div class="log-fields">
-                <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
-                ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
-                ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
-                ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
-                ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
-                ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
-                ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
-            </div>` : ''}
-            <div class="log-event" style="margin-top: 2px;">${event}</div>
+            ${fieldData.sourceName ? `<div class="log-card-source-name">${fieldData.sourceName}</div>` : ''}
+            <div class="log-card-details">
+                ${fieldData.alias ? `<div class="log-card-alias">💬 ${fieldData.alias}</div>` : ''}
+                ${this.config.verbose ? `<div class="log-card-fields">
+                    ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
+                    ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
+                    ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
+                    ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
+                    ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
+                    ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
+                    ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
+                </div>` : ''}
+                <div class="log-card-event">${event}</div>
+            </div>
         `;
 
         // Remove "no activity" message if it exists
@@ -2007,40 +2070,41 @@ class BrandmeisterMonitor {
     }
 
     updateLogEntryFields(logEntry, titleText, fieldData, event) {
-        // Update title and event - handle both old and new structures
-        const titleElement = logEntry.querySelector('.log-title') || logEntry.querySelector('.log-callsign');
+        // Update the log entry with new field data using new card structure
+        const titleElement = logEntry.querySelector('.log-card-callsign') || logEntry.querySelector('.log-title') || logEntry.querySelector('.log-callsign');
         if (titleElement) {
-            titleElement.textContent = titleText;
+            // Parse radio ID and callsign if in \"RadioID Callsign\" format
+            const parts = titleText.trim().split(' ');
+            const actualCallsign = parts[parts.length - 1];
+            titleElement.textContent = actualCallsign;
+        }
+
+        const fieldsContainer = logEntry.querySelector('.log-card-fields') || logEntry.querySelector('.log-fields');
+        const eventElement = logEntry.querySelector('.log-card-event') || logEntry.querySelector('.log-event');
+        
+        if (fieldsContainer) {
+            fieldsContainer.innerHTML = this.config.verbose ? `
+                ${fieldData.sessionID ? `<span class=\"field session-id\" data-label=\"Session ID\">${fieldData.sessionID}</span>` : ''}
+                ${fieldData.linkName ? `<span class=\"field link-name\" data-label=\"Via\">${fieldData.linkName}</span>` : ''}
+                ${fieldData.linkType ? `<span class=\"field link-type\" data-label=\"Link Type\">${fieldData.linkType}</span>` : ''}
+                ${fieldData.sessionType ? `<span class=\"field session-type\" data-label=\"Session\">${fieldData.sessionType}</span>` : ''}
+                ${fieldData.status === 'Active' ? `<span class=\"field status active\" data-label=\"Status\">${fieldData.status}</span>` : ''}
+                ${fieldData.duration !== null ? `<span class=\"field duration\" data-label=\"Duration\">${fieldData.duration.toFixed(1)}s</span>` : ''}
+                ${fieldData.startTime ? `<span class=\"field start-time\" data-label=\"Start\">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
+                ${fieldData.stopTime ? `<span class=\"field stop-time\" data-label=\"Stop\">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
+            ` : '';
         }
         
-        const eventElement = logEntry.querySelector('.log-event');
         if (eventElement) {
             eventElement.textContent = event;
         }
         
-        // Update or create the identity section
-        const identityContainer = logEntry.querySelector('.log-identity');
-        if (identityContainer) {
-            identityContainer.innerHTML = `
-                ${fieldData.sourceName ? `<div class="source-name">${fieldData.sourceName}</div>` : ''}
-                ${fieldData.alias ? `<div class="talker-alias">${fieldData.alias}</div>` : ''}
-            `;
-        }
-        
-        // Update or create the fields container
-        const fieldsContainer = logEntry.querySelector('.log-fields');
-        if (fieldsContainer) {
-            fieldsContainer.innerHTML = this.config.verbose ? `
-                <span class="field talkgroup" data-label="TG">${fieldData.tg}</span>
-                ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
-                ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
-                ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
-                ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
-                ${fieldData.status === 'Active' ? `<span class="field status active" data-label="Status">${fieldData.status}</span>` : ''}
-                ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
-                ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
-                ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
-            ` : '';
+        // Update status badge if present
+        const statusElement = logEntry.querySelector('.log-card-status');
+        if (statusElement) {
+            const isActive = fieldData.status === 'Active';
+            statusElement.className = `log-card-status ${isActive ? 'live' : 'completed'}`;
+            statusElement.innerHTML = isActive ? '🔴 LIVE' : '✅ COMPLETED';
         }
     }
 
@@ -2057,12 +2121,39 @@ class BrandmeisterMonitor {
         
         const timestamp = new Date().toLocaleString();
         
+        // Extract callsign for QRZ link and phonetic
+        const callsignForQRZ = this.extractCallsignFromTitle(callsign);
+        const qrzLink = this.createQRZLogbookLink(callsignForQRZ);
+        const phoneticCallsign = this.callsignToPhonetic(callsignForQRZ);
+        
+        // Parse radio ID and callsign if in "RadioID Callsign" format
+        const parts = callsign.trim().split(' ');
+        const actualCallsign = parts[parts.length - 1];
+        const radioID = parts.length > 1 ? parts[0] : null;
+        
+        // Determine if this is a completed transmission
+        const isCompleted = type === 'transmission-complete' || event.includes('Complete');
+        const statusBadge = isCompleted
+            ? '<div class="log-card-status completed">✅ COMPLETED</div>'
+            : '<div class="log-card-status live">🔴 LIVE</div>';
+        
         logEntry.innerHTML = `
-            <div class="log-header">
-                <span class="log-callsign">${callsign}</span>
-                <span class="log-timestamp">${timestamp}</span>
+            <div class="log-card-header">
+                <div class="log-card-identity">
+                    <div class="log-card-callsign">${actualCallsign}</div>
+                    ${radioID ? `<div class="log-card-radio-id">Radio ID: ${radioID}</div>` : ''}
+                    <div class="log-card-phonetic">${phoneticCallsign}</div>
+                </div>
+                <div class="log-card-controls">
+                    ${qrzLink}
+                    ${statusBadge}
+                    <div class="log-card-timestamp">${timestamp}</div>
+                </div>
             </div>
-            <div class="log-details">${details} • ${event}</div>
+            <div class="log-card-details">
+                <div class="log-card-details-text">${details}</div>
+                <div class="log-card-event">${event}</div>
+            </div>
         `;
 
         // Remove "no activity" message if it exists
