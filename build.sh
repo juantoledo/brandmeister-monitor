@@ -189,7 +189,12 @@ auto_build() {
             for file in dist/brandmeister-monitor/brandmeister-monitor-*; do
                 if [ -f "$file" ]; then
                     filename=$(basename "$file")
-                    filesize=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "unknown")
+                    # Alpine Linux compatible file size detection
+                    if command -v stat >/dev/null 2>&1; then
+                        filesize=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "unknown size")
+                    else
+                        filesize=$(ls -l "$file" | awk '{print $5}' 2>/dev/null || echo "unknown size")
+                    fi
                     
                     case "$filename" in
                         *win_x64.exe)
