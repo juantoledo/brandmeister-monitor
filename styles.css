@@ -41,7 +41,7 @@
     
     /* Layout Variables */
     --sidebar-width: 320px;
-    --console-height: 250px;
+    --console-height: 350px;
     --header-height: 80px;
     --radius: 0px;
     --radius-lg: 0px;
@@ -302,12 +302,8 @@
 /* Dark mode log entries and card styles */
 [data-theme="dark"] .log-entry {
     background: var(--gray-800);
-    border-color: var(--gray-600);
 }
 
-[data-theme="dark"] .log-entry:hover {
-    border-color: var(--primary);
-}
 
 [data-theme="dark"] .log-entry.error {
     background: rgba(239, 68, 68, 0.15);
@@ -1058,7 +1054,6 @@ button:disabled {
     display: flex;
     flex-direction: column;
     transition: height 0.3s ease, border-top-width 0.3s ease;
-    border-left: 4px solid var(--primary);
     overflow: hidden;
 }
 
@@ -1172,7 +1167,6 @@ button:disabled {
     display: none;
     height: 100%;
     overflow-y: auto;
-    padding: 16px 24px;
 }
 
 .console-pane.active {
@@ -1185,17 +1179,11 @@ button:disabled {
 }
 
 /* Session state visual indicators */
-.active-transmission.state-live {
-    border-left: 4px solid var(--success);
-}
-
 .active-transmission.state-stale {
-    border-left: 4px solid var(--warning);
     opacity: 0.8;
 }
 
 .active-transmission.state-orphaned {
-    border-left: 4px solid var(--gray-400);
     opacity: 0.6;
 }
 
@@ -1203,42 +1191,380 @@ button:disabled {
 
 .log-entry {
     background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
-    transition: all 0.2s ease;
+    border: none;
+    box-shadow: none;
     overflow: hidden;
     position: relative;
 }
 
-.log-entry:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
 
 /* Status-specific border colors */
-.log-entry.transmission-complete {
-    border-left: 4px solid var(--success);
-}
-
-.log-entry.session-start {
-    border-left: 4px solid var(--primary);
-}
-
-.log-entry.session-stop {
-    border-left: 4px solid var(--warning);
-}
-
 .log-entry.error {
-    border-left: 4px solid var(--error);
     background: rgba(239, 68, 68, 0.05);
 }
 
 .log-entry.warning {
-    border-left: 4px solid var(--warning);
     background: rgba(245, 158, 11, 0.05);
+}
+
+/* COMPACT LOG ENTRIES - One-line design */
+.log-entry-compact {
+    background: var(--surface);
+    border: none;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+.log-entry-compact.new {
+    background: rgba(37, 99, 235, 0.1);
+    /* Removed animation for cleaner appearance */
+}
+
+.log-header-compact {
+    display: none; /* Remove header */
+}
+
+.compact-header-line {
+    display: none; /* Remove header */
+}
+
+.compact-header-line span {
+    display: none; /* Remove header */
+}
+
+.compact-log-line {
+    display: grid;
+    grid-template-columns: 
+        125px     /* timestamp - full MM/dd/yy, HH:mm:ss format */
+        80px      /* callsign */
+        1fr       /* name from location */
+        120px     /* alias */
+        60px      /* talkgroup */
+        60px      /* duration */
+        50px;     /* qrz */
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    min-height: 36px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Dynamic flag backgrounds */
+.compact-log-line[data-country]::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 100%; /* Full height of log entry */
+    background-size: 40px 100%; /* Full height scaling */
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    opacity: 0.6; /* Increased for always visible */
+    z-index: -1;
+    pointer-events: none;
+}
+
+.compact-log-line[data-country="us"]::before {
+    background-image: url('https://flagcdn.com/w40/us.png');
+}
+
+.compact-log-line[data-country="gb"]::before {
+    background-image: url('https://flagcdn.com/w40/gb.png');
+}
+
+.compact-log-line[data-country="au"]::before {
+    background-image: url('https://flagcdn.com/w40/au.png');
+}
+
+.compact-log-line[data-country="de"]::before {
+    background-image: url('https://flagcdn.com/w40/de.png');
+}
+
+.compact-log-line[data-country="es"]::before {
+    background-image: url('https://flagcdn.com/w40/es.png');
+}
+
+.compact-log-line[data-country="cl"]::before {
+    background-image: url('https://flagcdn.com/w40/cl.png');
+}
+
+.compact-log-line[data-country="ca"]::before {
+    background-image: url('https://flagcdn.com/w40/ca.png');
+}
+
+.compact-log-line[data-country="fr"]::before {
+    background-image: url('https://flagcdn.com/w40/fr.png');
+}
+
+.compact-log-line[data-country="it"]::before {
+    background-image: url('https://flagcdn.com/w40/it.png');
+}
+
+.compact-log-line[data-country="nl"]::before {
+    background-image: url('https://flagcdn.com/w40/nl.png');
+}
+
+.compact-log-line[data-country="se"]::before {
+    background-image: url('https://flagcdn.com/w40/se.png');
+}
+
+.compact-log-line[data-country="no"]::before {
+    background-image: url('https://flagcdn.com/w40/no.png');
+}
+
+.compact-log-line[data-country="dk"]::before {
+    background-image: url('https://flagcdn.com/w40/dk.png');
+}
+
+.compact-log-line[data-country="fi"]::before {
+    background-image: url('https://flagcdn.com/w40/fi.png');
+}
+
+.compact-log-line[data-country="br"]::before {
+    background-image: url('https://flagcdn.com/w40/br.png');
+}
+
+.compact-log-line[data-country="mx"]::before {
+    background-image: url('https://flagcdn.com/w40/mx.png');
+}
+
+.compact-log-line[data-country="ar"]::before {
+    background-image: url('https://flagcdn.com/w40/ar.png');
+}
+
+.compact-log-line[data-country="jp"]::before {
+    background-image: url('https://flagcdn.com/w40/jp.png');
+}
+
+.compact-log-line[data-country="cn"]::before {
+    background-image: url('https://flagcdn.com/w40/cn.png');
+}
+
+.compact-log-line[data-country="in"]::before {
+    background-image: url('https://flagcdn.com/w40/in.png');
+}
+
+.compact-log-line[data-country="za"]::before {
+    background-image: url('https://flagcdn.com/w40/za.png');
+}
+
+.compact-log-line[data-country="nz"]::before {
+    background-image: url('https://flagcdn.com/w40/nz.png');
+}
+
+/* Generic background for unknown countries */
+.compact-log-line[data-country=""]::before, 
+.compact-log-line:not([data-country])::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="36" viewBox="0 0 40 36" preserveAspectRatio="none"><rect width="40" height="36" fill="%23ddd" opacity="0.4"/><text x="20" y="20" text-anchor="middle" fill="%23666" font-size="14">🌍</text></svg>');
+    opacity: 0.5; /* Always visible fallback */
+    background-size: 40px 100%; /* Full height for fallback too */
+}
+
+.compact-timestamp {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem; /* Slightly larger for better readability */
+    color: var(--text-muted);
+    font-weight: 500;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.compact-callsign {
+    font-weight: 600;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;
+}
+
+.compact-name-location {
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400; /* Reduced weight */
+    font-size: 0.75rem; /* Reduced font size */
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.compact-alias {
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8125rem;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.compact-alias-empty {
+    color: var(--text-light);
+    text-align: center;
+    font-size: 0.8125rem;
+    position: relative;
+    z-index: 1;
+}
+
+.compact-duration-empty {
+    color: var(--text-light);
+    text-align: center;
+    font-size: 0.8125rem;
+    position: relative;
+    z-index: 1;
+}
+
+
+
+.compact-alias {
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8125rem;
+    min-width: 0;
+}
+
+.compact-alias-empty {
+    color: var(--text-light);
+    text-align: center;
+    font-size: 0.8125rem;
+}
+
+.compact-talkgroup {
+    background: var(--success);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.compact-qrz {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.compact-qrz .qrz-link {
+    font-size: 0.6875rem;
+    padding: 2px 4px;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.compact-qrz-empty {
+    color: var(--text-light);
+    text-align: center;
+    font-size: 0.8125rem;
+}
+
+.compact-duration {
+    background: var(--warning);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+
+
+/* Dark mode support for compact logs */
+[data-theme="dark"] .log-entry-compact {
+    background: var(--gray-800);
+}
+
+
+/* Responsive design for compact logs */
+@media (max-width: 1200px) {
+    .compact-log-line {
+        grid-template-columns: 
+            115px     /* timestamp - full date format */
+            70px      /* callsign */
+            1fr       /* name from location */
+            100px     /* alias */
+            55px      /* talkgroup */
+            55px      /* duration */
+            45px;     /* qrz */
+        gap: 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    .compact-log-line {
+        grid-template-columns: 
+            105px     /* timestamp - full date format */
+            70px      /* callsign */
+            1fr       /* name from location */
+            50px      /* talkgroup */
+            40px;     /* qrz */
+        gap: 6px;
+    }
+    
+    .compact-alias,
+    .compact-duration,
+    .compact-alias-empty,
+    .compact-duration-empty {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .compact-log-line {
+        grid-template-columns: 
+            95px      /* timestamp - full date format */
+            65px      /* callsign */
+            1fr       /* name from location */
+            45px      /* talkgroup */
+            35px;     /* qrz */
+        font-size: 0.8125rem;
+        gap: 4px;
+        min-height: 32px;
+    }
+    
+    .compact-log-line[data-country]::before {
+        width: 50px;
+        background-size: 30px 100%; /* Full height on mobile */
+        background-position: 4px center;
+        opacity: 0.7; /* Even more visible on mobile */
+    }
+    
+    .compact-timestamp {
+        font-size: 0.75rem; /* Larger on mobile for readability */
+    }
+    
+    .compact-name-location {
+        font-size: 0.6875rem; /* Smaller on mobile */
+    }
+    
+    .compact-qrz .qrz-link {
+        font-size: 0.625rem;
+        padding: 1px 2px;
+    }
 }
 
 /* Log Card Header - Callsign, Radio ID, and Controls */
@@ -1965,7 +2291,7 @@ button:disabled {
 @media (max-width: 480px) {
     :root {
         --sidebar-width: 280px;
-        --console-height: 200px;
+        --console-height: 280px;
         --header-height: 70px; /* Smaller header on very small screens */
     }
     

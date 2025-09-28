@@ -101,19 +101,19 @@
                             <span class="setting-description">Choose your preferred accent color</span>
                         </div>
                         
-                        <div class="setting-group">
+                        <div class="setting-group" style="opacity: 0.5;">
                             <label for="minDuration">Min Duration (sec):</label>
-                            <input type="number" id="minDuration" min="0" max="60" step="1" value="4">
-                            <span class="setting-description">Only log completed transmissions longer than this</span>
+                            <input type="number" id="minDuration" min="0" max="60" step="1" value="0" disabled>
+                            <span class="setting-description">Duration filtering disabled - all transmissions are logged</span>
                         </div>
                         
                         <div class="setting-group">
                             <label class="toggle-label">
                                 <input type="checkbox" id="verbose">
                                 <span class="toggle-slider"></span>
-                                Verbose Mode
+                                Console Verbose Mode
                             </label>
-                            <span class="setting-description">Show detailed technical information</span>
+                            <span class="setting-description">Show detailed technical information in browser console (F12)</span>
                         </div>
                         
                         <div class="setting-group">

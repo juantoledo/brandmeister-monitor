@@ -19,8 +19,8 @@ class BrandmeisterMonitor {
         
         // Configuration (can be made user-configurable later)
         this.config = {
-            minDuration: 4, // minimum duration in seconds for activity log only
-            verbose: true, // TEMPORARY: Enable for debugging short transmission issues
+            minDuration: 0, // duration filtering disabled - all transmissions logged
+            verbose: true, // Enable verbose console logging for debugging (does not affect activity log)
             monitorAllTalkgroups: false, // if true, monitor all TGs; if false, use monitoredTalkgroup
             primaryColor: '#2563eb', // Primary color for the interface
             // Session management settings
@@ -778,6 +778,11 @@ class BrandmeisterMonitor {
         this.updateConnectionStatus(true);
         // System message removed - only log transmissions
         
+        // Add header to activity log if it doesn't exist
+        if (!this.elements.logContainer.querySelector('.log-header-compact')) {
+            this.addLogHeader();
+        }
+        
         this.elements.connectBtn.disabled = true;
         this.elements.disconnectBtn.disabled = false;
     }
@@ -892,30 +897,17 @@ class BrandmeisterMonitor {
                 // Always update UI and session state on Session-Stop
                 this.createOrUpdateTransmissionSession(sessionKey, call, 'stop');
                 
-                // Only log if duration meets minimum (UI cleanup handled by 'stop' handler above)
-                if (duration >= this.config.minDuration) {
-                    notify = true;
-                    
-                    if (this.config.verbose) {
-                        this.logDebug('Session-Stop logging completed transmission', {
-                            sessionID,
-                            callsign,
-                            tg,
-                            duration: duration.toFixed(1) + 's',
-                            action: 'added to activity log'
-                        });
-                    }
-                } else {
-                    // Short transmission - UI cleanup already handled by 'stop' handler above
-                    if (this.config.verbose) {
-                        this.logDebug('Session-Stop short transmission - UI cleanup completed', {
-                            sessionID,
-                            callsign,
-                            tg,
-                            duration: duration.toFixed(1) + 's',
-                            action: 'removed from UI without logging'
-                        });
-                    }
+                // Always log all transmissions regardless of duration
+                notify = true;
+                
+                if (this.config.verbose) {
+                    this.logDebug('Session-Stop logging completed transmission', {
+                        sessionID,
+                        callsign,
+                        tg,
+                        duration: duration.toFixed(1) + 's',
+                        action: 'added to activity log'
+                    });
                 }
             } else if (event === 'Session-Start') {
                 // Create transmission session in memory but delay showing in UI
@@ -1009,23 +1001,24 @@ class BrandmeisterMonitor {
             console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), ContextID: ${group.contextID || 'N/A'}, status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
             if (group.status === 'completed' && group.stopTime) {
                 const duration = group.stopTime - group.startTime;
-                console.log(`[${timestamp}] DEBUG: Completed transmission duration: ${duration.toFixed(1)}s, minDuration: ${this.config.minDuration}s`);
+                console.log(`[${timestamp}] DEBUG: Completed transmission duration: ${duration.toFixed(1)}s`);
             }
         }
         
-        // Create title: Radio ID - Source Call
-        let titleText = callsign;
-        if (sourceID && String(sourceID).trim() !== '') {
-            titleText = `${sourceID} ${callsign}`;
+        // Create title: Radio ID - Source Call using accumulated session data
+        let titleText = group.callsign || callsign;
+        const useSourceID = group.sourceID || sourceID;
+        if (useSourceID && String(useSourceID).trim() !== '') {
+            titleText = `${useSourceID} ${group.callsign || callsign}`;
         }
 
-        // Create individual field data object instead of concatenated string
+        // Create individual field data object using accumulated session data
         const fieldData = {
             tg: tg,
             sessionID: group.sessionID || '',
-            sourceID: sourceID || '',
-            sourceName: sourceName || '',
-            alias: alias || '',
+            sourceID: group.sourceID || sourceID || '',  // Use accumulated data first
+            sourceName: group.sourceName || sourceName || '',  // Use accumulated data first
+            alias: group.alias || alias || '',  // Use accumulated data first
             linkName: group.linkName || '',
             linkType: group.linkType || '',
             sessionType: group.sessionType || '',
@@ -1045,8 +1038,24 @@ class BrandmeisterMonitor {
 
         const eventType = group.status === 'completed' ? 'Transmission Complete' : 'Transmission Active';
         
+        // Debug logging for transmission processing
+        if (this.config.verbose) {
+            console.log(`🔄 Processing transmission - Status: ${group.status}, Type: ${eventType}, Callsign: ${titleText}`);
+            console.log(`📊 Session data accumulated:`, {
+                callsign: group.callsign,
+                sourceName: group.sourceName,
+                sourceID: group.sourceID,
+                alias: group.alias,
+                linkName: group.linkName,
+                sessionID: group.sessionID
+            });
+        }
+        
         // Direct UI Updates based on session state
         if (group.status === 'completed') {
+            if (this.config.verbose) {
+                console.log(`✅ Completed transmission - Adding to activity log: ${titleText}, Duration: ${fieldData.duration}s`);
+            }
             // Handle completed transmissions
             if (group.logEntry) {
                 // Update existing log entry
@@ -1097,7 +1106,7 @@ class BrandmeisterMonitor {
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
                 if (callsignElement) callsignElement.textContent = callsign;
-                if (radioIdElement) radioIdElement.textContent = group.sourceID || 'Unknown ID';
+                if (radioIdElement) radioIdElement.textContent = group.sourceID || '-';
                 if (sourceNameElement && sourceName) {
                     sourceNameElement.textContent = sourceName;
                 } else if (sourceNameElement && !sourceName) {
@@ -1179,7 +1188,7 @@ class BrandmeisterMonitor {
                         <div class="card-header">
                             <div class="card-identity">
                                 <div class="card-callsign">${callsign}</div>
-                                <div class="card-radio-id">${group.sourceID || 'Unknown ID'}</div>
+                                <div class="card-radio-id">${group.sourceID || '-'}</div>
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
@@ -1839,9 +1848,9 @@ class BrandmeisterMonitor {
     limitActivityLogEntries() {
         if (!this.elements.logContainer) return;
         
-        const entries = this.elements.logContainer.querySelectorAll('.log-entry');
+        const entries = this.elements.logContainer.querySelectorAll('.log-entry, .log-entry-compact');
         if (entries.length > this.config.maxLogEntries) {
-            // Remove excess entries from the end
+            // Remove excess entries from the end (but keep header)
             for (let i = this.config.maxLogEntries; i < entries.length; i++) {
                 entries[i].remove();
             }
@@ -2091,23 +2100,62 @@ class BrandmeisterMonitor {
         return `<a href="https://logbook.qrz.com/logbook/?op=add&addcall=${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Log ${cleanCallsign} in QRZ Logbook">📋 QRZ</a>`;
     }
 
+    addLogHeader() {
+        // Create compact header for activity log
+        const headerHtml = `
+            <div class="log-header-compact">
+                <div class="log-time">Time</div>
+                <div class="log-call">Call</div>
+                <div class="log-name">Name from Location</div>
+                <div class="log-alias">Alias</div>
+                <div class="log-tg">TG</div>
+                <div class="log-duration">Duration</div>
+                <div class="log-qrz">QRZ</div>
+            </div>
+        `;
+        
+        // Remove any existing "no activity" message
+        const noActivityMsg = this.elements.logContainer.querySelector('.no-activity');
+        if (noActivityMsg) {
+            noActivityMsg.remove();
+        }
+        
+        // Add header at the beginning of log container
+        this.elements.logContainer.insertAdjacentHTML('afterbegin', headerHtml);
+    }
+
     addLogEntryWithFields(type, callsign, fieldData, event) {
         // Only log actual transmissions, filter out system messages
         const transmissionTypes = ['session-start', 'session-stop', 'transmission-complete'];
         
         if (!transmissionTypes.includes(type)) {
+            if (this.config.verbose) {
+                console.log(`🚫 Skipping event type: ${type} (not in transmissionTypes)`);
+            }
             return; // Skip system messages
+        }
+
+        // Log all transmissions for debugging (removed duration filter)
+        if (this.config.verbose && fieldData.duration !== null) {
+            console.log(`📻 Logging transmission from ${callsign} (${fieldData.duration.toFixed(1)}s)`);
         }
         
         const logEntry = document.createElement('div');
-        logEntry.className = `log-entry ${type} new`;
+        logEntry.className = `log-entry-compact ${type} new`;
         
-        const timestamp = new Date().toLocaleString();
+        const timestamp = new Date().toLocaleString('en-US', {
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit', 
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
         
-        // Extract callsign for QRZ link and phonetic
+        // Extract callsign for QRZ link
         const callsignForQRZ = this.extractCallsignFromTitle(callsign);
         const qrzLink = this.createQRZLogbookLink(callsignForQRZ);
-        const phoneticCallsign = this.callsignToPhonetic(callsignForQRZ);
         
         // Parse radio ID and callsign if in "RadioID Callsign" format
         const parts = callsign.trim().split(' ');
@@ -2116,7 +2164,9 @@ class BrandmeisterMonitor {
         
         // Lookup RadioID information
         const radioIdInfo = radioID ? this.lookupRadioID(radioID) : null;
-        let locationInfo = '';
+        let locationText = '-';
+        let flagIcon = '🌍';
+        
         if (radioIdInfo) {
             const city = radioIdInfo.city;
             const state = radioIdInfo.state;
@@ -2124,47 +2174,52 @@ class BrandmeisterMonitor {
             
             const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
             if (locationParts.length > 0) {
+                locationText = locationParts.join(', ');
                 const countryCode = this.getCountryCode(country);
-                const flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '🌍';
-                locationInfo = `<div class="log-card-location">${flagIcon} ${locationParts.join(', ')}</div>`;
+                flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '🌍';
             }
         }
         
-        // Determine status badge
-        const isActive = fieldData.status === 'Active';
-        const statusBadge = isActive 
-            ? '<div class="log-card-status live">🔴 LIVE</div>'
-            : '<div class="log-card-status completed">✅ COMPLETED</div>';
+        // Get operator name from RadioID database
+        const operatorName = radioIdInfo?.name || fieldData.sourceName || '-';
         
-        // Create structured HTML with new card-based layout
+        // Talker alias (fallback to empty if not available)
+        const talkerAlias = fieldData.alias || '';
+        
+        // Talk group
+        const talkGroup = fieldData.tg ? `TG ${fieldData.tg}` : '-';
+        
+        // Duration (if available)
+        const durationText = fieldData.duration !== null ? `${fieldData.duration.toFixed(1)}s` : '';
+        
+        // Status indicator
+        const isActive = fieldData.status === 'Active';
+        const statusIcon = isActive ? '🔴' : '✅';
+        
+        // Get country code for background flag
+        let countryCode = '';
+        if (radioIdInfo?.country) {
+            countryCode = this.getCountryCode(radioIdInfo.country);
+        }
+        
+        // Create name-location text with proper handling of unknowns
+        let nameLocationText;
+        if (operatorName === '-' && locationText === '-') {
+            nameLocationText = '—';
+        } else {
+            nameLocationText = `${operatorName} from ${locationText}`;
+        }
+        
+        // Create one-line compact layout with flag background
         logEntry.innerHTML = `
-            <div class="log-card-header">
-                <div class="log-card-identity">
-                    <div class="log-card-callsign">${actualCallsign}</div>
-                    ${radioID ? `<div class="log-card-radio-id">Radio ID: ${radioID}</div>` : ''}
-                    <div class="log-card-phonetic">${phoneticCallsign}</div>
-                </div>
-                <div class="log-card-controls">
-                    ${qrzLink}
-                    <div class="log-card-tg">TG ${fieldData.tg}</div>
-                    ${statusBadge}
-                    <div class="log-card-timestamp">${timestamp}</div>
-                </div>
-            </div>
-            ${fieldData.sourceName ? `<div class="log-card-source-name">${fieldData.sourceName}</div>` : ''}
-            ${locationInfo}
-            <div class="log-card-details">
-                ${fieldData.alias ? `<div class="log-card-alias">💬 ${fieldData.alias}</div>` : ''}
-                ${this.config.verbose ? `<div class="log-card-fields">
-                    ${fieldData.sessionID ? `<span class="field session-id" data-label="Session ID">${fieldData.sessionID}</span>` : ''}
-                    ${fieldData.linkName ? `<span class="field link-name" data-label="Via">${fieldData.linkName}</span>` : ''}
-                    ${fieldData.linkType ? `<span class="field link-type" data-label="Link Type">${fieldData.linkType}</span>` : ''}
-                    ${fieldData.sessionType ? `<span class="field session-type" data-label="Session">${fieldData.sessionType}</span>` : ''}
-                    ${fieldData.duration !== null ? `<span class="field duration" data-label="Duration">${fieldData.duration.toFixed(1)}s</span>` : ''}
-                    ${fieldData.startTime ? `<span class="field start-time" data-label="Start">${this.formatTimestamp(fieldData.startTime)}</span>` : ''}
-                    ${fieldData.stopTime ? `<span class="field stop-time" data-label="Stop">${this.formatTimestamp(fieldData.stopTime)}</span>` : ''}
-                </div>` : ''}
-                <div class="log-card-event">${event}</div>
+            <div class="compact-log-line" data-country="${countryCode}" title="${radioIdInfo?.country || '-'}">
+                <span class="compact-timestamp">${timestamp}</span>
+                <span class="compact-callsign">${actualCallsign}</span>
+                <span class="compact-name-location">${nameLocationText}</span>
+                ${talkerAlias ? `<span class="compact-alias">💬 ${talkerAlias}</span>` : '<span class="compact-alias-empty">—</span>'}
+                <span class="compact-talkgroup">${talkGroup}</span>
+                ${durationText ? `<span class="compact-duration">${durationText}</span>` : '<span class="compact-duration-empty">—</span>'}
+                ${qrzLink ? `<span class="compact-qrz">${qrzLink}</span>` : '<span class="compact-qrz-empty">—</span>'}
             </div>
         `;
 
@@ -2305,6 +2360,8 @@ class BrandmeisterMonitor {
         this.updateStats();
     }
 
+
+
     updateConnectionStatus(connected) {
         this.elements.connectionStatus.className = `status-dot ${connected ? 'connected' : ''}`;
         this.elements.statusText.textContent = connected ? 'Connected' : 'Disconnected';
@@ -2403,7 +2460,7 @@ class BrandmeisterMonitor {
                 const settings = JSON.parse(savedSettings);
                 
                 // Update config object
-                this.config.minDuration = settings.minDuration || 4;
+                this.config.minDuration = settings.minDuration || 0;
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
                 this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
@@ -2454,7 +2511,7 @@ class BrandmeisterMonitor {
 
     resetSettings() {
         // Reset to default values
-        this.config.minDuration = 4;
+        this.config.minDuration = 0; // Duration filtering disabled
         this.config.verbose = false;
         this.config.monitorAllTalkgroups = false;
         this.config.enableRadioIDLookup = true;
@@ -2477,7 +2534,7 @@ class BrandmeisterMonitor {
         const previousMonitorAllTalkgroups = this.config.monitorAllTalkgroups;
         
         // Update config from UI elements
-        this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 4;
+        this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 0;
         this.config.verbose = this.elements.verboseCheckbox.checked;
         this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
         if (this.elements.enableRadioIDLookupCheckbox) {
