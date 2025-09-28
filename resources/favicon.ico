@@ -1,0 +1,30 @@
+<!-- Simple inline SVG that can be converted to favicon -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="#f8fafc" rx="4"/>
+  
+  <!-- Main body -->
+  <rect x="10" y="6" width="12" height="20" rx="2" fill="#2563eb"/>
+  
+  <!-- Antenna -->
+  <rect x="15" y="2" width="2" height="6" fill="#f59e0b"/>
+  <circle cx="16" cy="2" r="1" fill="#f59e0b"/>
+  
+  <!-- Screen -->
+  <rect x="12" y="9" width="8" height="4" rx="1" fill="#10b981"/>
+  
+  <!-- Speaker -->
+  <rect x="12" y="15" width="8" height="3" rx="1" fill="#1e40af"/>
+  <circle cx="14" cy="16" r="0.5" fill="#3b82f6"/>
+  <circle cx="16" cy="16" r="0.5" fill="#3b82f6"/>
+  <circle cx="18" cy="16" r="0.5" fill="#3b82f6"/>
+  
+  <!-- Buttons -->
+  <circle cx="13" cy="21" r="1.5" fill="#dc2626"/>
+  <circle cx="16" cy="21" r="1.5" fill="#16a34a"/>
+  <circle cx="19" cy="21" r="1.5" fill="#2563eb"/>
+  
+  <!-- PTT buttons -->
+  <rect x="8" y="14" width="1" height="4" rx="0.5" fill="#dc2626"/>
+  <rect x="23" y="14" width="1" height="4" rx="0.5" fill="#dc2626"/>
+</svg>

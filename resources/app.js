@@ -56,9 +56,78 @@ class BrandmeisterMonitor {
         };
 
         this.initializeUI();
-        this.loadTalkgroupFromStorage();
-        this.loadAliasesFromStorage();
-        this.loadRadioIDDatabase();
+        // Load data asynchronously - don't block constructor
+        this.initializeAsync();
+    }
+
+    // Async initialization for storage-dependent features
+    async initializeAsync() {
+        try {
+            await this.setWindowIcon();
+            await this.loadTalkgroupFromStorage();
+            await this.loadAliasesFromStorage();
+            await this.loadRadioIDDatabase();
+            await this.loadSettingsFromStorage();
+            await this.loadThemeFromStorage();
+        } catch (error) {
+            console.error('Error during async initialization:', error);
+        }
+    }
+
+    // Set window icon programmatically
+    async setWindowIcon() {
+        try {
+            if (typeof Neutralino !== 'undefined' && Neutralino.window && Neutralino.window.setIcon) {
+                // Try multiple methods
+                try {
+                    await Neutralino.window.setIcon('/resources/icons/walkie-talkie-simple.svg');
+                    console.log('Window icon set successfully with absolute path');
+                } catch (e1) {
+                    try {
+                        await Neutralino.window.setIcon('resources/icons/walkie-talkie-simple.svg');
+                        console.log('Window icon set successfully with relative path');
+                    } catch (e2) {
+                        console.log('Could not set window icon via API:', e2);
+                    }
+                }
+            } else {
+                console.log('Neutralino.window.setIcon not available');
+            }
+        } catch (error) {
+            console.log('Could not set window icon:', error);
+        }
+    }
+
+    // Open external URLs in system default browser
+    async openExternalUrl(url) {
+        try {
+            if (typeof Neutralino !== 'undefined' && Neutralino.os) {
+                await Neutralino.os.open(url);
+                console.log('Opened URL in system browser:', url);
+            } else {
+                // Fallback for web version
+                window.open(url, '_blank');
+            }
+        } catch (error) {
+            console.error('Could not open URL:', error);
+            // Fallback
+            window.open(url, '_blank');
+        }
+    }
+
+    // Theme management
+    async loadThemeFromStorage() {
+        const savedTheme = await storage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        // Update theme icon if available
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const themeIcon = themeToggle.querySelector('.theme-icon');
+            if (themeIcon) {
+                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+                themeToggle.title = `Switch to ${savedTheme === 'dark' ? 'light' : 'dark'} mode`;
+            }
+        }
     }
 
     initializeUI() {
@@ -94,18 +163,18 @@ class BrandmeisterMonitor {
         };
 
         // Bind event listeners
-        this.elements.saveTgBtn.addEventListener('click', () => this.saveTalkgroup());
+        this.elements.saveTgBtn.addEventListener('click', async () => await this.saveTalkgroup());
         this.elements.connectBtn.addEventListener('click', () => this.connect());
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
         
         // Settings event listeners
-        this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        this.elements.saveSettingsBtn.addEventListener('click', async () => await this.saveSettings());
         this.elements.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
         
         // RadioID event listeners
         if (this.elements.enableRadioIDLookupCheckbox) {
-            this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
+            this.elements.enableRadioIDLookupCheckbox.addEventListener('change', async () => await this.toggleRadioIDSettings());
         }
         
         // Color spectrum picker event listeners
@@ -114,19 +183,27 @@ class BrandmeisterMonitor {
         }
         
         // Real-time settings updates for number inputs
-        this.elements.minDurationInput.addEventListener('input', () => this.updateConfigFromUI());
+        this.elements.minDurationInput.addEventListener('input', async () => await this.updateConfigFromUI());
         
         // Real-time settings updates for checkboxes
-        this.elements.verboseCheckbox.addEventListener('change', () => this.updateConfigFromUI());
-        this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', () => this.updateConfigFromUI());
-        
-        // Load saved settings
-        this.loadSettings();
+        this.elements.verboseCheckbox.addEventListener('change', async () => await this.updateConfigFromUI());
+        this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', async () => await this.updateConfigFromUI());
         
         // Allow Enter key to save talkgroup
         this.elements.talkgroupInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.saveTalkgroup();
+            }
+        });
+
+        // Handle QRZ link clicks using event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.classList && e.target.classList.contains('qrz-link')) {
+                e.preventDefault();
+                const url = e.target.getAttribute('data-url');
+                if (url) {
+                    this.openExternalUrl(url);
+                }
             }
         });
 
@@ -614,9 +691,9 @@ class BrandmeisterMonitor {
         this.callsignAliases = {};
     }
 
-    loadTalkgroupFromStorage() {
-        const savedTg = localStorage.getItem('brandmeister_talkgroup');
-        const monitorAll = localStorage.getItem('brandmeister_monitor_all') === 'true';
+    async loadTalkgroupFromStorage() {
+        const savedTg = await storage.getItem('brandmeister_talkgroup');
+        const monitorAll = await storage.getItem('brandmeister_monitor_all') === 'true';
         
         if (savedTg) {
             if (savedTg === 'all' || monitorAll) {
@@ -639,8 +716,8 @@ class BrandmeisterMonitor {
         }
     }
 
-    loadAliasesFromStorage() {
-        const savedAliases = localStorage.getItem('brandmeister_aliases');
+    async loadAliasesFromStorage() {
+        const savedAliases = await storage.getItem('brandmeister_aliases');
         if (savedAliases) {
             try {
                 this.callsignAliases = JSON.parse(savedAliases);
@@ -651,10 +728,10 @@ class BrandmeisterMonitor {
         }
     }
 
-    saveAliasToStorage(callsign, alias) {
+    async saveAliasToStorage(callsign, alias) {
         if (callsign && alias && alias.trim() !== '') {
             this.callsignAliases[callsign] = alias.trim();
-            localStorage.setItem('brandmeister_aliases', JSON.stringify(this.callsignAliases));
+            await storage.setItem('brandmeister_aliases', JSON.stringify(this.callsignAliases));
         }
     }
 
@@ -662,14 +739,14 @@ class BrandmeisterMonitor {
         return this.callsignAliases[callsign] || '';
     }
 
-    saveTalkgroup() {
+    async saveTalkgroup() {
         const tgValue = this.elements.talkgroupInput.value.trim();
         if (tgValue === '' || tgValue.toLowerCase() === 'all') {
             // Monitor all talkgroups
             this.monitoredTalkgroups = [];
             this.config.monitorAllTalkgroups = true;
-            localStorage.setItem('brandmeister_talkgroup', 'all');
-            localStorage.setItem('brandmeister_monitor_all', 'true');
+            await storage.setItem('brandmeister_talkgroup', 'all');
+            await storage.setItem('brandmeister_monitor_all', 'true');
             this.elements.currentTg.textContent = 'All Talkgroups';
             // System message removed - only log transmissions
         } else if (tgValue) {
@@ -694,8 +771,8 @@ class BrandmeisterMonitor {
             // Monitor specific talkgroups
             this.monitoredTalkgroups = validTalkgroups;
             this.config.monitorAllTalkgroups = false;
-            localStorage.setItem('brandmeister_talkgroup', validTalkgroups.join(','));
-            localStorage.setItem('brandmeister_monitor_all', 'false');
+            await storage.setItem('brandmeister_talkgroup', validTalkgroups.join(','));
+            await storage.setItem('brandmeister_monitor_all', 'false');
             
             const displayText = validTalkgroups.length === 1 ? 
                 `TG ${validTalkgroups[0]}` : 
@@ -716,7 +793,7 @@ class BrandmeisterMonitor {
         // System message removed - only log transmissions
         
         // Auto-save settings to ensure consistency
-        this.saveSettings();
+        await this.saveSettings();
         
         // Log the talkgroup change with structured logging
         this.logInfo('Talkgroup configuration updated', {
@@ -1220,7 +1297,11 @@ class BrandmeisterMonitor {
                             const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
                             const searchQuery = locationParts.join(' ');
                             const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                            window.open(googleUrl, '_blank');
+                            if (typeof Neutralino !== 'undefined' && Neutralino.os) {
+                                Neutralino.os.open(googleUrl);
+                            } else {
+                                window.open(googleUrl, '_blank');
+                            }
                         });
                     }
                 }
@@ -2087,8 +2168,10 @@ class BrandmeisterMonitor {
     createQRZLogbookLink(callsign) {
         if (!callsign) return '';
         const cleanCallsign = callsign.toUpperCase().trim();
-        // Use & instead of ; for better URL compatibility
-        return `<a href="https://logbook.qrz.com/logbook/?op=add&addcall=${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Log ${cleanCallsign} in QRZ Logbook">📋 QRZ</a>`;
+        const qrzUrl = `https://logbook.qrz.com/logbook/?op=add&addcall=${encodeURIComponent(cleanCallsign)}`;
+        
+        // Return a clickable span that uses the existing CSS styling - maintains original UI appearance with pointer cursor
+        return `<span class="qrz-link" data-url="${qrzUrl}" title="Log ${cleanCallsign} in QRZ Logbook" style="cursor: pointer;">📋 QRZ</span>`;
     }
 
     addLogEntryWithFields(type, callsign, fieldData, event) {
@@ -2396,11 +2479,13 @@ class BrandmeisterMonitor {
     }
 
     // Settings Management Methods
-    loadSettings() {
-        const savedSettings = localStorage.getItem('brandmeister-settings');
+    async loadSettingsFromStorage() {
+        const savedSettings = await storage.getItem('brandmeister-settings');
+        console.log('Loading settings from storage:', savedSettings);
         if (savedSettings) {
             try {
                 const settings = JSON.parse(savedSettings);
+                console.log('Parsed settings:', settings);
                 
                 // Update config object
                 this.config.minDuration = settings.minDuration || 4;
@@ -2409,25 +2494,27 @@ class BrandmeisterMonitor {
                 this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
                 this.config.primaryColor = settings.primaryColor || '#2563eb';
                 
+                console.log('Updated config primaryColor:', this.config.primaryColor);
+                
                 // Apply the primary color
                 this.applyPrimaryColor(this.config.primaryColor);
                 
                 // Update UI elements
-                this.updateUIFromConfig();
+                await this.updateUIFromConfig();
                 
             } catch (error) {
                 const timestamp = new Date().toLocaleString();
                 console.log(`[${timestamp}] Error loading settings from storage:`, error);
-                this.resetSettings();
+                await this.resetSettings();
             }
         } else {
             // First time - update UI with default values and apply default color
             this.applyPrimaryColor(this.config.primaryColor);
-            this.updateUIFromConfig();
+            await this.updateUIFromConfig();
         }
     }
 
-    saveSettings() {
+    async saveSettings() {
         const settings = {
             minDuration: this.config.minDuration,
             verbose: this.config.verbose,
@@ -2436,7 +2523,8 @@ class BrandmeisterMonitor {
             primaryColor: this.config.primaryColor
         };
         
-        localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
+        console.log('Saving settings:', settings);
+        await storage.setItem('brandmeister-settings', JSON.stringify(settings));
         
         // Add visual feedback for manual saves
         if (this.elements.saveSettingsBtn && this.elements.saveSettingsBtn.style.pointerEvents !== 'none') {
@@ -2448,11 +2536,13 @@ class BrandmeisterMonitor {
             minDuration: settings.minDuration,
             verbose: settings.verbose,
             monitorAllTalkgroups: settings.monitorAllTalkgroups,
+            enableRadioIDLookup: settings.enableRadioIDLookup,
+            primaryColor: settings.primaryColor,
             autoSave: 'enabled'
         });
     }
 
-    resetSettings() {
+    async resetSettings() {
         // Reset to default values
         this.config.minDuration = 4;
         this.config.verbose = false;
@@ -2464,15 +2554,15 @@ class BrandmeisterMonitor {
         this.applyPrimaryColor(this.config.primaryColor);
         
         // Update UI
-        this.updateUIFromConfig();
+        await this.updateUIFromConfig();
         
         // Save to localStorage
-        this.saveSettings();
+        await this.saveSettings();
         
         // System message removed - only log transmissions
     }
 
-    updateConfigFromUI() {
+    async updateConfigFromUI() {
         // Store previous monitoring state to detect changes
         const previousMonitorAllTalkgroups = this.config.monitorAllTalkgroups;
         
@@ -2499,10 +2589,10 @@ class BrandmeisterMonitor {
         }
         
         // Auto-save settings when changed
-        this.saveSettings();
+        await this.saveSettings();
     }
 
-    updateUIFromConfig() {
+    async updateUIFromConfig() {
         // Update UI elements from config
         this.elements.minDurationInput.value = this.config.minDuration;
         this.elements.verboseCheckbox.checked = this.config.verbose;
@@ -2511,16 +2601,16 @@ class BrandmeisterMonitor {
             this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
         }
         this.updateColorSelection();
-        this.toggleRadioIDSettings();
+        await this.toggleRadioIDSettings();
         this.updateRadioIDStatus();
     }
 
-    toggleRadioIDSettings() {
+    async toggleRadioIDSettings() {
         if (this.elements.radioIDSettings && this.elements.enableRadioIDLookupCheckbox) {
             const isEnabled = this.elements.enableRadioIDLookupCheckbox.checked;
             this.config.enableRadioIDLookup = isEnabled;
             this.elements.radioIDSettings.style.display = isEnabled ? 'block' : 'none';
-            this.saveSettings();
+            await this.saveSettings();
             
             if (isEnabled) {
                 // Auto-download if no database exists
@@ -2537,12 +2627,12 @@ class BrandmeisterMonitor {
         }
     }
 
-    selectColor(color) {
+    async selectColor(color) {
         this.config.primaryColor = color;
         this.applyPrimaryColor(color);
         this.updateColorPreview(color);
         this.updateColorCursor(color);
-        this.saveSettings();
+        await this.saveSettings();
         
         // System message removed - only log transmissions
     }
@@ -2550,7 +2640,7 @@ class BrandmeisterMonitor {
     initializeColorPicker() {
         let isDragging = false;
         
-        const handleColorPick = (e) => {
+        const handleColorPick = async (e) => {
             const rect = this.elements.colorSpectrum.getBoundingClientRect();
             const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
             const percentage = x / rect.width;
@@ -2562,7 +2652,7 @@ class BrandmeisterMonitor {
             const color = `hsl(${hue}, 100%, 50%)`;
             const hexColor = this.hslToHex(hue, 100, 50);
             
-            this.selectColor(hexColor);
+            await this.selectColor(hexColor);
         };
         
         this.elements.colorSpectrum.addEventListener('mousedown', (e) => {
@@ -2691,8 +2781,22 @@ class BrandmeisterMonitor {
 
     updateColorSelection() {
         // This method is now handled by updateColorPreview and updateColorCursor
-        this.updateColorPreview(this.config.primaryColor);
-        this.updateColorCursor(this.config.primaryColor);
+        // Only update if the color picker elements exist
+        if (this.elements.colorPreview && this.elements.colorCursor) {
+            console.log('Updating color selection with:', this.config.primaryColor);
+            this.updateColorPreview(this.config.primaryColor);
+            this.updateColorCursor(this.config.primaryColor);
+        } else {
+            console.log('Color picker elements not available yet, deferring update');
+            // Defer the update until the elements are available
+            setTimeout(() => {
+                if (this.elements.colorPreview && this.elements.colorCursor) {
+                    console.log('Retrying color selection update with:', this.config.primaryColor);
+                    this.updateColorPreview(this.config.primaryColor);
+                    this.updateColorCursor(this.config.primaryColor);
+                }
+            }, 100);
+        }
     }
 
     applyPrimaryColor(color) {
@@ -2743,8 +2847,8 @@ class BrandmeisterMonitor {
 
         try {
             // Check if we have cached data
-            const cachedData = localStorage.getItem('radioIDDatabase');
-            const lastUpdate = localStorage.getItem('radioIDLastUpdate');
+            const cachedData = await storage.getItem('radioIDDatabase');
+            const lastUpdate = await storage.getItem('radioIDLastUpdate');
             
             if (cachedData && lastUpdate) {
                 const cacheAge = Date.now() - parseInt(lastUpdate);
@@ -2803,25 +2907,25 @@ class BrandmeisterMonitor {
             this.radioIDDatabase = parsedData;
             this.radioIDLastUpdate = Date.now();
 
-            // Try to save to localStorage with quota error handling
+            // Try to save to storage with quota error handling
             try {
                 const dataToStore = JSON.stringify(parsedData);
                 const sizeInMB = (dataToStore.length / (1024 * 1024)).toFixed(2);
                 console.log(`💾 Attempting to store ${sizeInMB}MB of RadioID data...`);
                 
-                localStorage.setItem('radioIDDatabase', dataToStore);
-                localStorage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
-                console.log('✅ Successfully cached RadioID database to localStorage');
+                await storage.setItem('radioIDDatabase', dataToStore);
+                await storage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
+                console.log('✅ Successfully cached RadioID database to storage');
                 
-            } catch (storageError) {
-                if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
-                    console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only (will not persist)');
-                    this.updateRadioIDStatus(`${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`);
-                    return; // Still functional, just won't persist
-                } else {
-                    throw storageError; // Re-throw other storage errors
+                } catch (storageError) {
+                    if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
+                        console.warn('⚠️ Storage quota exceeded - RadioID data stored in memory only (will not persist)');
+                        this.updateRadioIDStatus(`${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`);
+                        return; // Still functional, just won't persist
+                    } else {
+                        throw storageError; // Re-throw other storage errors
+                    }
                 }
-            }
 
             this.updateRadioIDStatus();
             
@@ -2940,14 +3044,14 @@ class BrandmeisterMonitor {
     }
 
     // Clear RadioID cache
-    clearRadioIDCache() {
+    async clearRadioIDCache() {
         console.log('🗑️ Clearing RadioID database cache...');
         
         this.radioIDDatabase = null;
         this.radioIDLastUpdate = null;
         
-        localStorage.removeItem('radioIDDatabase');
-        localStorage.removeItem('radioIDLastUpdate');
+        await storage.removeItem('radioIDDatabase');
+        await storage.removeItem('radioIDLastUpdate');
         
         this.updateRadioIDStatus('Cache cleared');
     }
@@ -3123,17 +3227,20 @@ function initializeNewInterface() {
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = themeToggle.querySelector('.theme-icon');
     
-    // Load saved theme or default to light
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
+    // Initialize theme asynchronously
+    (async () => {
+        // Load saved theme or default to light
+        const savedTheme = await storage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+    })();
     
-    themeToggle.addEventListener('click', () => {
+    themeToggle.addEventListener('click', async () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         
         document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
+        await storage.setItem('theme', newTheme);
         updateThemeIcon(newTheme);
         
         window.brandmeisterMonitor.logWithAttributes('Theme toggled', {
