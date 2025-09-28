@@ -1,6 +1,38 @@
-# Brandmeister Monitor Web App
+# 🔊 Brandmeister Monitor
 
-A real-time web-based monitoring application for Brandmeister DMR network talkgroups. This app connects to the Brandmeister API via WebSocket and monitors activity on a specific talkgroup that you configure.
+**Real-time DMR Talkgroup Activity Monitor for Brandmeister Network**
+
+[![Live App](https://img.shields.io/badge/🌐%20Live%20App-Open-brightgreen)](https://juantoledo.github.io/brandmeister-monitor)
+[![PWA Ready](https://img.shields.io/badge/📱%20PWA-Installable-blue)](https://juantoledo.github.io/brandmeister-monitor)
+[![GitHub Pages](https://img.shields.io/badge/⚡%20Powered%20by-GitHub%20Pages-black)](https://pages.github.com/)
+
+## 🚀 Quick Start - Install as App
+
+**Visit**: [**https://juantoledo.github.io/brandmeister-monitor**](https://juantoledo.github.io/brandmeister-monitor)
+
+### 📱 **Install on Mobile (iOS/Android)**
+
+1. **Open in browser**: Safari (iOS) or Chrome/Edge (Android)
+2. **Look for install option**:
+   - **iOS Safari**: Share button → "Add to Home Screen"
+   - **Android Chrome**: Menu (⋮) → "Add to Home screen" or "Install app"
+3. **Tap "Add"** → App appears on home screen like any native app!
+
+### 🖥️ **Install on Desktop (Windows/Mac/Linux)**
+
+1. **Open in Chrome or Edge**: [https://juantoledo.github.io/brandmeister-monitor](https://juantoledo.github.io/brandmeister-monitor)
+2. **Look for install button**: 
+   - Install icon (⊕) in address bar
+   - Or browser menu → "Install Brandmeister Monitor"
+3. **Click "Install"** → App appears in Start Menu/Applications!
+
+### 🎯 **App Features After Installation**
+
+✅ **Runs like native app** - No browser interface  
+✅ **Works offline** - Cached for fast loading  
+✅ **Desktop shortcut** - Easy access from desktop/home screen  
+✅ **Push notifications** - Real-time activity alerts (coming soon)  
+✅ **Auto-updates** - Always get the latest version
 
 ## Features
 
