@@ -67,7 +67,7 @@ goto END
 :WIN
 echo.
 echo Building Windows executable...
-neu build
+neu build --release
 echo.
 echo Build complete! Check dist folder.
 goto END
@@ -75,7 +75,7 @@ goto END
 :ALL
 echo.
 echo Building all platforms...
-neu build
+neu build --release
 echo.
 echo Build complete! Files in dist folder:
 if exist "dist\brandmeister-monitor\" (
@@ -95,8 +95,8 @@ echo ==========================================
 echo.
 echo Cleaning previous builds...
 if exist "dist" rmdir /s /q "dist"
-echo Building all platforms...
-neu build
+echo Building all platforms (this may take a moment)...
+neu build --release
 echo.
 echo ==========================================
 echo  BUILD RESULTS
