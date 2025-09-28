@@ -482,6 +482,40 @@ body {
     font-weight: 400;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.github-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.github-link:hover {
+    color: var(--primary);
+}
+
+.callsign {
+    background: var(--primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
 .header-status {
     display: flex;
     align-items: center;
@@ -490,6 +524,12 @@ body {
     padding: 6px 12px;
     border-radius: var(--radius);
     font-size: 0.875rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .status-dot {
@@ -1867,17 +1907,58 @@ button:disabled {
         display: block;
     }
     
-    .header-content {
+    .app-header {
+        padding: 0 16px;
+        height: var(--header-height);
         flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        flex: 1;
+        min-width: 0; /* Allow text to shrink */
+    }
+    
+    .header-right {
         gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .header-info {
+        gap: 8px;
+    }
+    
+    .github-link svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .callsign {
+        font-size: 0.6875rem;
+        padding: 2px 6px;
     }
     
     .header-content h1 {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
+        line-height: 1.2;
     }
     
     .subtitle {
-        font-size: 0.8125rem;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    
+    .header-status {
+        flex-shrink: 0;
+        padding: 4px 8px;
+        font-size: 0.75rem;
     }
 }
 
@@ -1885,6 +1966,48 @@ button:disabled {
     :root {
         --sidebar-width: 280px;
         --console-height: 200px;
+        --header-height: 70px; /* Smaller header on very small screens */
+    }
+    
+    .app-header {
+        padding: 0 12px;
+    }
+    
+    .header-info {
+        gap: 6px;
+    }
+    
+    .github-link svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .callsign {
+        font-size: 0.625rem;
+        padding: 2px 4px;
+    }
+    
+    .header-content h1 {
+        font-size: 1rem;
+    }
+    
+    .subtitle {
+        font-size: 0.6875rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .header-status {
+        padding: 3px 6px;
+        font-size: 0.6875rem;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
     }
     
     .console-tabs {
@@ -1902,6 +2025,58 @@ button:disabled {
     
     .main-content, .sidebar-content {
         padding: 16px;
+    }
+}
+
+/* Extra small screens - phones in portrait */
+@media (max-width: 360px) {
+    :root {
+        --header-height: 60px;
+    }
+    
+    .app-header {
+        padding: 0 8px;
+    }
+    
+    .header-content {
+        gap: 2px;
+    }
+    
+    .header-right {
+        gap: 8px;
+    }
+    
+    .header-info {
+        gap: 4px;
+    }
+    
+    .github-link svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .callsign {
+        font-size: 0.5rem;
+        padding: 1px 3px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.875rem;
+    }
+    
+    .subtitle {
+        font-size: 0.625rem;
+    }
+    
+    .header-status {
+        padding: 2px 4px;
+        font-size: 0.625rem;
+        gap: 4px;
+    }
+    
+    .status-dot {
+        width: 6px;
+        height: 6px;
     }
 }
 
