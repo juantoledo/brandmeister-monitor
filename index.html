@@ -58,15 +58,14 @@
                     <div class="settings-content">
                         <div class="setting-group">
                             <label for="colorPalette">Primary Color:</label>
-                            <div class="color-palette" id="colorPalette">
-                                <div class="color-option" data-color="#2563eb" style="background-color: #2563eb" title="Blue (Default)"></div>
-                                <div class="color-option" data-color="#dc2626" style="background-color: #dc2626" title="Red"></div>
-                                <div class="color-option" data-color="#16a34a" style="background-color: #16a34a" title="Green"></div>
-                                <div class="color-option" data-color="#ea580c" style="background-color: #ea580c" title="Orange"></div>
-                                <div class="color-option" data-color="#9333ea" style="background-color: #9333ea" title="Purple"></div>
-                                <div class="color-option" data-color="#0891b2" style="background-color: #0891b2" title="Cyan"></div>
-                                <div class="color-option" data-color="#be123c" style="background-color: #be123c" title="Rose"></div>
-                                <div class="color-option" data-color="#65a30d" style="background-color: #65a30d" title="Lime"></div>
+                            <div class="color-picker-container">
+                                <div class="color-spectrum" id="colorSpectrum">
+                                    <div class="color-picker-cursor" id="colorCursor"></div>
+                                </div>
+                                <div class="color-preview">
+                                    <div class="color-preview-swatch" id="colorPreview" style="background-color: #2563eb;"></div>
+                                    <span class="color-value" id="colorValue">#2563eb</span>
+                                </div>
                             </div>
                             <span class="setting-description">Choose your preferred accent color</span>
                         </div>

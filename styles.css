@@ -81,8 +81,22 @@
         rgba(30, 41, 59, 0.85) 100%);
 }
 
-[data-theme="dark"] .color-palette {
+[data-theme="dark"] .color-preview {
     background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .color-value {
+    background: var(--gray-600);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .color-spectrum {
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .color-spectrum:hover {
+    border-color: var(--primary);
 }
 
 [data-theme="dark"] button:hover {
@@ -356,12 +370,13 @@
     color: var(--text-muted);
 }
 
-[data-theme="dark"] .card-source-name {
-    color: var(--primary-light);
-}
 
 [data-theme="dark"] .card-location {
     color: var(--text-muted);
+}
+
+[data-theme="dark"] .card-location-link:hover {
+    opacity: 0.7;
 }
 
 [data-theme="dark"] .card-alias {
@@ -750,46 +765,77 @@ button:disabled {
     margin-bottom: 8px; /* Space after description */
 }
 
-/* Color Palette Selector */
-.color-palette {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+/* Color Spectrum Picker */
+.color-picker-container {
     margin: 8px 0;
-    padding: 12px;
-    background: var(--surface);
-    border-radius: var(--radius);
 }
 
-.color-option {
+.color-spectrum {
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(to right, 
+        hsl(0, 100%, 50%) 0%, 
+        hsl(60, 100%, 50%) 16.66%, 
+        hsl(120, 100%, 50%) 33.33%, 
+        hsl(180, 100%, 50%) 50%, 
+        hsl(240, 100%, 50%) 66.66%, 
+        hsl(300, 100%, 50%) 83.33%, 
+        hsl(360, 100%, 50%) 100%);
+    border-radius: 8px;
+    position: relative;
+    cursor: crosshair;
+    border: 2px solid var(--border);
+    transition: border-color 0.2s ease;
+}
+
+.color-spectrum:hover {
+    border-color: var(--primary);
+}
+
+.color-picker-cursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid white;
+    border-radius: 50%;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    transition: all 0.1s ease;
+}
+
+.color-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 8px;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.color-preview-swatch {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-    position: relative;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
 }
 
-.color-option:hover {
-    border-color: var(--border);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.color-option.selected {
-    border-color: var(--text);
-    transform: scale(1.05);
-}
-
-.color-option.selected::after {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+.color-value {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--gray-100);
+    padding: 4px 8px;
+    border-radius: 4px;
+    user-select: all;
+    cursor: text;
 }
 
 .setting-group input[type="number"] {
@@ -1645,11 +1691,21 @@ button:disabled {
 
 /* Location Info from RadioID database */
 .card-location {
-    font-size: 1.875rem;
+    font-size: 2.2rem;
     color: var(--text-secondary);
     font-weight: 500;
     margin: 2px 0 4px 0;
     opacity: 0.9;
+}
+
+/* Clickable location link styling - maintains original appearance */
+.card-location-link {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.card-location-link:hover {
+    opacity: 0.7;
 }
 
 /* Card content layout with left content and right flag */
@@ -1926,3 +1982,52 @@ button:disabled {
 .text-primary { color: var(--primary); }
 .text-success { color: var(--success); }
 .text-error { color: var(--error); }
+
+/* Responsive Color Picker */
+@media (max-width: 768px) {
+    .color-spectrum {
+        height: 36px;
+    }
+    
+    .color-picker-cursor {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .color-preview {
+        gap: 10px;
+        padding: 6px;
+    }
+    
+    .color-preview-swatch {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .color-spectrum {
+        height: 32px;
+    }
+    
+    .color-picker-cursor {
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+    }
+    
+    .color-preview {
+        gap: 8px;
+        padding: 4px;
+    }
+    
+    .color-preview-swatch {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .color-value {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+}

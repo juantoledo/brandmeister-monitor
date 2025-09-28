@@ -84,7 +84,10 @@ class BrandmeisterMonitor {
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
             enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
             radioIDSettings: document.getElementById('radioIDSettings'),
-            colorPalette: document.getElementById('colorPalette'),
+            colorSpectrum: document.getElementById('colorSpectrum'),
+            colorCursor: document.getElementById('colorCursor'),
+            colorPreview: document.getElementById('colorPreview'),
+            colorValue: document.getElementById('colorValue'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
             settingsContainer: document.getElementById('settingsContainer')
@@ -105,12 +108,9 @@ class BrandmeisterMonitor {
             this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
         }
         
-        // Color palette event listeners
-        if (this.elements.colorPalette) {
-            const colorOptions = this.elements.colorPalette.querySelectorAll('.color-option');
-            colorOptions.forEach(option => {
-                option.addEventListener('click', () => this.selectColor(option.dataset.color));
-            });
+        // Color spectrum picker event listeners
+        if (this.elements.colorSpectrum) {
+            this.initializeColorPicker();
         }
         
         // Real-time settings updates for number inputs
@@ -1169,7 +1169,8 @@ class BrandmeisterMonitor {
                         countryCode = this.getCountryCode(country);
                         // Create flag background URL from flag-icons CDN
                         flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
-                        locationInfo = `<div class="card-location">${locationParts.join(', ')}</div>`;
+                        // Make location text clickable for Google search
+                        locationInfo = `<div class="card-location card-location-link" title="Click to search location on Google">${locationParts.join(', ')}</div>`;
                     }
                 }
                 
@@ -1202,24 +1203,26 @@ class BrandmeisterMonitor {
                 // Apply flag background if available
                 if (flagBackgroundUrl) {
                     activeEntry.style.backgroundImage = `url('${flagBackgroundUrl}')`;
-                    activeEntry.title = `Click to search location on Google`;
-                    activeEntry.style.cursor = 'pointer';
                 }
                 
                 // Add to active container
                 this.elements.activeContainer.appendChild(activeEntry);
                 
-                // Add click handler for flag background if it exists
+                // Add click handler for location link if it exists
                 if (countryCode && radioIdInfo) {
-                    activeEntry.addEventListener('click', () => {
-                        const city = radioIdInfo.city;
-                        const state = radioIdInfo.state;
-                        const country = radioIdInfo.country;
-                        const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
-                        const searchQuery = locationParts.join(' ');
-                        const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                        window.open(googleUrl, '_blank');
-                    });
+                    const locationLink = activeEntry.querySelector('.card-location-link');
+                    if (locationLink) {
+                        locationLink.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent event bubbling
+                            const city = radioIdInfo.city;
+                            const state = radioIdInfo.state;
+                            const country = radioIdInfo.country;
+                            const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
+                            const searchQuery = locationParts.join(' ');
+                            const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                            window.open(googleUrl, '_blank');
+                        });
+                    }
                 }
                 
                 if (this.config.verbose) {
@@ -2537,23 +2540,159 @@ class BrandmeisterMonitor {
     selectColor(color) {
         this.config.primaryColor = color;
         this.applyPrimaryColor(color);
-        this.updateColorSelection();
+        this.updateColorPreview(color);
+        this.updateColorCursor(color);
         this.saveSettings();
         
         // System message removed - only log transmissions
     }
 
-    updateColorSelection() {
-        if (this.elements.colorPalette) {
-            const colorOptions = this.elements.colorPalette.querySelectorAll('.color-option');
-            colorOptions.forEach(option => {
-                if (option.dataset.color === this.config.primaryColor) {
-                    option.classList.add('selected');
-                } else {
-                    option.classList.remove('selected');
-                }
-            });
+    initializeColorPicker() {
+        let isDragging = false;
+        
+        const handleColorPick = (e) => {
+            const rect = this.elements.colorSpectrum.getBoundingClientRect();
+            const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+            const percentage = x / rect.width;
+            
+            // Direct hue calculation to match the HSL gradient (0-360)
+            const hue = percentage * 360;
+            
+            // Use HSL directly to match the gradient exactly
+            const color = `hsl(${hue}, 100%, 50%)`;
+            const hexColor = this.hslToHex(hue, 100, 50);
+            
+            this.selectColor(hexColor);
+        };
+        
+        this.elements.colorSpectrum.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleColorPick(e);
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                handleColorPick(e);
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // Initialize with current color
+        this.updateColorPreview(this.config.primaryColor);
+        this.updateColorCursor(this.config.primaryColor);
+    }
+    
+    updateColorPreview(color) {
+        if (this.elements.colorPreview && this.elements.colorValue) {
+            this.elements.colorPreview.style.backgroundColor = color;
+            this.elements.colorValue.textContent = color.toUpperCase();
         }
+    }
+    
+    updateColorCursor(color) {
+        if (this.elements.colorCursor) {
+            // Convert hex to HSL to get hue, then position cursor accordingly
+            const hsl = this.hexToHsl(color);
+            let hue = hsl.h;
+            
+            // Ensure hue is in 0-360 range
+            hue = ((hue % 360) + 360) % 360;
+            
+            const percentage = hue / 360;
+            this.elements.colorCursor.style.left = `${percentage * 100}%`;
+            
+            // Debug log to see what's happening
+            console.log(`Color: ${color}, HSL: ${JSON.stringify(hsl)}, Hue: ${hue}, Position: ${percentage * 100}%`);
+        }
+    }
+    
+    // Helper function to convert HSL to Hex
+    hslToHex(h, s, l) {
+        // Normalize values
+        h = ((h % 360) + 360) % 360; // Ensure hue is 0-360
+        s = Math.max(0, Math.min(100, s)) / 100; // Ensure saturation is 0-1
+        l = Math.max(0, Math.min(100, l)) / 100; // Ensure lightness is 0-1
+        
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = l - c / 2;
+        
+        let r, g, b;
+        
+        if (h >= 0 && h < 60) {
+            r = c; g = x; b = 0;
+        } else if (h >= 60 && h < 120) {
+            r = x; g = c; b = 0;
+        } else if (h >= 120 && h < 180) {
+            r = 0; g = c; b = x;
+        } else if (h >= 180 && h < 240) {
+            r = 0; g = x; b = c;
+        } else if (h >= 240 && h < 300) {
+            r = x; g = 0; b = c;
+        } else {
+            r = c; g = 0; b = x;
+        }
+        
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+        
+        const toHex = (n) => {
+            const hex = n.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+    
+    // Helper function to convert Hex to HSL
+    hexToHsl(hex) {
+        // Remove # if present
+        hex = hex.replace('#', '');
+        
+        const r = parseInt(hex.slice(0, 2), 16) / 255;
+        const g = parseInt(hex.slice(2, 4), 16) / 255;
+        const b = parseInt(hex.slice(4, 6), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const diff = max - min;
+        
+        let h = 0;
+        let s = 0;
+        let l = (max + min) / 2;
+        
+        if (diff !== 0) {
+            s = l > 0.5 ? diff / (2 - max - min) : diff / (max + min);
+            
+            switch (max) {
+                case r:
+                    h = ((g - b) / diff + (g < b ? 6 : 0)) * 60;
+                    break;
+                case g:
+                    h = ((b - r) / diff + 2) * 60;
+                    break;
+                case b:
+                    h = ((r - g) / diff + 4) * 60;
+                    break;
+            }
+        }
+        
+        return { 
+            h: Math.round(h), 
+            s: Math.round(s * 100), 
+            l: Math.round(l * 100) 
+        };
+    }
+
+    updateColorSelection() {
+        // This method is now handled by updateColorPreview and updateColorCursor
+        this.updateColorPreview(this.config.primaryColor);
+        this.updateColorCursor(this.config.primaryColor);
     }
 
     applyPrimaryColor(color) {
