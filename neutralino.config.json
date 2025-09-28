@@ -35,6 +35,12 @@
       "hidden": false,
       "resizable": true,
       "exitProcessOnClose": true
+    },
+    "browser": {
+      "globalVariables": {
+        "TEST_MODE": "true"
+      },
+      "nativeBlockList": []
     }
   },
   "cli": {
