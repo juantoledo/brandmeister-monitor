@@ -3047,6 +3047,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize new UI components
     initializeNewInterface();
     
+    // Auto-connect on page load for better UX
+    setTimeout(() => {
+        if (!window.brandmeisterMonitor.isConnected) {
+            console.log('🚀 Auto-connecting to Brandmeister network...');
+            window.brandmeisterMonitor.connect();
+        }
+    }, 1000); // Small delay to ensure UI is fully loaded
+    
     // Expose performance debugging functions to console
     window.getPerformanceInfo = () => window.brandmeisterMonitor.getPerformanceDebugInfo();
     window.forceCleanup = () => window.brandmeisterMonitor.forceCleanup();
