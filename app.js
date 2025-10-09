@@ -84,8 +84,7 @@ class BrandmeisterMonitor {
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
             enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
             radioIDSettings: document.getElementById('radioIDSettings'),
-            colorSpectrum: document.getElementById('colorSpectrum'),
-            colorCursor: document.getElementById('colorCursor'),
+            colorPresets: document.getElementById('colorPresets'),
             colorPreview: document.getElementById('colorPreview'),
             colorValue: document.getElementById('colorValue'),
             saveSettingsBtn: document.getElementById('saveSettings'),
@@ -108,8 +107,8 @@ class BrandmeisterMonitor {
             this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
         }
         
-        // Color spectrum picker event listeners
-        if (this.elements.colorSpectrum) {
+        // Color preset picker event listeners
+        if (this.elements.colorPresets) {
             this.initializeColorPicker();
         }
         
@@ -2605,49 +2604,25 @@ class BrandmeisterMonitor {
         this.config.primaryColor = color;
         this.applyPrimaryColor(color);
         this.updateColorPreview(color);
-        this.updateColorCursor(color);
+        this.updateColorPresets(color);
         this.saveSettings();
         
         // System message removed - only log transmissions
     }
 
     initializeColorPicker() {
-        let isDragging = false;
-        
-        const handleColorPick = (e) => {
-            const rect = this.elements.colorSpectrum.getBoundingClientRect();
-            const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
-            const percentage = x / rect.width;
-            
-            // Direct hue calculation to match the HSL gradient (0-360)
-            const hue = percentage * 360;
-            
-            // Use HSL directly to match the gradient exactly
-            const color = `hsl(${hue}, 100%, 50%)`;
-            const hexColor = this.hslToHex(hue, 100, 50);
-            
-            this.selectColor(hexColor);
-        };
-        
-        this.elements.colorSpectrum.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            handleColorPick(e);
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                handleColorPick(e);
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
+        // Add click event listeners to all color preset buttons
+        const colorPresets = this.elements.colorPresets.querySelectorAll('.color-preset');
+        colorPresets.forEach(preset => {
+            preset.addEventListener('click', () => {
+                const color = preset.getAttribute('data-color');
+                this.selectColor(color);
+            });
         });
         
         // Initialize with current color
         this.updateColorPreview(this.config.primaryColor);
-        this.updateColorCursor(this.config.primaryColor);
+        this.updateColorPresets(this.config.primaryColor);
     }
     
     updateColorPreview(color) {
@@ -2657,20 +2632,17 @@ class BrandmeisterMonitor {
         }
     }
     
-    updateColorCursor(color) {
-        if (this.elements.colorCursor) {
-            // Convert hex to HSL to get hue, then position cursor accordingly
-            const hsl = this.hexToHsl(color);
-            let hue = hsl.h;
-            
-            // Ensure hue is in 0-360 range
-            hue = ((hue % 360) + 360) % 360;
-            
-            const percentage = hue / 360;
-            this.elements.colorCursor.style.left = `${percentage * 100}%`;
-            
-            // Debug log to see what's happening
-            console.log(`Color: ${color}, HSL: ${JSON.stringify(hsl)}, Hue: ${hue}, Position: ${percentage * 100}%`);
+    updateColorPresets(selectedColor) {
+        if (this.elements.colorPresets) {
+            const colorPresets = this.elements.colorPresets.querySelectorAll('.color-preset');
+            colorPresets.forEach(preset => {
+                const presetColor = preset.getAttribute('data-color');
+                if (presetColor.toLowerCase() === selectedColor.toLowerCase()) {
+                    preset.classList.add('selected');
+                } else {
+                    preset.classList.remove('selected');
+                }
+            });
         }
     }
     
@@ -2754,9 +2726,9 @@ class BrandmeisterMonitor {
     }
 
     updateColorSelection() {
-        // This method is now handled by updateColorPreview and updateColorCursor
+        // This method is now handled by updateColorPreview and updateColorPresets
         this.updateColorPreview(this.config.primaryColor);
-        this.updateColorCursor(this.config.primaryColor);
+        this.updateColorPresets(this.config.primaryColor);
     }
 
     applyPrimaryColor(color) {
