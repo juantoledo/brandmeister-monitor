@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 * {
-    margin: 0;
+    margin: -1px;
     padding: 0;
     box-sizing: border-box;
 }
@@ -382,6 +382,7 @@
 [data-theme="dark"] .card-phonetic {
     color: var(--text-light);
 }
+
 
 /* Dark mode legacy log styles */
 [data-theme="dark"] .log-header {
@@ -1009,7 +1010,6 @@ button:disabled {
 
 .transmission-container {
     flex: 1;
-    padding: 2px 0px 24px;
     overflow-y: auto;
 }
 
@@ -1903,15 +1903,12 @@ button:disabled {
 /* Active Transmissions - Redesigned Cards */
 .active-transmission {
     background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 2px;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
-    background-size: cover;
-    background-position: center;
+    background-position: right;
     background-repeat: no-repeat;
 }
 
@@ -2264,7 +2261,6 @@ button:disabled {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 100%;
     }
     
     .header-status {
@@ -2335,9 +2331,6 @@ button:disabled {
         grid-template-columns: 1fr;
     }
     
-    .main-content, .sidebar-content {
-        padding: 16px;
-    }
 }
 
 /* Extra small screens - phones in portrait */
@@ -2347,7 +2340,7 @@ button:disabled {
     }
     
     .app-header {
-        padding: 0 8px;
+        padding: 0 0px;
     }
     
     .header-content {
@@ -2408,57 +2401,19 @@ button:disabled {
 }
 
 .qrz-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
+    background: var(--primary);
+    color: var(--white);
+    padding: 4px 8px;
+    border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.025em;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(37, 99, 235, 0.3);
-    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.15);
-}
-
-.qrz-link:hover {
-    background: linear-gradient(135deg, var(--primary-light), #4F46E5);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
     text-decoration: none;
-    color: white;
-}
-
-.qrz-link:active {
-    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.15);
-}
-
-/* Ensure QRZ links work well in different contexts */
-.active-transmission .qrz-link,
-.log-entry .qrz-link {
+    display: inline-flex;
+    align-items: center;
     white-space: nowrap;
 }
 
-/* Responsive adjustments for QRZ links */
-@media (max-width: 768px) {
-    .qrz-link {
-        padding: 4px 8px;
-    }
-    
-    .log-actions {
-        gap: 6px;
-        margin-left: 6px;
-    }
-}
-
-@media (max-width: 480px) {
-    .qrz-link {
-        padding: 3px 6px;
-        font-size: 0.625rem;
-    }
-}
 
 /* Utility Classes */
 .text-sm { font-size: 0.875rem; }

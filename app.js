@@ -2096,8 +2096,7 @@ class BrandmeisterMonitor {
     createQRZLogbookLink(callsign) {
         if (!callsign) return '';
         const cleanCallsign = callsign.toUpperCase().trim();
-        // Use & instead of ; for better URL compatibility
-        return `<a href="https://logbook.qrz.com/logbook/?op=add&addcall=${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Log ${cleanCallsign} in QRZ Logbook">📋 QRZ</a>`;
+        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Look up ${cleanCallsign} on QRZ.com">📋 QRZ</a>`;
     }
 
     addLogHeader() {
