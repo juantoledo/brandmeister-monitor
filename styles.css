@@ -383,20 +383,6 @@
     color: var(--text-light);
 }
 
-/* Dark mode QRZ links */
-[data-theme="dark"] .qrz-link {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
-    border-color: rgba(59, 130, 246, 0.3);
-    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
-}
-
-[data-theme="dark"] .qrz-link:hover {
-    background: linear-gradient(135deg, var(--primary-light), #60a5fa);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-    color: white;
-}
-
 /* Dark mode legacy log styles */
 [data-theme="dark"] .log-header {
     background: var(--gray-700);
