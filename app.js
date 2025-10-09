@@ -767,7 +767,10 @@ class BrandmeisterMonitor {
 
     disconnect() {
         if (this.socket) {
+            // Remove all event listeners before disconnecting
+            this.socket.removeAllListeners();
             this.socket.disconnect();
+            this.socket = null;
         }
         this.onDisconnect();
     }
@@ -801,6 +804,11 @@ class BrandmeisterMonitor {
     }
 
     onMqttMessage(data) {
+        // Don't process messages if not connected
+        if (!this.isConnected) {
+            return;
+        }
+        
         this.startPerformanceTimer('messageProcessing');
         
         try {
