@@ -3851,10 +3851,11 @@ function initializeNewInterface() {
         });
     });
     
-    // Initialize console panel as collapsed by default
-    consolePanel.classList.add('minimized');
-    appLayout.classList.add('console-minimized');
-    consoleToggle.textContent = '▲';
+    // Initialize console panel as open by default
+    // Remove the minimized classes to show the console expanded
+    consolePanel.classList.remove('minimized');
+    appLayout.classList.remove('console-minimized');
+    consoleToggle.textContent = '▼';
     
     // Theme toggle functionality
     const themeToggle = document.getElementById('themeToggle');
