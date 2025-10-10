@@ -635,6 +635,16 @@ class BrandmeisterMonitor {
                     `TGs: ${tgList.join(', ')}`;
                 this.elements.currentTg.textContent = displayText;
             }
+        } else {
+            // No saved talkgroup - default to TG 91 (Worldwide)
+            this.monitoredTalkgroups = [91];
+            this.config.monitorAllTalkgroups = false;
+            this.elements.talkgroupInput.value = '91';
+            this.elements.currentTg.textContent = 'TG 91';
+            
+            if (this.config.verbose) {
+                console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
+            }
         }
     }
 
@@ -2549,10 +2559,31 @@ class BrandmeisterMonitor {
         // Store previous monitoring state to detect changes
         const previousMonitorAllTalkgroups = this.config.monitorAllTalkgroups;
         
+        // Check if user is trying to enable "Monitor All Talkgroups"
+        const newMonitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
+        
+        // Show warning when enabling "Monitor All Talkgroups"
+        if (!previousMonitorAllTalkgroups && newMonitorAllTalkgroups) {
+            const confirmed = confirm(
+                '⚠️ WARNING: Monitor All Talkgroups\n\n' +
+                'This will monitor ALL talkgroup activity on the network!\n\n' +
+                '• The UI will become very busy with transmissions\n' +
+                '• Performance may be impacted\n' +
+                '• Best used for network monitoring purposes\n\n' +
+                'Are you sure you want to continue?'
+            );
+            
+            if (!confirmed) {
+                // User cancelled - revert the checkbox
+                this.elements.monitorAllTalkgroupsCheckbox.checked = false;
+                return; // Exit without updating config
+            }
+        }
+        
         // Update config from UI elements
         this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 0;
         this.config.verbose = this.elements.verboseCheckbox.checked;
-        this.config.monitorAllTalkgroups = this.elements.monitorAllTalkgroupsCheckbox.checked;
+        this.config.monitorAllTalkgroups = newMonitorAllTalkgroups;
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.config.enableRadioIDLookup = this.elements.enableRadioIDLookupCheckbox.checked;
         }
@@ -2561,7 +2592,7 @@ class BrandmeisterMonitor {
         if (previousMonitorAllTalkgroups !== this.config.monitorAllTalkgroups) {
             this.clearActiveTransmissions();
             const modeText = this.config.monitorAllTalkgroups ? 
-                'Monitor all talkgroups enabled' : 
+                'Monitor all talkgroups enabled - UI may become very busy!' : 
                 'Monitor all talkgroups disabled - now monitoring specific talkgroups';
             // System message removed - only log transmissions
             
