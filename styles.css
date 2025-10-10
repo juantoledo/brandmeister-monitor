@@ -870,6 +870,29 @@ button:disabled {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* Text inputs for settings */
+.setting-group .setting-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.setting-group .setting-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.setting-group .setting-input::placeholder {
+    color: var(--text-light);
+    font-style: italic;
+}
+
 /* Toggle Switch */
 .toggle-label {
     display: flex;
@@ -1225,9 +1248,14 @@ button:disabled {
     background-size: 40px 100%; /* Full height scaling */
     background-repeat: no-repeat;
     background-position: 8px center;
-    opacity: 0.6; /* Increased for always visible */
+    opacity: 0.8; /* Increased opacity for better visibility */
     z-index: -1;
     pointer-events: none;
+}
+
+/* Dynamic flag backgrounds using CSS custom properties */
+.compact-log-line.has-flag-background::before {
+    background-image: var(--flag-url);
 }
 
 /* Generic background for unknown countries */
@@ -2349,5 +2377,163 @@ button:disabled {
     .color-value {
         font-size: 0.75rem;
         padding: 3px 6px;
+    }
+}
+
+/* Location Photo System - Left Side Only */
+
+/* Left-side photo backgrounds for compact log lines */
+.compact-log-line.has-photo-left::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80px; /* Wider than flag area */
+    height: 100%;
+    background-image: var(--photo-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+    z-index: -2; /* Behind flag but in front of background */
+    pointer-events: none;
+    border-radius: 0px;
+}
+
+/* Photo loading state for left side */
+.compact-log-line.loading-photo-left::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    animation: photoLoading 1s linear infinite;
+    z-index: -2;
+    pointer-events: none;
+}
+
+/* Active transmission cards with left-side photos */
+.active-transmission.has-photo-left::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px; /* Left portion of card */
+    height: 100%;
+    background-image: var(--photo-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.9;
+    z-index: -1; /* Behind content but in front of flag */
+    pointer-events: none;
+    border-radius: 0px;
+}
+
+.active-transmission.loading-photo-left::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    animation: photoLoading 1s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Ensure text content is above both photo and flag */
+.compact-log-line.has-photo-left > *,
+.active-transmission.has-photo-left .card-main {
+    position: relative;
+    z-index: 1;
+}
+
+/* Gradient overlay for better text readability over photos */
+.compact-log-line.has-photo-left::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.7) 70%, rgba(255, 255, 255, 0.9) 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.active-transmission.has-photo-left::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.3) 60%, rgba(255, 255, 255, 0.8) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Active transmission flag backgrounds (right side) */
+.active-transmission.has-flag-background {
+    background-image: var(--flag-url);
+    background-size: 80px auto;
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-attachment: local;
+}
+
+/* Ensure photos and flags work together */
+.active-transmission.has-photo-left.has-flag-background {
+    background-image: var(--flag-url); /* Flag on right side */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .compact-log-line.has-photo-left::after,
+    .compact-log-line.loading-photo-left::after {
+        width: 60px;
+    }
+    
+    .compact-log-line.has-photo-left::before {
+        width: 60px;
+    }
+    
+    .active-transmission.has-photo-left::after,
+    .active-transmission.loading-photo-left::after {
+        width: 80px;
+    }
+    
+    .active-transmission.has-photo-left::before {
+        width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .compact-log-line.has-photo-left::after,
+    .compact-log-line.loading-photo-left::after {
+        width: 50px;
+    }
+    
+    .compact-log-line.has-photo-left::before {
+        width: 50px;
+    }
+    
+    .active-transmission.has-photo-left::after,
+    .active-transmission.loading-photo-left::after {
+        width: 60px;
+    }
+    
+    .active-transmission.has-photo-left::before {
+        width: 60px;
     }
 }
