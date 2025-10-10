@@ -795,6 +795,9 @@ class BrandmeisterMonitor {
         this.updateConnectionStatus(false);
         // System message removed - only log transmissions
         
+        // Clear all active transmissions on disconnect
+        this.clearActiveTransmissions();
+        
         // Cleanup memory when disconnected
         this.performMemoryCleanup();
         
@@ -2355,6 +2358,22 @@ class BrandmeisterMonitor {
         this.totalCalls = 0;
         this.lastActivityTime = null;
         this.updateStats();
+    }
+
+    clearActiveTransmissions() {
+        // Clear active transmissions UI
+        this.elements.activeContainer.innerHTML = '';
+        this.elements.activeContainer.appendChild(this.createNoActivityElement(this._htmlFragments.noActivityActive));
+        
+        // Clear transmission groups data
+        this.transmissionGroups = {};
+        
+        // Reset session tracking
+        this.sessionSequence = 0;
+        
+        if (this.config.verbose) {
+            console.log('🧹 Cleared all active transmissions on disconnect');
+        }
     }
 
 
