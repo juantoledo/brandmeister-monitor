@@ -19,7 +19,7 @@ class BrandmeisterMonitor {
         
         // Configuration (can be made user-configurable later)
         this.config = {
-            minDuration: 0, // duration filtering disabled - all transmissions logged
+            minDuration: 2, // filter out short transmissions (seconds)
             verbose: true, // Enable verbose console logging for debugging (does not affect activity log)
             monitorAllTalkgroups: false, // if true, monitor all TGs; if false, use monitoredTalkgroup
             primaryColor: '#2563eb', // Primary color for the interface
@@ -1060,6 +1060,20 @@ class BrandmeisterMonitor {
         
         // Direct UI Updates based on session state
         if (group.status === 'completed') {
+            // Check duration filter before logging
+            const duration = fieldData.duration || 0;
+            if (duration < this.config.minDuration) {
+                if (this.config.verbose) {
+                    console.log(`⏱️ Skipping transmission - Duration ${duration}s is below minimum threshold of ${this.config.minDuration}s: ${titleText}`);
+                }
+                // Remove from active display without logging
+                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+                if (activeEntry) {
+                    activeEntry.remove();
+                }
+                return; // Exit early - don't log this transmission
+            }
+            
             if (this.config.verbose) {
                 console.log(`✅ Completed transmission - Adding to activity log: ${titleText}, Duration: ${fieldData.duration}s`);
             }
@@ -2466,7 +2480,7 @@ class BrandmeisterMonitor {
                 const settings = JSON.parse(savedSettings);
                 
                 // Update config object
-                this.config.minDuration = settings.minDuration || 0;
+                this.config.minDuration = settings.minDuration || 2;
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
                 this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
@@ -2517,11 +2531,11 @@ class BrandmeisterMonitor {
 
     resetSettings() {
         // Reset to default values
-        this.config.minDuration = 0; // Duration filtering disabled
+        this.config.minDuration = 2; // Reset to 2 seconds default
         this.config.verbose = false;
         this.config.monitorAllTalkgroups = false;
         this.config.enableRadioIDLookup = true;
-        this.config.primaryColor = '#2563eb';
+        this.config.primaryColor = '#0066cc';
         
         // Apply default color
         this.applyPrimaryColor(this.config.primaryColor);

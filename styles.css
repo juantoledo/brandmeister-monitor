@@ -258,7 +258,6 @@
 [data-theme="dark"] .callsign {
     background: rgba(59, 130, 246, 0.15);
     border-color: rgba(59, 130, 246, 0.3);
-    color: var(--primary-light);
 }
 
 [data-theme="dark"] .talkgroup {
@@ -2446,7 +2445,6 @@ button:disabled {
 
 @media (max-width: 480px) {
     .color-presets {
-        grid-template-columns: repeat(3, 1fr);
         padding: 0.4rem;
         gap: 0.3rem;
     }
