@@ -2311,16 +2311,38 @@ button:disabled {
     opacity: 0.7;
 }
 
-/* Card content layout with left content and right flag */
+/* Card content layout with left content and chronometer */
 .card-content {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
+    position: relative;
 }
 
 .card-left {
     flex: 1;
+}
+
+.card-chronometer {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-chronometer .call-duration {
+    background: var(--success);
+    color: var(--white);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    min-width: 45px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 /* Large flag display in middle-right area - HIDDEN for background experiment */

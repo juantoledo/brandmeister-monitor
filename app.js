@@ -55,6 +55,9 @@ class BrandmeisterMonitor {
             timer: null
         };
 
+        // Call duration tracking
+        this.activeCalls = new Map(); // SessionID -> { startTime, callsign, tg, ... }
+
         // Talk Group Selector state
         this.selectedTalkgroups = new Set();
         this.recentlySelectedTalkgroups = []; // Track last 10 selected TGs
@@ -154,6 +157,7 @@ class BrandmeisterMonitor {
         // Initialize cleanup timers
         this.startMemoryCleanupTimer();
         this.startSessionCleanupTimer();
+        this.startChronometerTimer();
         
         // Initialize performance monitoring
         this.startPerformanceMonitoring();
@@ -513,6 +517,58 @@ class BrandmeisterMonitor {
         this.sessionCleanupTimer = setInterval(() => {
             this.performSessionCleanup();
         }, this.config.sessionCleanupInterval);
+    }
+
+    startChronometerTimer() {
+        // Clear any existing timer
+        if (this.chronometerTimer) {
+            clearInterval(this.chronometerTimer);
+        }
+        
+        // Update chronometers every second
+        this.chronometerTimer = setInterval(() => {
+            this.updateActiveCallChronometers();
+        }, 1000);
+    }
+
+    updateActiveCallChronometers() {
+        // Update duration display for all active transmissions
+        const activeTransmissions = Object.keys(this.transmissionGroups).filter(sessionKey => {
+            const group = this.transmissionGroups[sessionKey];
+            return group && group.status === 'active' && group.startTime;
+        });
+
+        if (this.config.verbose && activeTransmissions.length > 0) {
+            console.log(`📊 Updating chronometers for ${activeTransmissions.length} active calls`);
+        }
+
+        activeTransmissions.forEach(sessionKey => {
+            const group = this.transmissionGroups[sessionKey];
+            const activeElement = document.getElementById(`active-${sessionKey}`);
+            if (activeElement) {
+                const now = Math.floor(Date.now() / 1000);
+                const currentDuration = now - group.startTime;
+                const durationElement = activeElement.querySelector('.call-duration');
+                if (durationElement) {
+                    durationElement.textContent = this.formatDuration(currentDuration);
+                }
+            }
+        });
+    }
+
+    formatDuration(seconds) {
+        if (seconds < 60) {
+            return `${seconds}s`;
+        } else if (seconds < 3600) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}m ${remainingSeconds}s`;
+        } else {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = seconds % 60;
+            return `${hours}h ${minutes}m ${remainingSeconds}s`;
+        }
     }
 
     // Memory monitoring and reporting
@@ -1404,12 +1460,12 @@ class BrandmeisterMonitor {
         }
     }
 
-    createOrUpdateTransmissionGroup(callKey, call) {
-        const group = this.transmissionGroups[callKey];
+    createOrUpdateTransmissionGroup(sessionKey, call) {
+        const group = this.transmissionGroups[sessionKey];
         if (!group) {
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup called for ${callKey} but no group found`);
+                console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup called for ${sessionKey} but no group found`);
             }
             return;
         }
@@ -1422,7 +1478,7 @@ class BrandmeisterMonitor {
         
         if (this.config.verbose) {
             const timestamp = new Date().toLocaleString();
-            console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${callKey}), ContextID: ${group.contextID || 'N/A'}, status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
+            console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionGroup for ${callsign} (SessionID: ${sessionKey}), ContextID: ${group.contextID || 'N/A'}, status: ${group.status}, startTime: ${group.startTime}, stopTime: ${group.stopTime}`);
             if (group.status === 'completed' && group.stopTime) {
                 const duration = group.stopTime - group.startTime;
                 console.log(`[${timestamp}] DEBUG: Completed transmission duration: ${duration.toFixed(1)}s`);
@@ -1484,7 +1540,7 @@ class BrandmeisterMonitor {
                     console.log(`⏱️ Skipping transmission - Duration ${duration}s is below minimum threshold of ${this.config.minDuration}s: ${titleText}`);
                 }
                 // Remove from active display without logging
-                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
                 if (activeEntry) {
                     activeEntry.remove();
                 }
@@ -1506,16 +1562,16 @@ class BrandmeisterMonitor {
             }
             
             // Remove from active display
-            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
             if (activeEntry) {
                 activeEntry.remove();
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] DEBUG: Successfully removed active transmission from UI (SessionID: ${callKey})`);
+                    console.log(`[${timestamp}] DEBUG: Successfully removed active transmission from UI (SessionID: ${sessionKey})`);
                 }
             } else if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: Active transmission not found in UI for removal (SessionID: ${callKey}), selector: [data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+                console.log(`[${timestamp}] DEBUG: Active transmission not found in UI for removal (SessionID: ${sessionKey}), selector: [data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
                 // List all active entries for debugging
                 const allActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
                 const sessionKeys = Array.from(allActiveEntries).map(entry => entry.getAttribute('data-session-key')).filter(Boolean);
@@ -1529,7 +1585,7 @@ class BrandmeisterMonitor {
             
         } else {
             // Handle active/started transmissions
-            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(callKey)}"]`);
+            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
             
             if (existingActiveEntry) {
                 // Update existing active transmission UI
@@ -1575,14 +1631,14 @@ class BrandmeisterMonitor {
                 
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] Updated active transmission UI for SessionID: ${callKey}, ContextID: ${group.contextID || 'N/A'}, Title: ${titleText}`);
+                    console.log(`[${timestamp}] Updated active transmission UI for SessionID: ${sessionKey}, ContextID: ${group.contextID || 'N/A'}, Title: ${titleText}`);
                 }
                 
             } else {
                 // Create new active transmission UI
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] Creating new active transmission UI for ${titleText} (SessionID: ${callKey}), ContextID: ${group.contextID || 'N/A'}, TG: ${tg}`);
+                    console.log(`[${timestamp}] Creating new active transmission UI for ${titleText} (SessionID: ${sessionKey}), ContextID: ${group.contextID || 'N/A'}, TG: ${tg}`);
                 }
                 
                 // Remove "no activity" message if it exists
@@ -1594,7 +1650,8 @@ class BrandmeisterMonitor {
                 // Create new active entry
                 const activeEntry = document.createElement('div');
                 activeEntry.className = 'active-transmission';
-                activeEntry.setAttribute('data-session-key', this.escapeCSSSelector(callKey));
+                activeEntry.id = `active-${sessionKey}`;
+                activeEntry.setAttribute('data-session-key', this.escapeCSSSelector(sessionKey));
                 
                 // Extract callsign for QRZ link
                 const callsign = this.extractCallsignFromTitle(titleText);
@@ -1642,6 +1699,9 @@ class BrandmeisterMonitor {
                                     ${alias ? `<div class="card-alias">${alias}</div>` : ''}
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
                                 </div>
+                            </div>
+                            <div class="card-chronometer">
+                                <span class="call-duration">0s</span>
                             </div>
                         </div>
                     </div>
@@ -2276,11 +2336,11 @@ class BrandmeisterMonitor {
         }
     }
 
-    updateTransmissionGroupDisplay(callKey) {
-        const group = this.transmissionGroups[callKey];
+    updateTransmissionGroupDisplay(sessionKey) {
+        const group = this.transmissionGroups[sessionKey];
         if (!group || !group.logEntry) return;
 
-        this.createOrUpdateTransmissionGroup(callKey, { DestinationID: group.tg });
+        this.createOrUpdateTransmissionGroup(sessionKey, { DestinationID: group.tg });
     }
 
     handleTransmission(call) {
