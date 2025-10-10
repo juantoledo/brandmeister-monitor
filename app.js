@@ -55,6 +55,10 @@ class BrandmeisterMonitor {
             timer: null
         };
 
+        // Talk Group Selector state
+        this.selectedTalkgroups = new Set();
+        this.recentlySelectedTalkgroups = []; // Track last 10 selected TGs
+
         this.initializeUI();
         this.loadTalkgroupFromStorage();
         this.loadAliasesFromStorage();
@@ -89,7 +93,17 @@ class BrandmeisterMonitor {
             colorValue: document.getElementById('colorValue'),
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
-            settingsContainer: document.getElementById('settingsContainer')
+            settingsContainer: document.getElementById('settingsContainer'),
+            // Talk Group Selector elements
+            tgTabs: document.querySelectorAll('.tg-tab'),
+            tgTabContents: document.querySelectorAll('.tg-tab-content'),
+            tgSearch: document.getElementById('tgSearch'),
+            tgSearchResults: document.getElementById('tgSearchResults'),
+            tgPopularGrid: document.getElementById('tgPopularGrid'),
+            tgCategory: document.getElementById('tgCategory'),
+            tgCategoryGrid: document.getElementById('tgCategoryGrid'),
+            tgSelectedList: document.getElementById('tgSelectedList'),
+            clearSelection: document.getElementById('clearSelection')
         };
 
         // Bind event listeners
@@ -122,11 +136,19 @@ class BrandmeisterMonitor {
         // Load saved settings
         this.loadSettings();
         
+        // Initialize Talk Group Selector
+        this.initializeTalkGroupSelector();
+        
         // Allow Enter key to save talkgroup
         this.elements.talkgroupInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.saveTalkgroup();
             }
+        });
+
+        // Sync manual input changes to visual selections
+        this.elements.talkgroupInput.addEventListener('input', (e) => {
+            this.syncInputToSelectedTalkGroups();
         });
 
         // Initialize cleanup timers
@@ -135,6 +157,313 @@ class BrandmeisterMonitor {
         
         // Initialize performance monitoring
         this.startPerformanceMonitoring();
+    }
+
+    // Initialize Talk Group Selector
+    initializeTalkGroupSelector() {
+        // Tab switching
+        this.elements.tgTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetTab = e.target.dataset.tab;
+                this.switchTalkGroupTab(targetTab);
+            });
+        });
+
+        // Search functionality
+        if (this.elements.tgSearch) {
+            this.elements.tgSearch.addEventListener('input', (e) => {
+                this.handleTalkGroupSearch(e.target.value);
+            });
+
+            // Hide search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.tg-search-container')) {
+                    this.hideTalkGroupSearchResults();
+                }
+            });
+        }
+
+        // Category selector
+        if (this.elements.tgCategory) {
+            this.elements.tgCategory.addEventListener('change', (e) => {
+                this.loadTalkGroupCategory(e.target.value);
+            });
+        }
+
+        // Clear selection button
+        if (this.elements.clearSelection) {
+            this.elements.clearSelection.addEventListener('click', () => {
+                this.clearTalkGroupSelection();
+            });
+        }
+
+        // Load popular talk groups first
+        this.loadRecentlySelectedFromStorage();
+        this.loadRecentlySelectedTalkGroups();
+        
+        // Then load saved selections and update visuals
+        this.loadSelectedTalkGroupsFromStorage();
+        
+        // Sync existing talkgroup input with visual selector if no visual selections exist
+        this.syncExistingTalkgroupToVisualSelector();
+    }
+
+    switchTalkGroupTab(tabName) {
+        // Update tab buttons
+        this.elements.tgTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Update tab content
+        this.elements.tgTabContents.forEach(content => {
+            if (content.id === `${tabName}-tab`) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
+    }
+
+    loadRecentlySelectedTalkGroups() {
+        if (!this.elements.tgPopularGrid) return;
+
+        this.elements.tgPopularGrid.innerHTML = '';
+        
+        if (this.recentlySelectedTalkgroups.length === 0) {
+            // Show message when no recently selected TGs
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'tg-empty-message';
+            emptyMessage.innerHTML = `
+                <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.875rem;">
+                    <p>No recently selected talk groups</p>
+                    <p style="font-size: 0.75rem; opacity: 0.7;">Your last 10 selections will appear here</p>
+                </div>
+            `;
+            this.elements.tgPopularGrid.appendChild(emptyMessage);
+            return;
+        }
+        
+        this.recentlySelectedTalkgroups.forEach(tg => {
+            const item = document.createElement('div');
+            item.className = 'tg-popular-item';
+            item.dataset.tgId = tg.id;
+            
+            // Check if currently selected
+            if (this.selectedTalkgroups.has(tg.id)) {
+                item.classList.add('selected');
+            }
+            
+            item.innerHTML = `
+                <div class="tg-popular-id">${tg.id}</div>
+                <div class="tg-popular-name">${tg.name}</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                this.toggleTalkGroupSelection(tg.id, tg.name, item);
+            });
+            
+            this.elements.tgPopularGrid.appendChild(item);
+        });
+    }
+
+    loadTalkGroupCategory(category) {
+        if (!this.elements.tgCategoryGrid || !category || typeof getTalkgroupsByCategory === 'undefined') {
+            this.elements.tgCategoryGrid.innerHTML = '';
+            return;
+        }
+
+        const categoryTGs = getTalkgroupsByCategory(category);
+        this.elements.tgCategoryGrid.innerHTML = '';
+        
+        Object.entries(categoryTGs).forEach(([id, name]) => {
+            const item = document.createElement('div');
+            item.className = 'tg-category-item';
+            item.dataset.tgId = id;
+            
+            item.innerHTML = `
+                <div class="tg-category-id">${id}</div>
+                <div class="tg-category-name">${name}</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                this.toggleTalkGroupSelection(id, name, item);
+            });
+            
+            this.elements.tgCategoryGrid.appendChild(item);
+        });
+    }
+
+    handleTalkGroupSearch(query) {
+        if (!query.trim()) {
+            this.hideTalkGroupSearchResults();
+            return;
+        }
+
+        if (typeof searchTalkgroups === 'undefined') return;
+
+        const results = searchTalkgroups(query.trim());
+        this.showTalkGroupSearchResults(results);
+    }
+
+    showTalkGroupSearchResults(results) {
+        if (!this.elements.tgSearchResults) return;
+
+        if (results.length === 0) {
+            this.elements.tgSearchResults.innerHTML = '<div class="tg-search-result">No talk groups found</div>';
+        } else {
+            this.elements.tgSearchResults.innerHTML = results.map(result => `
+                <div class="tg-search-result" data-tg-id="${result.id}">
+                    <div class="tg-search-result-id">${result.id}</div>
+                    <div class="tg-search-result-name">${result.name}</div>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            this.elements.tgSearchResults.querySelectorAll('.tg-search-result[data-tg-id]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.dataset.tgId;
+                    const name = item.querySelector('.tg-search-result-name').textContent;
+                    this.toggleTalkGroupSelection(id, name);
+                    this.hideTalkGroupSearchResults();
+                    this.elements.tgSearch.value = '';
+                });
+            });
+        }
+
+        this.elements.tgSearchResults.classList.add('show');
+    }
+
+    hideTalkGroupSearchResults() {
+        if (this.elements.tgSearchResults) {
+            this.elements.tgSearchResults.classList.remove('show');
+        }
+    }
+
+    toggleTalkGroupSelection(id, name, element = null) {
+        if (this.selectedTalkgroups.has(id)) {
+            this.selectedTalkgroups.delete(id);
+            if (element) element.classList.remove('selected');
+        } else {
+            this.selectedTalkgroups.add(id);
+            if (element) element.classList.add('selected');
+            this.addToRecentlySelected(id, name);
+        }
+
+        this.updateSelectedTalkGroupsDisplay();
+        this.syncSelectedTalkGroupsToInput();
+        this.saveSelectedTalkGroupsToStorage();
+    }
+
+    updateSelectedTalkGroupsDisplay() {
+        if (!this.elements.tgSelectedList) return;
+
+        if (this.selectedTalkgroups.size === 0) {
+            this.elements.tgSelectedList.innerHTML = '<span class="tg-selected-empty">No talk groups selected</span>';
+            return;
+        }
+
+        const tags = Array.from(this.selectedTalkgroups).map(id => {
+            const name = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`;
+            return `
+                <span class="tg-selected-tag">
+                    <span class="tg-selected-tag-id">${id}</span>
+                    <span class="tg-selected-tag-remove" data-tg-id="${id}">×</span>
+                </span>
+            `;
+        }).join('');
+
+        this.elements.tgSelectedList.innerHTML = tags;
+
+        // Add remove handlers
+        this.elements.tgSelectedList.querySelectorAll('.tg-selected-tag-remove').forEach(removeBtn => {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = removeBtn.dataset.tgId;
+                this.toggleTalkGroupSelection(id, '', null);
+                this.updateTalkGroupSelectionVisuals();
+            });
+        });
+    }
+
+    updateTalkGroupSelectionVisuals() {
+        // Update popular grid
+        this.elements.tgPopularGrid?.querySelectorAll('.tg-popular-item').forEach(item => {
+            const id = item.dataset.tgId;
+            item.classList.toggle('selected', this.selectedTalkgroups.has(id));
+        });
+
+        // Update category grid
+        this.elements.tgCategoryGrid?.querySelectorAll('.tg-category-item').forEach(item => {
+            const id = item.dataset.tgId;
+            item.classList.toggle('selected', this.selectedTalkgroups.has(id));
+        });
+    }
+
+    syncSelectedTalkGroupsToInput() {
+        if (this.selectedTalkgroups.size === 0) {
+            this.elements.talkgroupInput.value = '';
+        } else {
+            const sortedIds = Array.from(this.selectedTalkgroups).sort((a, b) => parseInt(a) - parseInt(b));
+            this.elements.talkgroupInput.value = sortedIds.join(',');
+        }
+    }
+
+    syncInputToSelectedTalkGroups() {
+        const inputValue = this.elements.talkgroupInput.value.trim();
+        
+        // Clear current selections
+        this.selectedTalkgroups.clear();
+        
+        if (inputValue && inputValue.toLowerCase() !== 'all') {
+            // Parse comma-separated values
+            const tgIds = inputValue.split(',')
+                .map(id => id.trim())
+                .filter(id => id && /^\d+$/.test(id)); // Only valid numeric IDs
+            
+            // Add to selected set and recently selected list
+            tgIds.forEach(id => {
+                this.selectedTalkgroups.add(id);
+                const name = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`;
+                this.addToRecentlySelected(id, name);
+            });
+        }
+        
+        // Update visual display
+        this.updateSelectedTalkGroupsDisplay();
+        this.updateTalkGroupSelectionVisuals();
+        this.saveSelectedTalkGroupsToStorage();
+    }
+
+    clearTalkGroupSelection() {
+        this.selectedTalkgroups.clear();
+        this.updateSelectedTalkGroupsDisplay();
+        this.updateTalkGroupSelectionVisuals();
+        this.syncSelectedTalkGroupsToInput();
+        this.saveSelectedTalkGroupsToStorage();
+    }
+
+    syncExistingTalkgroupToVisualSelector() {
+        // If no visual selections exist but talkgroup input has value, sync it
+        if (this.selectedTalkgroups.size === 0 && this.elements.talkgroupInput.value) {
+            const inputValue = this.elements.talkgroupInput.value.trim();
+            if (inputValue && inputValue.toLowerCase() !== 'all') {
+                // Parse the existing input and add to visual selector
+                const tgIds = inputValue.split(',')
+                    .map(id => id.trim())
+                    .filter(id => id && /^\d+$/.test(id));
+                
+                tgIds.forEach(id => {
+                    this.selectedTalkgroups.add(id);
+                    const name = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`;
+                    this.addToRecentlySelected(id, name);
+                });
+                
+                // Update visual display
+                this.updateSelectedTalkGroupsDisplay();
+                this.updateTalkGroupSelectionVisuals();
+                this.saveSelectedTalkGroupsToStorage();
+            }
+        }
     }
 
     // Helper methods for HTML generation to reduce string operations
@@ -642,6 +971,10 @@ class BrandmeisterMonitor {
             this.elements.talkgroupInput.value = '91';
             this.elements.currentTg.textContent = 'TG 91';
             
+            // Also add to visual selection system
+            this.selectedTalkgroups.add('91');
+            this.addToRecentlySelected('91', 'Worldwide (Global)');
+            
             if (this.config.verbose) {
                 console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
             }
@@ -664,6 +997,77 @@ class BrandmeisterMonitor {
         if (callsign && alias && alias.trim() !== '') {
             this.callsignAliases[callsign] = alias.trim();
             localStorage.setItem('brandmeister_aliases', JSON.stringify(this.callsignAliases));
+        }
+    }
+
+    // Selected Talk Groups Storage
+    saveSelectedTalkGroupsToStorage() {
+        try {
+            const selectedArray = Array.from(this.selectedTalkgroups);
+            localStorage.setItem('brandmeister_selected_talkgroups', JSON.stringify(selectedArray));
+        } catch (error) {
+            this.logError('Error saving selected talk groups to storage', { error: error.message });
+        }
+    }
+
+    loadSelectedTalkGroupsFromStorage() {
+        try {
+            const saved = localStorage.getItem('brandmeister_selected_talkgroups');
+            if (saved) {
+                const selectedArray = JSON.parse(saved);
+                this.selectedTalkgroups = new Set(selectedArray);
+                // Update display and visuals after loading
+                this.updateSelectedTalkGroupsDisplay();
+                this.updateTalkGroupSelectionVisuals();
+                this.syncSelectedTalkGroupsToInput();
+            }
+        } catch (error) {
+            this.logError('Error loading selected talk groups from storage', { error: error.message });
+            this.selectedTalkgroups = new Set();
+        }
+    }
+
+    // Recently Selected Talk Groups Management
+    addToRecentlySelected(id, name) {
+        const tgData = { 
+            id: id, 
+            name: name || (typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`),
+            timestamp: Date.now()
+        };
+        
+        // Remove if already exists
+        this.recentlySelectedTalkgroups = this.recentlySelectedTalkgroups.filter(tg => tg.id !== id);
+        
+        // Add to front
+        this.recentlySelectedTalkgroups.unshift(tgData);
+        
+        // Keep only last 10
+        this.recentlySelectedTalkgroups = this.recentlySelectedTalkgroups.slice(0, 10);
+        
+        // Save to storage
+        this.saveRecentlySelectedToStorage();
+        
+        // Refresh the popular grid display
+        this.loadRecentlySelectedTalkGroups();
+    }
+
+    saveRecentlySelectedToStorage() {
+        try {
+            localStorage.setItem('brandmeister_recently_selected', JSON.stringify(this.recentlySelectedTalkgroups));
+        } catch (error) {
+            this.logError('Error saving recently selected talk groups to storage', { error: error.message });
+        }
+    }
+
+    loadRecentlySelectedFromStorage() {
+        try {
+            const saved = localStorage.getItem('brandmeister_recently_selected');
+            if (saved) {
+                this.recentlySelectedTalkgroups = JSON.parse(saved);
+            }
+        } catch (error) {
+            this.logError('Error loading recently selected talk groups from storage', { error: error.message });
+            this.recentlySelectedTalkgroups = [];
         }
     }
 

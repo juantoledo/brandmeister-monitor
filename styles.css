@@ -691,6 +691,355 @@ body {
     color: var(--text-light);
 }
 
+/* Enhanced Talk Group Selector */
+.tg-tabs {
+    display: flex;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    padding: 2px;
+    margin-bottom: 16px;
+}
+
+.tg-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tg-tab.active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.tg-tab:hover:not(.active) {
+    color: var(--text);
+}
+
+.tg-tab-content {
+    display: none;
+}
+
+.tg-tab-content.active {
+    display: block;
+}
+
+/* Search Container */
+.tg-search-container {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.tg-search {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tg-search:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.tg-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.tg-search-results.show {
+    display: block;
+}
+
+.tg-search-result {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s;
+}
+
+.tg-search-result:hover {
+    background: var(--background);
+}
+
+.tg-search-result:last-child {
+    border-bottom: none;
+}
+
+.tg-search-result-id {
+    font-weight: 600;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+}
+
+.tg-search-result-name {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Popular Talk Groups Grid */
+.tg-popular-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.tg-popular-item {
+    padding: 6px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+}
+
+.tg-popular-item:hover {
+    border-color: var(--primary);
+    background: var(--background);
+}
+
+.tg-popular-item.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.tg-popular-id {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.tg-popular-name {
+    font-size: 0.7rem;
+    margin-top: 1px;
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+.tg-popular-item.selected .tg-popular-name {
+    opacity: 1;
+}
+
+/* Empty message for no recently selected */
+.tg-empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+}
+
+/* Category Selector */
+.tg-category-selector {
+    margin-bottom: 16px;
+}
+
+.tg-category-selector label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.tg-category-selector select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    background: var(--surface);
+    color: var(--text);
+}
+
+/* Category Grid */
+.tg-category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.tg-category-item {
+    padding: 6px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.tg-category-item:hover {
+    border-color: var(--primary);
+    background: var(--background);
+}
+
+.tg-category-item.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.tg-category-id {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.tg-category-name {
+    font-size: 0.7rem;
+    margin-top: 1px;
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+.tg-category-item.selected .tg-category-name {
+    opacity: 1;
+}
+
+/* Selected Talk Groups */
+.tg-selected {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 16px;
+}
+
+.tg-selected h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.tg-selected-list {
+    min-height: 40px;
+    padding: 8px;
+    background: var(--background);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.tg-selected-empty {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+.tg-selected-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.tg-selected-tag-id {
+    font-family: 'Courier New', monospace;
+}
+
+.tg-selected-tag-remove {
+    cursor: pointer;
+    opacity: 0.8;
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+.tg-selected-tag-remove:hover {
+    opacity: 1;
+}
+
+/* Buttons */
+.tg-btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.tg-btn.primary {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.tg-btn.primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.tg-btn.secondary {
+    background: var(--surface);
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+.tg-btn.secondary:hover {
+    background: var(--background);
+    border-color: var(--text-light);
+    color: var(--text);
+}
+
+.tg-save-container {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.tg-save-container .tg-btn {
+    width: 100%;
+}
+
+/* Input Help Text */
+.tg-input-help {
+    margin-top: 4px;
+}
+
+.tg-input-help small {
+    color: var(--text-light);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
 /* Buttons */
 button {
     padding: 12px 16px;
