@@ -2164,6 +2164,12 @@ button:disabled {
     position: relative;
     background-position: right;
     background-repeat: no-repeat;
+    animation: slideInFromRight 0.5s ease-out;
+}
+
+/* Exit animation class */
+.active-transmission.exiting {
+    animation: slideOutToRight 0.5s ease-in forwards;
 }
 
 /* Flag background overlay for better text readability */
@@ -2202,6 +2208,30 @@ button:disabled {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
+}
+
+/* Entry animation from right */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Exit animation to right */
+@keyframes slideOutToRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
 
 .active-transmission.active::before {

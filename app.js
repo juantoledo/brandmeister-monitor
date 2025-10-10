@@ -998,6 +998,23 @@ class BrandmeisterMonitor {
         this.callsignAliases = {};
     }
 
+    // Helper function to animate transmission card removal
+    animateTransmissionRemoval(element, callback) {
+        if (!element) {
+            if (callback) callback();
+            return;
+        }
+
+        // Add exit animation class
+        element.classList.add('exiting');
+        
+        // Wait for animation to complete, then remove element
+        setTimeout(() => {
+            element.remove();
+            if (callback) callback();
+        }, 500); // Match the CSS animation duration
+    }
+
     loadTalkgroupFromStorage() {
         const savedTg = localStorage.getItem('brandmeister_talkgroup');
         const monitorAll = localStorage.getItem('brandmeister_monitor_all') === 'true';
@@ -1542,7 +1559,7 @@ class BrandmeisterMonitor {
                 // Remove from active display without logging
                 const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
                 if (activeEntry) {
-                    activeEntry.remove();
+                    this.animateTransmissionRemoval(activeEntry);
                 }
                 return; // Exit early - don't log this transmission
             }
@@ -1564,7 +1581,7 @@ class BrandmeisterMonitor {
             // Remove from active display
             const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
             if (activeEntry) {
-                activeEntry.remove();
+                this.animateTransmissionRemoval(activeEntry);
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
                     console.log(`[${timestamp}] DEBUG: Successfully removed active transmission from UI (SessionID: ${sessionKey})`);
@@ -2061,7 +2078,7 @@ class BrandmeisterMonitor {
             // Clean up invalid transmission
             const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
             if (activeEntry) {
-                activeEntry.remove();
+                this.animateTransmissionRemoval(activeEntry);
             }
             delete this.transmissionGroups[sessionKey];
             return;
