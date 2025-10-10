@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 * {
-    margin: -1px;
+    margin: 0px;
     padding: 0;
     box-sizing: border-box;
 }
@@ -1216,12 +1216,10 @@ button:disabled {
     display: grid;
     grid-template-columns: 
         125px     /* timestamp - full MM/dd/yy, HH:mm:ss format */
-        80px      /* callsign */
+        80px      /* callsign (now QRZ link) */
         1fr       /* name from location */
         120px     /* alias */
-        60px      /* talkgroup */
-        60px      /* duration */
-        50px;     /* qrz */
+        60px;     /* duration */
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
@@ -1244,94 +1242,6 @@ button:disabled {
     opacity: 0.6; /* Increased for always visible */
     z-index: -1;
     pointer-events: none;
-}
-
-.compact-log-line[data-country="us"]::before {
-    background-image: url('https://flagcdn.com/w40/us.png');
-}
-
-.compact-log-line[data-country="gb"]::before {
-    background-image: url('https://flagcdn.com/w40/gb.png');
-}
-
-.compact-log-line[data-country="au"]::before {
-    background-image: url('https://flagcdn.com/w40/au.png');
-}
-
-.compact-log-line[data-country="de"]::before {
-    background-image: url('https://flagcdn.com/w40/de.png');
-}
-
-.compact-log-line[data-country="es"]::before {
-    background-image: url('https://flagcdn.com/w40/es.png');
-}
-
-.compact-log-line[data-country="cl"]::before {
-    background-image: url('https://flagcdn.com/w40/cl.png');
-}
-
-.compact-log-line[data-country="ca"]::before {
-    background-image: url('https://flagcdn.com/w40/ca.png');
-}
-
-.compact-log-line[data-country="fr"]::before {
-    background-image: url('https://flagcdn.com/w40/fr.png');
-}
-
-.compact-log-line[data-country="it"]::before {
-    background-image: url('https://flagcdn.com/w40/it.png');
-}
-
-.compact-log-line[data-country="nl"]::before {
-    background-image: url('https://flagcdn.com/w40/nl.png');
-}
-
-.compact-log-line[data-country="se"]::before {
-    background-image: url('https://flagcdn.com/w40/se.png');
-}
-
-.compact-log-line[data-country="no"]::before {
-    background-image: url('https://flagcdn.com/w40/no.png');
-}
-
-.compact-log-line[data-country="dk"]::before {
-    background-image: url('https://flagcdn.com/w40/dk.png');
-}
-
-.compact-log-line[data-country="fi"]::before {
-    background-image: url('https://flagcdn.com/w40/fi.png');
-}
-
-.compact-log-line[data-country="br"]::before {
-    background-image: url('https://flagcdn.com/w40/br.png');
-}
-
-.compact-log-line[data-country="mx"]::before {
-    background-image: url('https://flagcdn.com/w40/mx.png');
-}
-
-.compact-log-line[data-country="ar"]::before {
-    background-image: url('https://flagcdn.com/w40/ar.png');
-}
-
-.compact-log-line[data-country="jp"]::before {
-    background-image: url('https://flagcdn.com/w40/jp.png');
-}
-
-.compact-log-line[data-country="cn"]::before {
-    background-image: url('https://flagcdn.com/w40/cn.png');
-}
-
-.compact-log-line[data-country="in"]::before {
-    background-image: url('https://flagcdn.com/w40/in.png');
-}
-
-.compact-log-line[data-country="za"]::before {
-    background-image: url('https://flagcdn.com/w40/za.png');
-}
-
-.compact-log-line[data-country="nz"]::before {
-    background-image: url('https://flagcdn.com/w40/nz.png');
 }
 
 /* Generic background for unknown countries */
@@ -1361,6 +1271,34 @@ button:disabled {
     text-overflow: ellipsis;
     position: relative;
     z-index: 1;
+}
+
+/* QRZ Callsign Link Styles */
+.qrz-callsign {
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    border-radius: 3px;
+    padding: 2px 4px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;
+}
+
+.qrz-callsign:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.qrz-callsign:active {
+    transform: translateY(0);
 }
 
 .compact-name-location {
@@ -1416,41 +1354,6 @@ button:disabled {
 }
 
 .compact-alias-empty {
-    color: var(--text-light);
-    text-align: center;
-    font-size: 0.8125rem;
-}
-
-.compact-talkgroup {
-    background: var(--success);
-    color: white;
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-align: center;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-}
-
-.compact-qrz {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-}
-
-.compact-qrz .qrz-link {
-    font-size: 0.6875rem;
-    padding: 2px 4px;
-    white-space: nowrap;
-    display: inline-block;
-}
-
-.compact-qrz-empty {
     color: var(--text-light);
     text-align: center;
     font-size: 0.8125rem;
@@ -1539,11 +1442,6 @@ button:disabled {
     
     .compact-name-location {
         font-size: 0.6875rem; /* Smaller on mobile */
-    }
-    
-    .compact-qrz .qrz-link {
-        font-size: 0.625rem;
-        padding: 1px 2px;
     }
 }
 

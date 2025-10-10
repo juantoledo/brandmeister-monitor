@@ -2121,16 +2121,14 @@ class BrandmeisterMonitor {
     }
 
     addLogHeader() {
-        // Create compact header for activity log
+        // Create compact header for activity log (removed TG and QRZ columns)
         const headerHtml = `
             <div class="log-header-compact">
                 <div class="log-time">Time</div>
                 <div class="log-call">Call</div>
                 <div class="log-name">Name from Location</div>
                 <div class="log-alias">Alias</div>
-                <div class="log-tg">TG</div>
                 <div class="log-duration">Duration</div>
-                <div class="log-qrz">QRZ</div>
             </div>
         `;
         
@@ -2230,16 +2228,14 @@ class BrandmeisterMonitor {
             nameLocationText = `${operatorName} from ${locationText}`;
         }
         
-        // Create one-line compact layout with flag background
+        // Create one-line compact layout with flag background and callsign as QRZ link
         logEntry.innerHTML = `
             <div class="compact-log-line" data-country="${countryCode}" title="${radioIdInfo?.country || '-'}">
                 <span class="compact-timestamp">${timestamp}</span>
-                <span class="compact-callsign">${actualCallsign}</span>
+                <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>
                 <span class="compact-name-location">${nameLocationText}</span>
                 ${talkerAlias ? `<span class="compact-alias">💬 ${talkerAlias}</span>` : '<span class="compact-alias-empty">—</span>'}
-                <span class="compact-talkgroup">${talkGroup}</span>
                 ${durationText ? `<span class="compact-duration">${durationText}</span>` : '<span class="compact-duration-empty">—</span>'}
-                ${qrzLink ? `<span class="compact-qrz">${qrzLink}</span>` : '<span class="compact-qrz-empty">—</span>'}
             </div>
         `;
 
