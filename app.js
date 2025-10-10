@@ -1248,8 +1248,8 @@ class BrandmeisterMonitor {
                     activeEntry.style.backgroundImage = `url('${flagBackgroundUrl}')`;
                 }
                 
-                // Add to active container
-                this.elements.activeContainer.appendChild(activeEntry);
+                // Add to active container at the top (newest first)
+                this.elements.activeContainer.insertBefore(activeEntry, this.elements.activeContainer.firstChild);
                 
                 // Add click handler for location link if it exists
                 if (countryCode && radioIdInfo) {
