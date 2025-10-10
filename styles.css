@@ -1042,11 +1042,6 @@ button:disabled {
     overflow: hidden;
 }
 
-.console-panel.minimized .console-header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    border-bottom: 2px solid var(--border);
-}
-
 .console-panel.minimized .console-minimize {
     background: rgba(255, 255, 255, 0.2);
     animation: minimizedPulse 2s infinite;
@@ -1156,15 +1151,6 @@ button:disabled {
 /* Transmission Log */
 .activity-log {
     height: 100%;
-}
-
-/* Session state visual indicators */
-.active-transmission.state-stale {
-    opacity: 0.8;
-}
-
-.active-transmission.state-orphaned {
-    opacity: 0.6;
 }
 
 /* TRANSMISSION LOG CARDS - New Card-Based Design */
@@ -1405,7 +1391,6 @@ button:disabled {
             1fr       /* name from location */
             50px      /* talkgroup */
             40px;     /* qrz */
-        gap: 6px;
     }
     
     .compact-alias,
@@ -2112,7 +2097,6 @@ button:disabled {
         padding: 0 16px;
         height: var(--header-height);
         flex-wrap: wrap;
-        gap: 8px;
     }
     
     .header-content {

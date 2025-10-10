@@ -1711,15 +1711,15 @@ class BrandmeisterMonitor {
             const timeSinceUpdate = now - session.lastUpdateTime;
             const totalSessionAge = now - session.createdTime;
             
-            // Mark as stale if no updates for configured time
+            // Mark as stale if no updates for configured time (internal tracking only)
             if (timeSinceUpdate > this.config.maxInactivityTime && session.state === 'live') {
                 session.state = 'stale';
                 session.status = 'stale';
                 staleSessions++;
-                this.updateSessionUI(sessionKey, session);
+                // No UI update - keep sessions looking live until auto-completion
                 
                 if (this.config.verbose) {
-                    this.logDebug('Session marked as stale', {
+                    this.logDebug('Session marked as stale (internal only)', {
                         sessionID: session.sessionID,
                         callsign: session.callsign,
                         tg: session.tg,
@@ -1740,11 +1740,11 @@ class BrandmeisterMonitor {
                 // Create completion log entry
                 this.createCompletionLogEntry(session, 'auto-completed due to age');
                 
-                // Remove from active UI
+                // Remove from active UI (no stale state shown)
                 this.removeSessionFromActiveUI(sessionKey);
                 
                 if (this.config.verbose) {
-                    this.logDebug('Session auto-completed (orphaned)', {
+                    this.logDebug('Session auto-completed', {
                         sessionID: session.sessionID,
                         callsign: session.callsign,
                         tg: session.tg,
@@ -1778,27 +1778,8 @@ class BrandmeisterMonitor {
         const element = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
         if (!element) return;
         
-        // Update visual state based on session state
-        element.classList.remove('state-live', 'state-stale', 'state-orphaned');
-        element.classList.add(`state-${session.state}`);
-        
-        // Update status indicator
-        const statusElement = element.querySelector('.card-status');
-        if (statusElement) {
-            switch (session.state) {
-                case 'stale':
-                    statusElement.innerHTML = '🟡 STALE';
-                    statusElement.style.background = 'var(--warning)';
-                    break;
-                case 'orphaned':
-                    statusElement.innerHTML = '⚫ ORPHANED';
-                    statusElement.style.background = 'var(--gray-400)';
-                    break;
-                default:
-                    statusElement.innerHTML = '🔴 LIVE';
-                    statusElement.style.background = 'var(--error)';
-            }
-        }
+        // Keep session data updated but don't show stale/orphaned states in UI
+        // The cleanup timers continue to work in the background
     }
 
     createCompletionLogEntry(session, reason) {
