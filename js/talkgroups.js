@@ -268,14 +268,10 @@ function getTalkgroupsByCategory(category) {
     return TALKGROUP_CATEGORIES[category] || {};
 }
 
-// Export for use in main application
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        BRANDMEISTER_TALKGROUPS,
-        TALKGROUP_CATEGORIES,
-        POPULAR_TALKGROUPS,
-        getTalkgroupName,
-        searchTalkgroups,
-        getTalkgroupsByCategory
-    };
-}
+// Export for use in main application - Browser environment only
+window.BRANDMEISTER_TALKGROUPS = BRANDMEISTER_TALKGROUPS;
+window.TALKGROUP_CATEGORIES = TALKGROUP_CATEGORIES;
+window.POPULAR_TALKGROUPS = POPULAR_TALKGROUPS;
+window.getTalkgroupName = getTalkgroupName;
+window.searchTalkgroups = searchTalkgroups;
+window.getTalkgroupsByCategory = getTalkgroupsByCategory;
