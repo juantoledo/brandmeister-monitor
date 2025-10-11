@@ -3,23 +3,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 * {
-    margin: 0px;
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
 :root {
     /* Professional Monitoring Color Palette */
-    --primary: #0066cc;           /* Professional blue - less intense */
-    --primary-light: #3399ff;     /* Lighter blue for hover states */
-    --primary-dark: #004499;      /* Darker blue for accents */
+    --primary: #06c;           /* Professional blue - less intense */
+    --primary-light: #39f;     /* Lighter blue for hover states */
+    --primary-dark: #049;      /* Darker blue for accents */
     --secondary: #6b7280;         /* Neutral gray for secondary elements */
     --success: #059669;           /* Professional green - more muted */
     --warning: #d97706;           /* Amber/orange - less harsh than yellow */
     --error: #dc2626;             /* Professional red - less bright */
     
     /* Neutral Colors - Softer grays */
-    --white: #ffffff;
+    --white: #fff;
     --gray-50: #f9fafb;           /* Very light background */
     --gray-100: #f3f4f6;         /* Light surface */
     --gray-200: #e5e7eb;         /* Subtle borders */
@@ -43,8 +43,8 @@
     --sidebar-width: 320px;
     --console-height: 350px;
     --header-height: 80px;
-    --radius: 0px;
-    --radius-lg: 0px;
+    --radius: 0;
+    --radius-lg: 0;
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -57,7 +57,7 @@
     --border: #404040;           /* Subtle borders in dark mode */
     --text: #e8e8e8;             /* High contrast but not pure white */
     --text-muted: #b3b3b3;       /* Readable muted text */
-    --text-light: #999999;       /* Light text elements */
+    --text-light: #999;       /* Light text elements */
     
     /* Dark mode shadows - more subtle */
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -525,12 +525,6 @@ body {
 
 .status-dot.connected {
     background: var(--success);
-}
-
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
 }
 
 .theme-toggle {
@@ -1930,7 +1924,7 @@ button:disabled {
 .log-card-location .fi {
     width: 18px;
     height: 14px;
-    box-shadow: 1px 1px 0px rgba(0,0,0,0.15);
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.15);
     flex-shrink: 0;
 }
 
@@ -2318,7 +2312,7 @@ button:disabled {
     font-weight: 600;
     color: var(--primary);
     line-height: 1.2;
-    margin: -8px 0px -12px 0;
+    margin: -8px 0 -12px 0;
     font-style: italic;
 }
 
@@ -2645,7 +2639,7 @@ button:disabled {
     }
     
     .app-header {
-        padding: 0 0px;
+        padding: 0;
     }
     
     .header-content {
@@ -2798,7 +2792,7 @@ button:disabled {
     opacity: 0.8;
     z-index: -2; /* Behind flag but in front of background */
     pointer-events: none;
-    border-radius: 0px;
+    border-radius: 0;
 }
 
 /* Photo loading state for left side */
@@ -2833,7 +2827,7 @@ button:disabled {
     opacity: 0.9;
     z-index: -1; /* Behind content but in front of flag */
     pointer-events: none;
-    border-radius: 0px;
+    border-radius: 0;
 }
 
 .active-transmission.loading-photo-left::after {
