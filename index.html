@@ -29,6 +29,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/talkgroups.js"></script>
+    <script src="js/pwa-install.js"></script>
 </head>
 <body>
     <div class="app-layout">
@@ -52,6 +53,9 @@
                     <span id="statusText">Disconnected</span>
                 </div>
                 <div class="header-controls">
+                    <button class="install-button" id="installButton" style="display: none;" title="Install App">
+                        <span class="install-icon">📱</span>
+                    </button>
                     <div class="theme-toggle" id="themeToggle">
                         <span class="theme-icon">🌙</span>
                     </div>

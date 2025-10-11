@@ -514,6 +514,28 @@ body {
     gap: 12px;
 }
 
+.install-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-size: 1.25rem;
+    color: var(--success);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 0;
+    transition: all 0.2s;
+    min-width: 40px;
+    font-weight: 600;
+}
+
+.install-button:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    transform: scale(1.1);
+}
+
 .status-dot {
     width: 10px;
     height: 10px;
