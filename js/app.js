@@ -74,6 +74,10 @@ class BrandmeisterMonitor {
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
             settingsContainer: document.getElementById('settingsContainer'),
+            // Language selector elements
+            languageButton: document.getElementById('languageButton'),
+            languageDropdown: document.getElementById('languageDropdown'),
+            currentLanguageFlag: document.getElementById('currentLanguageFlag'),
             // Talk Group Selector elements
             tgTabs: document.querySelectorAll('.tg-tab'),
             tgTabContents: document.querySelectorAll('.tg-tab-content'),
@@ -116,6 +120,9 @@ class BrandmeisterMonitor {
         // Load saved settings
         this.loadSettings();
         
+        // Initialize Language System
+        this.initializeLanguageSystem();
+        
         // Initialize Talk Group Selector
         this.initializeTalkGroupSelector();
         
@@ -138,6 +145,201 @@ class BrandmeisterMonitor {
         
         // Initialize performance monitoring
         this.startPerformanceMonitoring();
+    }
+
+    // Initialize Language System
+    initializeLanguageSystem() {
+        if (!window.I18n) {
+            console.warn('I18n system not available');
+            return;
+        }
+
+        // Set up language button and dropdown
+        if (this.elements.languageButton && this.elements.languageDropdown) {
+            // Update current language flag
+            this.updateCurrentLanguageFlag();
+            
+            // Language button click handler
+            this.elements.languageButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleLanguageDropdown();
+            });
+
+            // Language option click handlers
+            this.elements.languageDropdown.addEventListener('click', (e) => {
+                const langOption = e.target.closest('.language-option');
+                if (langOption) {
+                    const langCode = langOption.dataset.lang;
+                    this.changeLanguage(langCode);
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.language-selector')) {
+                    this.hideLanguageDropdown();
+                }
+            });
+
+            // Listen for language change events
+            document.addEventListener('languageChanged', (e) => {
+                this.onLanguageChanged(e.detail.language);
+            });
+        }
+
+        // Initialize UI with current language
+        if (window.I18n) {
+            window.I18n.updateUI();
+        }
+    }
+
+    updateCurrentLanguageFlag() {
+        if (window.I18n && this.elements.currentLanguageFlag) {
+            const currentLang = window.I18n.getCurrentLanguage();
+            this.elements.currentLanguageFlag.textContent = currentLang.flag;
+        }
+    }
+
+    toggleLanguageDropdown() {
+        if (this.elements.languageDropdown) {
+            this.elements.languageDropdown.classList.toggle('show');
+            this.updateLanguageDropdownOptions();
+        }
+    }
+
+    hideLanguageDropdown() {
+        if (this.elements.languageDropdown) {
+            this.elements.languageDropdown.classList.remove('show');
+        }
+    }
+
+    updateLanguageDropdownOptions() {
+        if (!window.I18n) return;
+        
+        const currentLang = window.I18n.getCurrentLanguage();
+        const options = this.elements.languageDropdown.querySelectorAll('.language-option');
+        
+        options.forEach(option => {
+            const isActive = option.dataset.lang === currentLang.code;
+            option.classList.toggle('active', isActive);
+        });
+    }
+
+    changeLanguage(langCode) {
+        if (window.I18n && window.I18n.setLanguage(langCode)) {
+            this.updateCurrentLanguageFlag();
+            this.hideLanguageDropdown();
+            
+            // Update dynamic content that's not handled by the automatic translation
+            this.updateDynamicTranslations();
+        }
+    }
+
+    onLanguageChanged(langCode) {
+        // Handle language change for dynamic content
+        this.updateDynamicTranslations();
+        
+        // Update status text based on connection state
+        this.updateStatusText();
+        
+        // Update category dropdown options
+        this.updateCategoryDropdownTranslations();
+        
+        // Update activity log header if it exists
+        this.updateActivityLogHeader();
+        
+        // Update RadioID status if available
+        this.updateRadioIDStatusDisplay();
+    }
+
+    updateDynamicTranslations() {
+        // Update connection status
+        this.updateStatusText();
+        
+        // Update current talkgroup display
+        this.updateCurrentTgDisplay();
+        
+        // Update stats if needed
+        this.updateStatsDisplay();
+        
+        // Update color preset tooltips
+        this.updateColorPresetTooltips();
+    }
+
+    updateColorPresetTooltips() {
+        if (!window.t || !this.elements.colorPresets) return;
+        
+        const presets = this.elements.colorPresets.querySelectorAll('.color-preset[data-i18n-title]');
+        presets.forEach(preset => {
+            const key = preset.getAttribute('data-i18n-title');
+            preset.title = window.t(key);
+        });
+    }
+
+    updateDynamicTranslations() {
+        // Update connection status
+        this.updateStatusText();
+        
+        // Update current talkgroup display
+        this.updateCurrentTgDisplay();
+        
+        // Update stats if needed
+        this.updateStatsDisplay();
+    }
+
+    updateStatusText() {
+        if (!this.elements.statusText || !window.t) return;
+        
+        if (this.isConnected) {
+            this.elements.statusText.textContent = window.t('header.status.connected');
+        } else {
+            this.elements.statusText.textContent = window.t('header.status.disconnected');
+        }
+    }
+
+    updateCurrentTgDisplay() {
+        if (!this.elements.currentTg || !window.t) return;
+        
+        if (this.monitoredTalkgroups.length === 0) {
+            this.elements.currentTg.textContent = window.t('sidebar.monitoring.none');
+        }
+        // Otherwise keep the current talkgroup display as is
+    }
+
+    updateStatsDisplay() {
+        // Update stats labels if we have the elements and translation function
+        if (!window.t) return;
+        
+        // Update "Never" text for last activity if it's currently showing that
+        if (this.elements.lastActivity && this.elements.lastActivity.textContent === 'Never') {
+            this.elements.lastActivity.textContent = window.t('stats.never');
+        }
+    }
+
+    updateCategoryDropdownTranslations() {
+        if (!this.elements.tgCategory || !window.t) return;
+        
+        const options = this.elements.tgCategory.querySelectorAll('option[data-i18n]');
+        options.forEach(option => {
+            const key = option.getAttribute('data-i18n');
+            option.textContent = window.t(key);
+        });
+    }
+
+    updateActivityLogHeader() {
+        // Update activity log header if it exists
+        const existingHeader = this.elements.logContainer.querySelector('.log-header-compact');
+        if (existingHeader) {
+            existingHeader.remove();
+            this.addLogHeader();
+        }
+    }
+
+    updateRadioIDStatusDisplay() {
+        // Re-run the RadioID status update to apply new language
+        if (this.elements.radioIDStatus) {
+            this.updateRadioIDStatus();
+        }
     }
 
     // Initialize Talk Group Selector
@@ -1239,7 +1441,8 @@ class BrandmeisterMonitor {
     }
 
     onConnect() {
-        this.logInfo('Connected to Brandmeister network', { connectionStatus: 'established' });
+        const message = window.t ? window.t('message.connected') : 'Connected to Brandmeister network';
+        this.logInfo(message, { connectionStatus: 'established' });
         this.isConnected = true;
         this.updateConnectionStatus(true);
         // System message removed - only log transmissions
@@ -1254,7 +1457,8 @@ class BrandmeisterMonitor {
     }
 
     onDisconnect() {
-        this.logInfo('Disconnected from Brandmeister network', { connectionStatus: 'lost' });
+        const message = window.t ? window.t('message.disconnected') : 'Disconnected from Brandmeister network';
+        this.logInfo(message, { connectionStatus: 'lost' });
         this.isConnected = false;
         this.updateConnectionStatus(false);
         // System message removed - only log transmissions
@@ -2576,11 +2780,11 @@ class BrandmeisterMonitor {
         // Create compact header for activity log (removed TG and QRZ columns)
         const headerHtml = `
             <div class="log-header-compact">
-                <div class="log-time">Time</div>
-                <div class="log-call">Call</div>
-                <div class="log-name">Name from Location</div>
-                <div class="log-alias">Alias</div>
-                <div class="log-duration">Duration</div>
+                <div class="log-time">${window.t ? window.t('activity.log.header.time') : 'Time'}</div>
+                <div class="log-call">${window.t ? window.t('activity.log.header.call') : 'Call'}</div>
+                <div class="log-name">${window.t ? window.t('activity.log.header.name') : 'Name from Location'}</div>
+                <div class="log-alias">${window.t ? window.t('activity.log.header.alias') : 'Alias'}</div>
+                <div class="log-duration">${window.t ? window.t('activity.log.header.duration') : 'Duration'}</div>
             </div>
         `;
         
@@ -2607,7 +2811,10 @@ class BrandmeisterMonitor {
 
         // Log all transmissions for debugging (removed duration filter)
         if (this.config.verbose && fieldData.duration !== null) {
-            console.log(`📻 Logging transmission from ${callsign} (${fieldData.duration.toFixed(1)}s)`);
+            const logMessage = window.t ? 
+                `${window.t('activity.log.transmission.from')} ${callsign} (${fieldData.duration.toFixed(1)}s)` :
+                `Logging transmission from ${callsign} (${fieldData.duration.toFixed(1)}s)`;
+            console.log(`📻 ${logMessage}`);
         }
         
         const logEntry = document.createElement('div');
@@ -2848,7 +3055,13 @@ class BrandmeisterMonitor {
 
     updateConnectionStatus(connected) {
         this.elements.connectionStatus.className = `status-dot ${connected ? 'connected' : ''}`;
-        this.elements.statusText.textContent = connected ? 'Connected' : 'Disconnected';
+        if (window.t) {
+            this.elements.statusText.textContent = connected ? 
+                window.t('header.status.connected') : 
+                window.t('header.status.disconnected');
+        } else {
+            this.elements.statusText.textContent = connected ? 'Connected' : 'Disconnected';
+        }
     }
 
     formatTime(date) {
@@ -3351,7 +3564,10 @@ class BrandmeisterMonitor {
             } catch (storageError) {
                 if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
                     console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only (will not persist)');
-                    this.updateRadioIDStatus(`${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`);
+                    const message = window.t ? 
+                        `${Object.keys(parsedData).length.toLocaleString()} ${window.t('radioid.records.memory.only')}` :
+                        `${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`;
+                    this.updateRadioIDStatus(message);
                     return; // Still functional, just won't persist
                 } else {
                     throw storageError; // Re-throw other storage errors
@@ -3466,10 +3682,13 @@ class BrandmeisterMonitor {
         } else if (this.radioIDDatabase && this.radioIDLastUpdate) {
             const count = Object.keys(this.radioIDDatabase).length;
             const lastUpdate = new Date(this.radioIDLastUpdate);
-            statusElement.textContent = `${count.toLocaleString()} records loaded`;
-            updateElement.textContent = `Updated: ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
+            const recordsText = window.t ? window.t('radioid.records.loaded') : 'records loaded';
+            const updatedText = window.t ? window.t('radioid.updated') : 'Updated:';
+            statusElement.textContent = `${count.toLocaleString()} ${recordsText}`;
+            updateElement.textContent = `${updatedText} ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
         } else {
-            statusElement.textContent = 'Not loaded';
+            const notLoadedText = window.t ? window.t('radioid.status.notloaded') : 'Not loaded';
+            statusElement.textContent = notLoadedText;
             updateElement.textContent = '';
         }
     }

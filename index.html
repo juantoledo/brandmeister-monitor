@@ -28,6 +28,7 @@
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/talkgroups.js"></script>
     <script src="js/pwa-install.js"></script>
 </head>
@@ -36,8 +37,8 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <h1>🔊 Brandmeister Monitor</h1>
-                <p class="subtitle">Real-time DMR Talkgroup Activity Monitor</p>
+                <h1 data-i18n="app.title">🔊 Brandmeister Monitor</h1>
+                <p class="subtitle" data-i18n="app.subtitle">Real-time DMR Talkgroup Activity Monitor</p>
             </div>
             <div class="header-right">
                 <div class="header-info">
@@ -50,16 +51,32 @@
                 </div>
                 <div class="header-status">
                     <span class="status-dot" id="connectionStatus"></span>
-                    <span id="statusText">Disconnected</span>
+                    <span id="statusText" data-i18n="header.status.disconnected">Disconnected</span>
                 </div>
                 <div class="header-controls">
-                    <button class="install-button" id="installButton" style="display: none;" title="Install App">
+                    <!-- Language Selector -->
+                    <div class="language-selector">
+                        <button class="language-button" id="languageButton" title="Change Language">
+                            <span id="currentLanguageFlag">🇺🇸</span>
+                        </button>
+                        <div class="language-dropdown" id="languageDropdown">
+                            <div class="language-option" data-lang="en">
+                                <span class="flag">🇺🇸</span>
+                                <span class="name">English</span>
+                            </div>
+                            <div class="language-option" data-lang="es">
+                                <span class="flag">🇪🇸</span>
+                                <span class="name">Español</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="install-button" id="installButton" style="display: none;" data-i18n-title="header.install.tooltip" title="Install App">
                         <span class="install-icon">📱</span>
                     </button>
-                    <div class="theme-toggle" id="themeToggle">
+                    <div class="theme-toggle" id="themeToggle" data-i18n-title="header.theme.tooltip" title="Toggle Theme">
                         <span class="theme-icon">🌙</span>
                     </div>
-                    <button class="sidebar-toggle" id="sidebarToggle">
+                    <button class="sidebar-toggle" id="sidebarToggle" data-i18n-title="header.menu.tooltip" title="Toggle Menu">
                         <span class="hamburger-icon">☰</span>
                     </button>
                 </div>
@@ -70,36 +87,37 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-content">
                 <div class="sidebar-section">
-                    <h3>Quick Setup</h3>
+                    <h3 data-i18n="sidebar.title">Quick Setup</h3>
                     
                     <!-- Talk Group Selection Tabs -->
                     <div class="tg-tabs">
-                        <button class="tg-tab active" data-tab="browse">Browse TGs</button>
-                        <button class="tg-tab" data-tab="manual">Manual Input</button>
+                        <button class="tg-tab active" data-tab="browse" data-i18n="sidebar.tabs.browse">Browse TGs</button>
+                        <button class="tg-tab" data-tab="manual" data-i18n="sidebar.tabs.manual">Manual Input</button>
                     </div>
                     
                     <!-- Browse Talk Groups Tab -->
                     <div class="tg-tab-content active" id="browse-tab">
                         <div class="tg-search-container">
-                            <input type="text" id="tgSearch" placeholder="Search talk groups..." class="tg-search">
+                            <input type="text" id="tgSearch" data-i18n="sidebar.search.placeholder" placeholder="Search talk groups..." class="tg-search">
                             <div class="tg-search-results" id="tgSearchResults"></div>
                         </div>
                         
                         <div class="tg-categories">
-                            <h4>Recently Selected</h4>
+                            <h4 data-i18n="sidebar.recent.title">Recently Selected</h4>
                             <div class="tg-popular-grid" id="tgPopularGrid">
                                 <!-- Recently selected TGs will be loaded here -->
                             </div>
                             
                             <div class="tg-category-selector">
-                                <label for="tgCategory">Browse by Category:</label>
+                                <label for="tgCategory" data-i18n="sidebar.category.label">Browse by Category:</label>
                                 <select id="tgCategory">
-                                    <option value="">Choose a category...</option>
-                                    <option value="Popular Global">Popular Global</option>
-                                    <option value="Major Countries">Major Countries</option>
-                                    <option value="Languages">Languages</option>
-                                    <option value="Special Interest">Special Interest</option>
-                                    <option value="Tactical/Emergency">Tactical/Emergency</option>
+                                    <option value="" data-i18n="sidebar.category.choose">Choose a category...</option>
+                                    <option value="Popular Global" data-i18n="sidebar.category.popular">Popular Global</option>
+                                    <option value="Major Countries" data-i18n="sidebar.category.countries">Major Countries</option>
+                                    <option value="Languages" data-i18n="sidebar.category.languages">Languages</option>
+                                    <option value="Regional" data-i18n="sidebar.category.regional">Regional</option>
+                                    <option value="Digital Modes" data-i18n="sidebar.category.digital">Digital Modes</option>
+                                    <option value="Special Events" data-i18n="sidebar.category.special">Special Events</option>
                                 </select>
                             </div>
                             
@@ -109,113 +127,113 @@
                         </div>
                         
                         <div class="tg-selected">
-                            <h4>Selected Talk Groups</h4>
+                            <h4 data-i18n="sidebar.selected.title">Selected Talk Groups</h4>
                             <div class="tg-selected-list" id="tgSelectedList">
-                                <span class="tg-selected-empty">No talk groups selected</span>
+                                <span class="tg-selected-empty" data-i18n="sidebar.selected.empty">No talk groups selected</span>
                             </div>
-                            <button id="clearSelection" class="tg-btn secondary">Clear All</button>
+                            <button id="clearSelection" class="tg-btn secondary" data-i18n="sidebar.clear">Clear All</button>
                         </div>
                     </div>
                     
                     <!-- Manual Input Tab -->
                     <div class="tg-tab-content" id="manual-tab">
                         <div class="tg-input-group">
-                            <label for="talkgroup">Talkgroup ID(s):</label>
-                            <input type="text" id="talkgroup" placeholder="Enter TG IDs (e.g., 214,220,235) or 'all'" min="1">
+                            <label for="talkgroup" data-i18n="sidebar.manual.label">Talkgroup ID(s):</label>
+                            <input type="text" id="talkgroup" data-i18n="sidebar.manual.placeholder" placeholder="Enter TG IDs (e.g., 214,220,235) or 'all'" min="1">
                             <div class="tg-input-help">
-                                <small>💡 Enter comma-separated TG IDs or "all" to monitor everything</small>
+                                <small data-i18n="sidebar.manual.help">💡 Enter comma-separated TG IDs or "all" to monitor everything</small>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Save Button (common for both tabs) -->
                     <div class="tg-save-container">
-                        <button id="saveTg" class="tg-btn primary">Save & Monitor</button>
+                        <button id="saveTg" class="tg-btn primary" data-i18n="sidebar.save">Save & Monitor</button>
                     </div>
                     
                     <div class="current-tg">
-                        <p>Monitoring: <span id="currentTg">None</span></p>
+                        <p><span data-i18n="sidebar.monitoring">Monitoring:</span> <span id="currentTg" data-i18n="sidebar.monitoring.none">None</span></p>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Controls</h3>
+                    <h3 data-i18n="sidebar.controls.title">Controls</h3>
                     <div class="control-buttons">
-                        <button id="connectBtn">Connect</button>
-                        <button id="disconnectBtn" disabled>Disconnect</button>
-                        <button id="clearLogs">Clear Transmission Log</button>
+                        <button id="connectBtn" data-i18n="sidebar.connect">Connect</button>
+                        <button id="disconnectBtn" disabled data-i18n="sidebar.disconnect">Disconnect</button>
+                        <button id="clearLogs" data-i18n="sidebar.clear.logs">Clear Transmission Log</button>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>⚙️ Settings</h3>
+                    <h3 data-i18n="settings.title">⚙️ Settings</h3>
                     <div class="settings-content">
                         <div class="setting-group">
-                            <label for="colorPalette">Primary Color:</label>
+                            <label for="colorPalette" data-i18n="settings.color.label">Primary Color:</label>
                             <div class="color-picker-container">
                                 <div class="color-presets" id="colorPresets">
-                                    <div class="color-preset" data-color="#0066cc" style="background-color: #0066cc;" title="Professional Blue (Default)"></div>
-                                    <div class="color-preset" data-color="#059669" style="background-color: #059669;" title="Forest Green"></div>
-                                    <div class="color-preset" data-color="#7c3aed" style="background-color: #7c3aed;" title="Purple"></div>
-                                    <div class="color-preset" data-color="#dc2626" style="background-color: #dc2626;" title="Red Alert"></div>
-                                    <div class="color-preset" data-color="#d97706" style="background-color: #d97706;" title="Amber"></div>
-                                    <div class="color-preset" data-color="#0891b2" style="background-color: #0891b2;" title="Cyan"></div>
-                                    <div class="color-preset" data-color="#4338ca" style="background-color: #4338ca;" title="Indigo"></div>
-                                    <div class="color-preset" data-color="#6b7280" style="background-color: #6b7280;" title="Neutral Gray"></div>
-                                    <div class="color-preset" data-color="#1f2937" style="background-color: #1f2937;" title="Dark Charcoal"></div>
-                                    <div class="color-preset" data-color="#0f766e" style="background-color: #0f766e;" title="Teal"></div>
+                                    <div class="color-preset" data-color="#0066cc" style="background-color: #0066cc;" data-i18n-title="settings.color.blue" title="Professional Blue (Default)"></div>
+                                    <div class="color-preset" data-color="#059669" style="background-color: #059669;" data-i18n-title="settings.color.green" title="Forest Green"></div>
+                                    <div class="color-preset" data-color="#7c3aed" style="background-color: #7c3aed;" data-i18n-title="settings.color.purple" title="Purple"></div>
+                                    <div class="color-preset" data-color="#dc2626" style="background-color: #dc2626;" data-i18n-title="settings.color.red" title="Red Alert"></div>
+                                    <div class="color-preset" data-color="#d97706" style="background-color: #d97706;" data-i18n-title="settings.color.amber" title="Amber"></div>
+                                    <div class="color-preset" data-color="#0891b2" style="background-color: #0891b2;" data-i18n-title="settings.color.cyan" title="Cyan"></div>
+                                    <div class="color-preset" data-color="#4338ca" style="background-color: #4338ca;" data-i18n-title="settings.color.indigo" title="Indigo"></div>
+                                    <div class="color-preset" data-color="#6b7280" style="background-color: #6b7280;" data-i18n-title="settings.color.gray" title="Neutral Gray"></div>
+                                    <div class="color-preset" data-color="#1f2937" style="background-color: #1f2937;" data-i18n-title="settings.color.charcoal" title="Dark Charcoal"></div>
+                                    <div class="color-preset" data-color="#0f766e" style="background-color: #0f766e;" data-i18n-title="settings.color.teal" title="Teal"></div>
                                 </div>
                                 <div class="color-preview">
                                     <div class="color-preview-swatch" id="colorPreview" style="background-color: #0066cc;"></div>
                                     <span class="color-value" id="colorValue">#0066cc</span>
                                 </div>
                             </div>
-                            <span class="setting-description">Choose from professional monitoring colors</span>
+                            <span class="setting-description" data-i18n="settings.color.description">Choose from professional monitoring colors</span>
                         </div>
                         
                         <div class="setting-group">
-                            <label for="minDuration">Min Duration (sec):</label>
+                            <label for="minDuration" data-i18n="settings.duration.label">Min Duration (sec):</label>
                             <input type="number" id="minDuration" min="0" max="60" step="1" value="2">
-                            <span class="setting-description">Only log transmissions longer than this duration (excludes short kerchunks)</span>
+                            <span class="setting-description" data-i18n="settings.duration.description">Only log transmissions longer than this duration (excludes short kerchunks)</span>
                         </div>
                         
                         <div class="setting-group">
                             <label class="toggle-label">
                                 <input type="checkbox" id="verbose">
                                 <span class="toggle-slider"></span>
-                                Console Verbose Mode
+                                <span data-i18n="settings.verbose.label">Console Verbose Mode</span>
                             </label>
-                            <span class="setting-description">Show detailed technical information in browser console (F12)</span>
+                            <span class="setting-description" data-i18n="settings.verbose.description">Show detailed technical information in browser console (F12)</span>
                         </div>
                         
                         <div class="setting-group">
                             <label class="toggle-label">
                                 <input type="checkbox" id="monitorAllTalkgroups">
                                 <span class="toggle-slider"></span>
-                                Monitor All Talkgroups
+                                <span data-i18n="settings.monitor.all.label">Monitor All Talkgroups</span>
                             </label>
-                            <span class="setting-description">Override specific TG and monitor all activity</span>
+                            <span class="setting-description" data-i18n="settings.monitor.all.description">Override specific TG and monitor all activity</span>
                         </div>
                         
                         <div class="setting-group">
                             <label class="toggle-label">
                                 <input type="checkbox" id="enableRadioIDLookup">
                                 <span class="toggle-slider"></span>
-                                Enable RadioID Database
+                                <span data-i18n="settings.radioid.label">Enable RadioID Database</span>
                             </label>
-                            <span class="setting-description">Download and cache user information from radioid.net</span>
+                            <span class="setting-description" data-i18n="settings.radioid.description">Download and cache user information from radioid.net</span>
                         </div>
                         
                         <div class="setting-group" id="radioIDSettings" style="display: none;">
                             <div class="radioID-status">
-                                <span id="radioIDStatus">Not loaded</span>
+                                <span id="radioIDStatus" data-i18n="settings.radioid.status.notloaded">Not loaded</span>
                                 <span id="radioIDLastUpdate"></span>
                             </div>
                         </div>
                         
                         <div class="setting-actions">
-                            <button id="saveSettings" class="setting-btn">Save Settings</button>
-                            <button id="resetSettings" class="setting-btn secondary">Reset to Defaults</button>
+                            <button id="saveSettings" class="setting-btn" data-i18n="settings.save">Save Settings</button>
+                            <button id="resetSettings" class="setting-btn secondary" data-i18n="settings.reset">Reset to Defaults</button>
                         </div>
                     </div>
                 </div>
@@ -226,7 +244,7 @@
         <main class="main-content">
             <div class="active-transmissions">
                 <div id="activeContainer" class="transmission-container">
-                    <p class="no-activity">No active transmissions</p>
+                    <p class="no-activity" data-i18n="main.welcome.noactivity">No active transmissions</p>
                 </div>
             </div>
         </main>
@@ -235,9 +253,9 @@
         <div class="console-panel" id="consolePanel">
             <div class="console-header">
                 <div class="console-tabs">
-                    <button class="console-tab active" data-tab="activity">Activity Log</button>
-                    <button class="console-tab" data-tab="stats">Statistics</button>
-                    <button class="console-tab" data-tab="debug">Debug</button>
+                    <button class="console-tab active" data-tab="activity" data-i18n="console.tab.activity">Activity Log</button>
+                    <button class="console-tab" data-tab="stats" data-i18n="console.tab.stats">Statistics</button>
+                    <button class="console-tab" data-tab="debug" data-i18n="console.tab.debug">Debug</button>
                 </div>
                 <div class="console-controls">
                     <button class="console-minimize" id="consoleToggle">▼</button>
@@ -246,32 +264,32 @@
             <div class="console-content" id="consoleContent">
                 <div class="console-pane active" id="activityPane">
                     <div id="logContainer" class="activity-log">
-                        <p class="no-activity">No transmissions yet. Configure a talkgroup and connect to start monitoring.</p>
+                        <p class="no-activity" data-i18n="console.activity.empty">No transmissions yet. Configure a talkgroup and connect to start monitoring.</p>
                     </div>
                 </div>
                 <div class="console-pane" id="statsPane">
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <span class="stat-label">Total Calls:</span>
+                            <span class="stat-label" data-i18n="stats.total.calls">Total Calls:</span>
                             <span class="stat-value" id="totalCalls">0</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Last Transmission:</span>
-                            <span class="stat-value" id="lastActivity">Never</span>
+                            <span class="stat-label" data-i18n="stats.last.transmission">Last Transmission:</span>
+                            <span class="stat-value" id="lastActivity" data-i18n="stats.never">Never</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Session Duration:</span>
+                            <span class="stat-label" data-i18n="stats.session.duration">Session Duration:</span>
                             <span class="stat-value" id="sessionDuration">0:00:00</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Active TGs:</span>
+                            <span class="stat-label" data-i18n="stats.active.tgs">Active TGs:</span>
                             <span class="stat-value" id="activeTGs">0</span>
                         </div>
                     </div>
                 </div>
                 <div class="console-pane" id="debugPane">
                     <div class="debug-info">
-                        <p>Debug information and system logs will appear here</p>
+                        <p data-i18n="console.debug.description">Debug information and system logs will appear here</p>
                         <div id="debugContainer"></div>
                     </div>
                 </div>
