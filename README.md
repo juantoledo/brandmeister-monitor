@@ -1,5 +1,7 @@
 # 🔊 Brandmeister Monitor
 
+**Other languages:** **English** | [Español](README.es.md) | [Português](README.pt.md)
+
 **Monitor DMR Radio Activity in Real-Time**
 
 > **Watch live radio conversations from around the world as they happen**
@@ -66,3 +68,7 @@ Yes! Works great on phones, tablets, and computers.
 ### **[👆 Open Brandmeister Monitor Now](https://juantoledo.github.io/brandmeister-monitor)**
 
 *Start monitoring global DMR activity in seconds!*
+
+---
+
+**Other languages:** **English** | [Español](README.es.md) | [Português](README.pt.md)
