@@ -2,20 +2,29 @@
   "name": "Brandmeister Monitor",
   "short_name": "BM Monitor", 
   "description": "Real-time DMR Talkgroup Activity Monitor",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#1a1a1a",
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg width='192' height='192' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='192' height='192' fill='%232563eb'/%3E%3Ctext x='96' y='115' font-family='Arial' font-size='48' fill='white' text-anchor='middle'%3EBM%3C/text%3E%3C/svg%3E",
+      "src": "icons/icon.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg width='512' height='512' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='512' height='512' fill='%232563eb'/%3E%3Ctext x='256' y='286' font-family='Arial' font-size='120' fill='white' text-anchor='middle'%3EBM%3C/text%3E%3C/svg%3E",
-      "sizes": "512x512", 
-      "type": "image/svg+xml"
+      "src": "icons/icon.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ]
 }
