@@ -2264,6 +2264,168 @@ button:disabled {
     border: 1px solid var(--border);
 }
 
+/* About Info */
+.about-info {
+    padding: 20px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    overflow-y: auto;
+}
+
+.about-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.about-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.radio-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.about-logo h3 {
+    margin: 0;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.about-version {
+    background: var(--gray-100);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.about-section {
+    margin-bottom: 20px;
+}
+
+.about-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.about-section p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.developer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.callsign-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.callsign-badge {
+    background: var(--primary);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.5px;
+}
+
+.website-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    transition: opacity 0.2s;
+}
+
+.website-link:hover {
+    opacity: 0.7;
+    text-decoration: underline;
+}
+
+.link-icon {
+    font-size: 1rem;
+}
+
+.source-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    text-decoration: none;
+    background: var(--gray-100);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+}
+
+.github-link:hover {
+    background: var(--gray-200);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.features-list {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-muted);
+}
+
+.features-list li {
+    font-size: 0.8125rem;
+    margin-bottom: 4px;
+}
+
+/* Dark mode styles for About section */
+[data-theme="dark"] .about-version {
+    background: var(--gray-700);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .github-link {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--text);
+}
+
+[data-theme="dark"] .github-link:hover {
+    background: var(--gray-600);
+}
+
+[data-theme="dark"] #debugContainer {
+    background: var(--gray-800);
+    border-color: var(--gray-600);
+}
+
 /* Active Transmissions - Redesigned Cards */
 .active-transmission {
     background: var(--surface);
