@@ -1,181 +1,68 @@
 # 🔊 Brandmeister Monitor
 
-**Monitor DMR Radio Activity in Real-Time - Install as an App!**
+**Monitor DMR Radio Activity in Real-Time**
 
-[![📱 Install as App](https://img.shields.io/badge/📱%20Install%20as%20App-Click%20Here-brightgreen?style=for-the-badge)](https://juantoledo.github.io/brandmeister-monitor)
+> **Watch live radio conversations from around the world as they happen**
 
-> **Transform your device into a professional DMR monitoring station**  
-> Watch live radio conversations from around the world as they happen
+## 🚀 Access the Monitor
 
-## 🚀 Get Started in 30 Seconds
+### **👆 [Open Brandmeister Monitor](https://juantoledo.github.io/brandmeister-monitor)**
 
-### **Step 1: Open the App**
-👆 **[Click here to open Brandmeister Monitor](https://juantoledo.github.io/brandmeister-monitor)**
+## 📱 Install on Your Device (Optional)
 
-### **Step 2: Install as App (Recommended)**
+Want to use it like a regular app? Here's how to install it:
 
-**📱 On Your Phone:**
-- **iPhone**: Tap Share → "Add to Home Screen"  
-- **Android**: Tap Menu → "Add to Home screen"
+### **iPhone (Safari)**
+1. Open the link above in Safari
+2. Tap the **Share** button (square with arrow)
+3. Scroll down and tap **"Add to Home Screen"**
+4. Tap **"Add"** - now it's on your home screen!
 
-**🖥️ On Your Computer:**
-- **Chrome/Edge**: Look for Install button (⊕) in address bar
-- **Click "Install"** → App appears in your programs
+### **Android (Chrome)**
+1. Open the link above in Chrome
+2. Tap the **Menu** (three dots)
+3. Tap **"Add to Home screen"**
+4. Tap **"Add"** - now it's on your home screen!
 
-### **Step 3: Start Monitoring**
-- Choose what to monitor (specific talk groups or everything)
-- Hit Connect and watch live radio activity!
+### **Computer (Chrome/Edge)**
+1. Open the link above in Chrome or Edge
+2. Look for the **Install** button (⊕) in the address bar
+3. Click **"Install"**
+4. The app will appear in your programs!
 
-## 🎯 What You'll Experience
+## 🎯 What You'll See
 
-### **� Live Radio Activity**
-Watch real conversations happening right now across the global DMR network. See who's talking, where they're from, and how long they spoke - all updating live as it happens.
+### **📻 Live Radio Activity**
+Watch real conversations happening right now across the global DMR network. See who's talking, where they're from, and how long they spoke.
 
 ### **🌍 Global Coverage**
-Monitor radio activity from countries around the world. Each transmission shows the operator's country flag and location, giving you a window into global amateur radio activity.
+Monitor radio activity from countries around the world. Each transmission shows the operator's country flag and location.
 
-### **📱 Works Everywhere**
-Once installed, the app works perfectly on your phone, tablet, or computer. No app store needed - just install directly from your browser and it behaves like any other app on your device.
+### **⚡ Real-Time Updates**
+Everything updates live as it happens - no need to refresh the page.
 
-### **⚡ Lightning Fast**
-The app loads instantly and updates in real-time. All your settings are remembered, so you can jump right back into monitoring whenever you want.
+##  Perfect For
 
-## 🎨 What Makes This Special
+- **Ham Radio Enthusiasts** - Monitor your favorite repeaters and talk groups
+- **DX Listeners** - Discover activity from around the world  
+- **Emergency Coordinators** - Keep track of emergency communications
+- **Curious Minds** - Learn about amateur radio by listening
 
-**✨ No App Store Required** - Install directly from your browser  
-**🔄 Always Up-to-Date** - Automatically gets the latest features  
-**💾 Remembers Your Settings** - Your preferences are saved  
-**🌙 Dark & Light Themes** - Comfortable viewing any time of day  
-**🔍 Click to Learn More** - Tap any callsign to see operator details  
-**📊 Smart Activity Display** - Focus on what matters most  
+## ❓ Quick Questions
 
-## 📻 Perfect For
+**Do I need to create an account?**  
+No! Just open and start monitoring immediately.
 
-**🎓 Ham Radio Enthusiasts** - Monitor your favorite repeaters and talk groups  
-**🌐 DX Listeners** - Discover activity from around the world  
-**📡 Emergency Coordinators** - Keep track of emergency communications  
-**🔍 Curious Minds** - Learn about amateur radio by listening  
-**📱 Mobile Operators** - Monitor while on the go
+**Is it free?**  
+Completely free! No ads, no subscriptions, no costs.
 
-## 🤔 Frequently Asked Questions
-
-**Q: Do I need to create an account?**  
-A: No! Just open the app and start monitoring immediately.
-
-**Q: Does it work offline?**  
-A: The app loads offline, but you need internet to receive live radio activity.
-
-**Q: Will it drain my battery?**  
-A: The app is optimized for efficiency and uses minimal battery power.
-
-**Q: Is it really free?**  
-A: Completely free! No ads, no subscriptions, no hidden costs.
-
-**Q: How do I get updates?**  
-A: Updates happen automatically - you'll always have the latest version.
-
-## 🚀 Ready to Start?
-
-**Don't just read about it - experience it!**
-
-### **[👆 Open Brandmeister Monitor Now](https://juantoledo.github.io/brandmeister-monitor)**
-
-*Install it as an app for the best experience - it takes just one click!*
+**Does it work on mobile?**  
+Yes! Works great on phones, tablets, and computers.
 
 ---
 
-**💡 Pro Tip**: After installing, the app appears on your home screen or in your programs just like any other app. No browser needed - it opens in its own window for a clean, distraction-free experience.
+## 🚀 Ready to Start?
 
-**🔊 Start monitoring global DMR activity in seconds!**
+### **[👆 Open Brandmeister Monitor Now](https://juantoledo.github.io/brandmeister-monitor)**
 
-
-
-## Technical Details
-
-### Based on Original Python Code
-This web application is based on the provided Python SocketIO code that monitors Brandmeister network activity. Key features translated:
-
-- **Connection Management**: Handles connect/disconnect events
-- **MQTT Message Processing**: Filters and processes incoming transmission data
-- **Activity Tracking**: Monitors transmission duration and silence periods
-- **Event Filtering**: Only shows relevant activity based on configuration
-
-### Architecture
-- **Frontend**: Pure JavaScript (ES6+) with Socket.IO client
-- **Styling**: Modern CSS with responsive design
-- **Storage**: Browser localStorage for configuration persistence
-- **Connection**: WebSocket to `wss://api.brandmeister.network`
-
-### Files Structure
-```
-brandmeister-monitor/
-├── index.html          # Main HTML file
-├── styles.css          # CSS styling
-├── app.js             # Main JavaScript application
-├── sw.js              # Service Worker for offline capability
-└── README.md          # This file
-```
-
-## Browser Compatibility
-
-- Modern browsers with WebSocket support
-- Chrome, Firefox, Safari, Edge (latest versions)
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Security Considerations
-
-- Uses HTTPS connection to Brandmeister API
-- No sensitive data stored or transmitted
-- Client-side only application
-
-## Customization
-
-You can customize the application by modifying:
-
-1. **Configuration**: Edit the `config` object in `app.js`
-2. **Styling**: Modify `styles.css` for appearance changes
-3. **Functionality**: Add features in the `BrandmeisterMonitor` class
-
-## Troubleshooting
-
-### Connection Issues
-- Ensure you have a stable internet connection
-- Check browser console for error messages
-- Verify Brandmeister API is accessible
-
-### No Activity Showing
-- Confirm your talkgroup ID is correct
-- Ensure the talkgroup has active transmissions
-- Check that transmission duration meets minimum requirements
-
-### Audio Notifications Not Working
-- Some browsers require user interaction before playing audio
-- Check browser audio permissions
-- Audio may not work in all browsers
-
-## Development
-
-To run locally:
-1. Clone or download the files
-2. Open `index.html` in a web browser
-3. Or serve via a local web server for full functionality
-
-For development with a local server:
-```bash
-# Using Python
-python -m http.server 8000
-
-# Using Node.js (http-server)
-npx http-server
-
-# Using PHP
-php -S localhost:8000
-```
-
-## License
-
-This project is provided as-is for educational and amateur radio purposes.
-
-## Contributing
-
-Feel free to submit issues and enhancement requests or contribute improvements to the codebase.
+*Start monitoring global DMR activity in seconds!*
