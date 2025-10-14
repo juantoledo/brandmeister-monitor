@@ -4134,7 +4134,7 @@ class BrandmeisterMonitor {
     }
 
     /**
-     * Load time and weather information for a location (with 10-second delay)
+     * Load time and weather information for a location (with smart delay - instant if cached)
      */
     async loadTimeWeatherInfo(city, state, country, sessionKey) {
         // Skip weather loading if monitoring all talkgroups to avoid API overload
@@ -4154,7 +4154,19 @@ class BrandmeisterMonitor {
             clearTimeout(this.weatherLoadTimers.get(timerKey));
         }
 
-        // Set a 10-second delay before loading weather data
+        // Check if data is cached - if so, load immediately without delay
+        const isCached = this.locationWeatherService.isLocationInfoCached(city, state, country);
+        const delay = isCached ? 0 : 5000; // No delay for cached data, 5s for API calls
+
+        if (this.config.verbose) {
+            if (isCached) {
+                console.log(`🌍 Loading cached time/weather for: ${city}, ${state}, ${country} (instant)`);
+            } else {
+                console.log(`🌍 Will load time/weather for: ${city}, ${state}, ${country} (5s delay for API calls)`);
+            }
+        }
+
+        // Set delay (0 seconds for cached, 10 seconds for API calls)
         const timerId = setTimeout(async () => {
             try {
                 // Check if the transmission card still exists (user might have closed it)
@@ -4164,7 +4176,7 @@ class BrandmeisterMonitor {
                     return;
                 }
 
-                console.log(`🌍 Loading time/weather for: ${city}, ${state}, ${country} (after 10s delay)`);
+                console.log(`🌍 Loading time/weather for: ${city}, ${state}, ${country} ${isCached ? '(cached data)' : '(after 5s delay)'}`);
                 
                 const locationInfo = await this.locationWeatherService.getLocationInfo(city, state, country);
                 
@@ -4237,7 +4249,7 @@ class BrandmeisterMonitor {
                 // Clean up the timer reference
                 this.weatherLoadTimers.delete(timerKey);
             }
-        }, 10000); // 10-second delay
+        }, delay); // Smart delay: 0ms for cached data, 5000ms for API calls
 
         // Store the timer reference
         this.weatherLoadTimers.set(timerKey, timerId);

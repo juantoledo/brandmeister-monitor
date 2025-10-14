@@ -8,7 +8,9 @@ class LocationWeatherService {
         this.geocodeCache = new Map(); // Cache location coordinates
         this.weatherCache = new Map(); // Cache weather data
         this.timezoneCache = new Map(); // Cache timezone data
+        this.locationInfoCache = new Map(); // Cache complete location info (coordinates + weather + timezone)
         this.cacheExpiry = 30 * 60 * 1000; // 30 minutes
+        this.timeCacheExpiry = 1 * 60 * 1000; // 1 minute for time updates
         
         // Free APIs (no key required for basic usage)
         this.apis = {
@@ -104,21 +106,13 @@ class LocationWeatherService {
      * Get local time for timezone
      */
     async getLocalTime(timezone) {
-        // Check cache first
+        // For time, we only cache the timezone validity, not the actual time
+        // since time changes every minute
         const cached = this.timezoneCache.get(timezone);
-        if (cached && (Date.now() - cached.timestamp) < 60000) { // 1 minute cache for time
-            const now = new Date();
-            
-            // Get current language from i18n system (fallback to 'en')
-            const currentLang = window.I18n ? window.I18n.getCurrentLanguage()?.code || 'en' : 'en';
-            
-            const dayOfWeek = now.toLocaleDateString(currentLang, { weekday: 'short' });
-            const time = this.formatTime(now);
-            return `${dayOfWeek} ${time}`;
-        }
+        const isTimezoneValid = cached && (Date.now() - cached.timestamp) < this.timeCacheExpiry;
 
         try {
-            // Use browser's Intl API for timezone conversion
+            // Use browser's Intl API for timezone conversion (all local calculation)
             const now = new Date();
             
             // Get current language from i18n system (fallback to 'en')
@@ -140,17 +134,19 @@ class LocationWeatherService {
             // Combine day and time
             const fullTimeString = `${dayOfWeek} ${localTime}`;
             
-            // Cache the timezone validity
-            this.timezoneCache.set(timezone, {
-                timestamp: Date.now()
-            });
+            // Cache the timezone validity (not the time itself)
+            if (!isTimezoneValid) {
+                this.timezoneCache.set(timezone, {
+                    timestamp: Date.now()
+                });
+            }
             
             return fullTimeString;
         } catch (error) {
             console.warn('Timezone conversion failed:', error);
-            const now = new Date();
             
-            // Get current language from i18n system (fallback to 'en')
+            // Fallback to local time with user's language
+            const now = new Date();
             const currentLang = window.I18n ? window.I18n.getCurrentLanguage()?.code || 'en' : 'en';
             
             const dayOfWeek = now.toLocaleDateString(currentLang, { weekday: 'short' });
@@ -198,6 +194,27 @@ class LocationWeatherService {
      * Get complete location info with time and weather
      */
     async getLocationInfo(city, state, country) {
+        const locationKey = `${city}, ${state}, ${country}`.toLowerCase();
+        
+        // Check if we have cached location info
+        const cachedLocationInfo = this.locationInfoCache.get(locationKey);
+        if (cachedLocationInfo && (Date.now() - cachedLocationInfo.timestamp) < this.cacheExpiry) {
+            // Update only the time if timezone is available (time changes frequently)
+            if (cachedLocationInfo.data.timezone) {
+                try {
+                    const updatedTime = await this.getLocalTime(cachedLocationInfo.data.timezone);
+                    return {
+                        ...cachedLocationInfo.data,
+                        localTime: updatedTime
+                    };
+                } catch (error) {
+                    // If time update fails, return cached data
+                    return cachedLocationInfo.data;
+                }
+            }
+            return cachedLocationInfo.data;
+        }
+
         try {
             // Get coordinates
             const coords = await this.getCoordinates(city, state, country);
@@ -213,7 +230,7 @@ class LocationWeatherService {
                 localTime = await this.getLocalTime(weather.timezone);
             }
 
-            return {
+            const locationInfo = {
                 coordinates: coords,
                 weather: weather ? {
                     temperature: weather.temperature,
@@ -223,6 +240,14 @@ class LocationWeatherService {
                 localTime: localTime,
                 timezone: weather?.timezone || 'UTC'
             };
+
+            // Cache the complete location info
+            this.locationInfoCache.set(locationKey, {
+                data: locationInfo,
+                timestamp: Date.now()
+            });
+
+            return locationInfo;
         } catch (error) {
             console.warn('Location info fetch failed:', error);
             return null;
@@ -246,13 +271,43 @@ class LocationWeatherService {
     cleanCache() {
         const now = Date.now();
         
-        [this.geocodeCache, this.weatherCache, this.timezoneCache].forEach(cache => {
+        // Clean geocode, weather, and timezone caches
+        [this.geocodeCache, this.weatherCache, this.locationInfoCache].forEach(cache => {
             for (const [key, value] of cache.entries()) {
                 if (now - value.timestamp > this.cacheExpiry) {
                     cache.delete(key);
                 }
             }
         });
+
+        // Clean timezone cache with shorter expiry
+        for (const [key, value] of this.timezoneCache.entries()) {
+            if (now - value.timestamp > this.timeCacheExpiry) {
+                this.timezoneCache.delete(key);
+            }
+        }
+    }
+
+    /**
+     * Get cache statistics for debugging
+     */
+    getCacheStats() {
+        return {
+            geocode: this.geocodeCache.size,
+            weather: this.weatherCache.size,
+            timezone: this.timezoneCache.size,
+            locationInfo: this.locationInfoCache.size,
+            total: this.geocodeCache.size + this.weatherCache.size + this.timezoneCache.size + this.locationInfoCache.size
+        };
+    }
+
+    /**
+     * Check if location info is cached (without fetching)
+     */
+    isLocationInfoCached(city, state, country) {
+        const locationKey = `${city}, ${state}, ${country}`.toLowerCase();
+        const cachedLocationInfo = this.locationInfoCache.get(locationKey);
+        return cachedLocationInfo && (Date.now() - cachedLocationInfo.timestamp) < this.cacheExpiry;
     }
 }
 
