@@ -374,6 +374,32 @@
     opacity: 0.7;
 }
 
+[data-theme="dark"] .time-info, 
+[data-theme="dark"] .weather-info {
+    background: var(--gray-700);
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .time-info {
+    color: var(--primary);
+}
+
+[data-theme="dark"] .time-info:hover {
+    background: var(--gray-600);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .weather-info {
+    color: var(--primary);
+}
+
+[data-theme="dark"] .weather-info:hover {
+    background: var(--gray-600);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
 [data-theme="dark"] .card-alias {
     color: var(--text-muted);
 }
@@ -2688,6 +2714,49 @@ button:disabled {
 
 .card-location-link:hover {
     opacity: 0.7;
+}
+
+/* Time and Weather Info */
+.card-time-weather {
+    display: flex;
+    gap: 12px;
+    margin: 4px 0;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.time-info, .weather-info {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem; /* Slightly smaller to fit day + time */
+}
+
+.time-info {
+    color: var(--primary);
+    min-width: 70px; /* Ensure enough space for "Mon 14:35" */
+}
+
+.time-info:hover {
+    background: var(--gray-200);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+.weather-info {
+    color: var(--warning);
+}
+
+.weather-info:hover {
+    background: var(--gray-200);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
 }
 
 /* Card content layout with left content and chronometer */

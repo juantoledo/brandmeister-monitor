@@ -43,6 +43,10 @@ class BrandmeisterMonitor {
         this.selectedTalkgroups = new Set();
         this.recentlySelectedTalkgroups = []; // Track last 10 selected TGs
 
+        // Location & Weather Service
+        this.locationWeatherService = null;
+        this.weatherLoadTimers = new Map(); // Track delayed weather loading
+
         this.initializeUI();
         
         // Initialize talkgroup database first, then continue with other initializations
@@ -55,6 +59,12 @@ class BrandmeisterMonitor {
             this.talkgroupManager.initializeWithStaticData(
                 window.BRANDMEISTER_TALKGROUPS || {}
             );
+            
+            // Initialize Location & Weather Service
+            if (window.LocationWeatherService) {
+                this.locationWeatherService = new window.LocationWeatherService();
+                console.log('✅ Location & Weather Service initialized');
+            }
             
             // Load talkgroup database from API (this will update the manager)
             await this.loadTalkgroupDatabase();
@@ -303,6 +313,9 @@ class BrandmeisterMonitor {
         
         // Update RadioID status if available
         this.updateRadioIDStatusDisplay();
+        
+        // Refresh weather displays to show weekdays in new language
+        this.refreshWeatherDisplays();
     }
 
     updateDynamicTranslations() {
@@ -1983,6 +1996,8 @@ class BrandmeisterMonitor {
                 let locationInfo = '';
                 let flagBackgroundUrl = '';
                 let countryCode = '';
+                let timeWeatherInfo = '';
+                
                 if (radioIdInfo) {
                     const city = radioIdInfo.city;
                     const state = radioIdInfo.state;
@@ -1995,6 +2010,17 @@ class BrandmeisterMonitor {
                         flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
                         // Make location text clickable for Google search
                         locationInfo = `<div class="card-location card-location-link" title="Click to search location on Google">${locationParts.join(', ')}</div>`;
+                        
+                        // Add time and weather info placeholder only if not monitoring all talkgroups
+                        if (!this.config.monitorAllTalkgroups) {
+                            timeWeatherInfo = `<div class="card-time-weather" data-city="${city}" data-state="${state}" data-country="${country}">
+                                <span class="time-info">⏰ Loading...</span>
+                                <span class="weather-info">🌍 --°</span>
+                            </div>`;
+                            
+                            // Async load time and weather
+                            this.loadTimeWeatherInfo(city, state, country, sessionKey);
+                        }
                     }
                 }
                 
@@ -2015,6 +2041,7 @@ class BrandmeisterMonitor {
                             <div class="card-left">
                                 ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
                                 ${locationInfo}
+                                ${timeWeatherInfo}
                                 <div class="card-details">
                                     ${alias ? `<div class="card-alias">${alias}</div>` : ''}
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
@@ -2469,6 +2496,9 @@ class BrandmeisterMonitor {
         
         // Enhanced DOM cleanup
         this.performDOMCleanup();
+        
+        // Clean up weather loading timers for completed transmissions
+        this.cleanupWeatherTimers();
         
         // Clean up performance monitoring data
         this.cleanupPerformanceData();
@@ -4040,6 +4070,177 @@ class BrandmeisterMonitor {
     getCountryCode(countryName) {
         // Use the global country code function from config.js
         return window.getCountryCode(countryName);
+    }
+
+    /**
+     * Clean up weather loading timers for sessions that no longer exist
+     */
+    cleanupWeatherTimers() {
+        let cleanedTimers = 0;
+        
+        for (const [sessionKey, timerId] of this.weatherLoadTimers.entries()) {
+            // Check if the transmission card still exists
+            const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+            if (!transmissionCard) {
+                // Clear the timer and remove from map
+                clearTimeout(timerId);
+                this.weatherLoadTimers.delete(sessionKey);
+                cleanedTimers++;
+            }
+        }
+        
+        if (cleanedTimers > 0 && this.config.verbose) {
+            console.log(`🧹 Cleaned up ${cleanedTimers} orphaned weather timers`);
+        }
+    }
+
+    /**
+     * Refresh weather displays to update weekday language
+     */
+    refreshWeatherDisplays() {
+        if (!this.locationWeatherService || this.config.monitorAllTalkgroups) return;
+
+        // Find all current time displays and refresh them
+        const timeElements = document.querySelectorAll('.time-info');
+        timeElements.forEach(async (timeElement) => {
+            const weatherContainer = timeElement.closest('.card-time-weather');
+            if (!weatherContainer) return;
+
+            const city = weatherContainer.dataset.city;
+            const state = weatherContainer.dataset.state;
+            const country = weatherContainer.dataset.country;
+
+            if (city && country) {
+                try {
+                    // Force refresh of time display with new language
+                    this.locationWeatherService.timezoneCache.clear(); // Clear cache to force refresh
+                    const locationInfo = await this.locationWeatherService.getLocationInfo(city, state, country);
+                    
+                    if (locationInfo && locationInfo.localTime) {
+                        timeElement.textContent = `⏰ ${locationInfo.localTime}`;
+                        timeElement.style.cursor = 'pointer';
+                        timeElement.title = 'Powered by World Time API';
+                        timeElement.onclick = (e) => {
+                            e.stopPropagation();
+                            window.open('https://worldtimeapi.org/', '_blank');
+                        };
+                        timeElement.title = `Local time in ${locationInfo.timezone}`;
+                    }
+                } catch (error) {
+                    console.warn('Failed to refresh time display for language change:', error);
+                }
+            }
+        });
+    }
+
+    /**
+     * Load time and weather information for a location (with 10-second delay)
+     */
+    async loadTimeWeatherInfo(city, state, country, sessionKey) {
+        // Skip weather loading if monitoring all talkgroups to avoid API overload
+        if (this.config.monitorAllTalkgroups) {
+            if (this.config.verbose) {
+                console.log('⚠️ Weather loading disabled - monitoring all talkgroups (too many API calls)');
+            }
+            return;
+        }
+
+        if (!this.locationWeatherService || !city || !country) return;
+
+        const timerKey = sessionKey;
+        
+        // Clear any existing timer for this session
+        if (this.weatherLoadTimers.has(timerKey)) {
+            clearTimeout(this.weatherLoadTimers.get(timerKey));
+        }
+
+        // Set a 10-second delay before loading weather data
+        const timerId = setTimeout(async () => {
+            try {
+                // Check if the transmission card still exists (user might have closed it)
+                const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                if (!transmissionCard) {
+                    this.weatherLoadTimers.delete(timerKey);
+                    return;
+                }
+
+                console.log(`🌍 Loading time/weather for: ${city}, ${state}, ${country} (after 10s delay)`);
+                
+                const locationInfo = await this.locationWeatherService.getLocationInfo(city, state, country);
+                
+                // Double-check the card still exists after the async call
+                const currentTransmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                if (!currentTransmissionCard) {
+                    this.weatherLoadTimers.delete(timerKey);
+                    return;
+                }
+
+                const timeWeatherElement = currentTransmissionCard.querySelector('.card-time-weather');
+                if (!timeWeatherElement) {
+                    this.weatherLoadTimers.delete(timerKey);
+                    return;
+                }
+
+                if (locationInfo) {
+                    const timeInfo = timeWeatherElement.querySelector('.time-info');
+                    const weatherInfo = timeWeatherElement.querySelector('.weather-info');
+
+                    if (timeInfo) {
+                        timeInfo.textContent = `⏰ ${locationInfo.localTime}`;
+                        timeInfo.title = `Local time in ${locationInfo.timezone} - Powered by World Time API`;
+                        timeInfo.style.cursor = 'pointer';
+                        
+                        // Make time clickable to World Time API
+                        timeInfo.onclick = (e) => {
+                            e.stopPropagation();
+                            window.open('https://worldtimeapi.org/', '_blank');
+                        };
+                    }
+
+                    if (weatherInfo && locationInfo.weather) {
+                        weatherInfo.textContent = `${locationInfo.weather.emoji} ${locationInfo.weather.temperature}°C`;
+                        weatherInfo.title = `Current weather conditions - Powered by Open-Meteo`;
+                        weatherInfo.style.cursor = 'pointer';
+                        
+                        // Make weather clickable to Open-Meteo
+                        weatherInfo.onclick = (e) => {
+                            e.stopPropagation();
+                            window.open('https://open-meteo.com/', '_blank');
+                        };
+                    }
+
+                    console.log(`✅ Updated time/weather for ${city}: ${locationInfo.localTime}, ${locationInfo.weather?.temperature}°C`);
+                } else {
+                    // Show fallback if data unavailable
+                    const timeInfo = timeWeatherElement.querySelector('.time-info');
+                    const weatherInfo = timeWeatherElement.querySelector('.weather-info');
+                    
+                    if (timeInfo) timeInfo.textContent = '⏰ --:--';
+                    if (weatherInfo) weatherInfo.textContent = '🌍 --°';
+                }
+            } catch (error) {
+                console.warn('Failed to load time/weather info:', error);
+                
+                // Show error state
+                const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                if (transmissionCard) {
+                    const timeWeatherElement = transmissionCard.querySelector('.card-time-weather');
+                    if (timeWeatherElement) {
+                        const timeInfo = timeWeatherElement.querySelector('.time-info');
+                        const weatherInfo = timeWeatherElement.querySelector('.weather-info');
+                        
+                        if (timeInfo) timeInfo.textContent = '⏰ --:--';
+                        if (weatherInfo) weatherInfo.textContent = '🌍 --°';
+                    }
+                }
+            } finally {
+                // Clean up the timer reference
+                this.weatherLoadTimers.delete(timerKey);
+            }
+        }, 10000); // 10-second delay
+
+        // Store the timer reference
+        this.weatherLoadTimers.set(timerKey, timerId);
     }
 }
 
