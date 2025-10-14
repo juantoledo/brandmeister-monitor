@@ -872,8 +872,8 @@ body {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: 300px;
+    overflow: hidden;
     z-index: 1000;
     display: none;
     box-shadow: var(--shadow-lg);
@@ -883,11 +883,73 @@ body {
     display: block;
 }
 
+.tg-search-controls {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+}
+
+.tg-search-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tg-search-actions button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tg-search-actions button:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.tg-add-selected {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+.tg-add-selected:disabled {
+    background: var(--border) !important;
+    color: var(--text-muted) !important;
+    cursor: not-allowed;
+}
+
+.tg-close-search {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.tg-search-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
 .tg-search-result {
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--border);
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .tg-search-result:hover {
@@ -896,6 +958,21 @@ body {
 
 .tg-search-result:last-child {
     border-bottom: none;
+}
+
+.tg-search-result.selected {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--primary);
+}
+
+.tg-search-result-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.tg-search-result-content {
+    flex: 1;
 }
 
 .tg-search-result-id {

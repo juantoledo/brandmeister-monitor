@@ -17,6 +17,10 @@ class BrandmeisterMonitor {
         this.radioIDLastUpdate = null;
         this.radioIDUpdateInProgress = false;
         
+        // Talkgroup Manager for unified API and static data
+        this.talkgroupManager = new TalkgroupManager();
+        this.talkgroupUpdateInProgress = false;
+        
         // Configuration (loaded from external config file)
         this.config = window.BrandmeisterConfig;
 
@@ -40,9 +44,44 @@ class BrandmeisterMonitor {
         this.recentlySelectedTalkgroups = []; // Track last 10 selected TGs
 
         this.initializeUI();
-        this.loadTalkgroupFromStorage();
-        this.loadAliasesFromStorage();
-        this.loadRadioIDDatabase();
+        
+        // Initialize talkgroup database first, then continue with other initializations
+        this.initializeAsync();
+    }
+
+    async initializeAsync() {
+        try {
+            // Initialize TalkgroupManager with static data first
+            this.talkgroupManager.initializeWithStaticData(
+                window.BRANDMEISTER_TALKGROUPS || {}
+            );
+            
+            // Load talkgroup database from API (this will update the manager)
+            await this.loadTalkgroupDatabase();
+            
+            // Initialize Talk Group Selector after talkgroup manager is ready
+            this.initializeTalkGroupSelector();
+            
+            // Then load other data
+            this.loadTalkgroupFromStorage();
+            this.loadAliasesFromStorage();
+            this.loadRadioIDDatabase();
+            
+            // Update talkgroup status display
+            this.updateTalkgroupStatus();
+            
+            console.log('✅ Brandmeister Monitor initialization complete');
+        } catch (error) {
+            console.error('❌ Error during initialization:', error);
+            // Continue with fallback data
+            this.talkgroupManager.initializeWithStaticData(
+                window.BRANDMEISTER_TALKGROUPS || {}
+            );
+            this.initializeTalkGroupSelector(); // Initialize even with fallback data
+            this.loadTalkgroupFromStorage();
+            this.loadAliasesFromStorage();
+            this.loadRadioIDDatabase();
+        }
     }
 
     initializeUI() {
@@ -68,6 +107,11 @@ class BrandmeisterMonitor {
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
             enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
             radioIDSettings: document.getElementById('radioIDSettings'),
+            enableTalkgroupAPICheckbox: document.getElementById('enableTalkgroupAPI'),
+            talkgroupSettings: document.getElementById('talkgroupSettings'),
+            downloadTalkgroupsBtn: document.getElementById('downloadTalkgroups'),
+            clearTalkgroupCacheBtn: document.getElementById('clearTalkgroupCache'),
+            talkgroupStatus: document.getElementById('talkgroupStatus'),
             colorPresets: document.getElementById('colorPresets'),
             colorPreview: document.getElementById('colorPreview'),
             colorValue: document.getElementById('colorValue'),
@@ -83,9 +127,13 @@ class BrandmeisterMonitor {
             tgTabContents: document.querySelectorAll('.tg-tab-content'),
             tgSearch: document.getElementById('tgSearch'),
             tgSearchResults: document.getElementById('tgSearchResults'),
+            tgSearchList: document.getElementById('tgSearchList'),
+            tgSearchControls: document.getElementById('tgSearchControls'),
+            tgSelectAll: document.getElementById('tgSelectAll'),
+            tgDeselectAll: document.getElementById('tgDeselectAll'),
+            tgAddSelected: document.getElementById('tgAddSelected'),
+            tgCloseSearch: document.getElementById('tgCloseSearch'),
             tgPopularGrid: document.getElementById('tgPopularGrid'),
-            tgCategory: document.getElementById('tgCategory'),
-            tgCategoryGrid: document.getElementById('tgCategoryGrid'),
             tgSelectedList: document.getElementById('tgSelectedList'),
             clearSelection: document.getElementById('clearSelection')
         };
@@ -105,6 +153,17 @@ class BrandmeisterMonitor {
             this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
         }
         
+        // Talkgroup settings event listeners
+        if (this.elements.enableTalkgroupAPICheckbox) {
+            this.elements.enableTalkgroupAPICheckbox.addEventListener('change', () => this.toggleTalkgroupSettings());
+        }
+        if (this.elements.downloadTalkgroupsBtn) {
+            this.elements.downloadTalkgroupsBtn.addEventListener('click', () => this.downloadTalkgroupDatabase());
+        }
+        if (this.elements.clearTalkgroupCacheBtn) {
+            this.elements.clearTalkgroupCacheBtn.addEventListener('click', () => this.clearTalkgroupCache());
+        }
+        
         // Color preset picker event listeners
         if (this.elements.colorPresets) {
             this.initializeColorPicker();
@@ -122,9 +181,6 @@ class BrandmeisterMonitor {
         
         // Initialize Language System
         this.initializeLanguageSystem();
-        
-        // Initialize Talk Group Selector
-        this.initializeTalkGroupSelector();
         
         // Allow Enter key to save talkgroup
         this.elements.talkgroupInput.addEventListener('keypress', (e) => {
@@ -242,9 +298,6 @@ class BrandmeisterMonitor {
         // Update status text based on connection state
         this.updateStatusText();
         
-        // Update category dropdown options
-        this.updateCategoryDropdownTranslations();
-        
         // Update activity log header if it exists
         this.updateActivityLogHeader();
         
@@ -316,16 +369,6 @@ class BrandmeisterMonitor {
         }
     }
 
-    updateCategoryDropdownTranslations() {
-        if (!this.elements.tgCategory || !window.t) return;
-        
-        const options = this.elements.tgCategory.querySelectorAll('option[data-i18n]');
-        options.forEach(option => {
-            const key = option.getAttribute('data-i18n');
-            option.textContent = window.t(key);
-        });
-    }
-
     updateActivityLogHeader() {
         // Update activity log header if it exists
         const existingHeader = this.elements.logContainer.querySelector('.log-header-compact');
@@ -366,12 +409,22 @@ class BrandmeisterMonitor {
             });
         }
 
-        // Category selector
-        if (this.elements.tgCategory) {
-            this.elements.tgCategory.addEventListener('change', (e) => {
-                this.loadTalkGroupCategory(e.target.value);
-            });
+        // Multi-select controls
+        if (this.elements.tgSelectAll) {
+            this.elements.tgSelectAll.addEventListener('click', () => this.selectAllSearchResults());
         }
+        if (this.elements.tgDeselectAll) {
+            this.elements.tgDeselectAll.addEventListener('click', () => this.deselectAllSearchResults());
+        }
+        if (this.elements.tgAddSelected) {
+            this.elements.tgAddSelected.addEventListener('click', () => this.addSelectedTalkgroups());
+        }
+        if (this.elements.tgCloseSearch) {
+            this.elements.tgCloseSearch.addEventListener('click', () => this.hideTalkGroupSearchResults());
+        }
+
+        // Initialize search state
+        this.searchSelectedTalkgroups = new Set();
 
         // Clear selection button
         if (this.elements.clearSelection) {
@@ -449,33 +502,6 @@ class BrandmeisterMonitor {
         });
     }
 
-    loadTalkGroupCategory(category) {
-        if (!this.elements.tgCategoryGrid || !category || typeof getTalkgroupsByCategory === 'undefined') {
-            this.elements.tgCategoryGrid.innerHTML = '';
-            return;
-        }
-
-        const categoryTGs = getTalkgroupsByCategory(category);
-        this.elements.tgCategoryGrid.innerHTML = '';
-        
-        Object.entries(categoryTGs).forEach(([id, name]) => {
-            const item = document.createElement('div');
-            item.className = 'tg-category-item';
-            item.dataset.tgId = id;
-            
-            item.innerHTML = `
-                <div class="tg-category-id">${id}</div>
-                <div class="tg-category-name">${name}</div>
-            `;
-            
-            item.addEventListener('click', () => {
-                this.toggleTalkGroupSelection(id, name, item);
-            });
-            
-            this.elements.tgCategoryGrid.appendChild(item);
-        });
-    }
-
     handleTalkGroupSearch(query) {
         if (!query.trim()) {
             this.hideTalkGroupSearchResults();
@@ -489,37 +515,133 @@ class BrandmeisterMonitor {
     }
 
     showTalkGroupSearchResults(results) {
-        if (!this.elements.tgSearchResults) return;
+        if (!this.elements.tgSearchResults || !this.elements.tgSearchList) return;
+
+        // Show controls if we have results
+        if (this.elements.tgSearchControls) {
+            this.elements.tgSearchControls.style.display = results.length > 0 ? 'block' : 'none';
+        }
 
         if (results.length === 0) {
-            this.elements.tgSearchResults.innerHTML = '<div class="tg-search-result">No talk groups found</div>';
+            this.elements.tgSearchList.innerHTML = '<div class="tg-search-result">No talk groups found</div>';
         } else {
-            this.elements.tgSearchResults.innerHTML = results.map(result => `
+            this.elements.tgSearchList.innerHTML = results.map(result => `
                 <div class="tg-search-result" data-tg-id="${result.id}">
-                    <div class="tg-search-result-id">${result.id}</div>
-                    <div class="tg-search-result-name">${result.name}</div>
+                    <input type="checkbox" class="tg-search-result-checkbox" data-tg-id="${result.id}">
+                    <div class="tg-search-result-content">
+                        <div class="tg-search-result-id">${result.id}</div>
+                        <div class="tg-search-result-name">${result.name}</div>
+                    </div>
                 </div>
             `).join('');
 
-            // Add click handlers
-            this.elements.tgSearchResults.querySelectorAll('.tg-search-result[data-tg-id]').forEach(item => {
-                item.addEventListener('click', () => {
-                    const id = item.dataset.tgId;
-                    const name = item.querySelector('.tg-search-result-name').textContent;
-                    this.toggleTalkGroupSelection(id, name);
-                    this.hideTalkGroupSearchResults();
-                    this.elements.tgSearch.value = '';
+            // Add click handlers for rows and checkboxes
+            this.elements.tgSearchList.querySelectorAll('.tg-search-result[data-tg-id]').forEach(item => {
+                const checkbox = item.querySelector('.tg-search-result-checkbox');
+                const tgId = item.dataset.tgId;
+
+                // Handle row click (toggle checkbox)
+                item.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        checkbox.checked = !checkbox.checked;
+                        this.updateSearchSelection(tgId, checkbox.checked);
+                    }
                 });
+
+                // Handle checkbox change
+                checkbox.addEventListener('change', (e) => {
+                    this.updateSearchSelection(tgId, e.target.checked);
+                });
+
+                // Restore previous selection state
+                if (this.searchSelectedTalkgroups.has(tgId)) {
+                    checkbox.checked = true;
+                    item.classList.add('selected');
+                }
             });
         }
 
+        this.updateSearchControls();
         this.elements.tgSearchResults.classList.add('show');
     }
 
     hideTalkGroupSearchResults() {
         if (this.elements.tgSearchResults) {
             this.elements.tgSearchResults.classList.remove('show');
+            this.searchSelectedTalkgroups.clear();
+            if (this.elements.tgSearchControls) {
+                this.elements.tgSearchControls.style.display = 'none';
+            }
         }
+    }
+
+    updateSearchSelection(tgId, selected) {
+        const item = this.elements.tgSearchList.querySelector(`.tg-search-result[data-tg-id="${tgId}"]`);
+        if (!item) return;
+
+        if (selected) {
+            this.searchSelectedTalkgroups.add(tgId);
+            item.classList.add('selected');
+        } else {
+            this.searchSelectedTalkgroups.delete(tgId);
+            item.classList.remove('selected');
+        }
+
+        this.updateSearchControls();
+    }
+
+    updateSearchControls() {
+        if (!this.elements.tgAddSelected) return;
+
+        const count = this.searchSelectedTalkgroups.size;
+        this.elements.tgAddSelected.textContent = `Add Selected (${count})`;
+        this.elements.tgAddSelected.disabled = count === 0;
+    }
+
+    selectAllSearchResults() {
+        if (!this.elements.tgSearchList) return;
+
+        const checkboxes = this.elements.tgSearchList.querySelectorAll('.tg-search-result-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            this.updateSearchSelection(checkbox.dataset.tgId, true);
+        });
+    }
+
+    deselectAllSearchResults() {
+        if (!this.elements.tgSearchList) return;
+
+        const checkboxes = this.elements.tgSearchList.querySelectorAll('.tg-search-result-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            this.updateSearchSelection(checkbox.dataset.tgId, false);
+        });
+    }
+
+    addSelectedTalkgroups() {
+        if (this.searchSelectedTalkgroups.size === 0) return;
+
+        // Get talkgroup data for selected IDs
+        const selectedTalkgroups = Array.from(this.searchSelectedTalkgroups).map(id => {
+            const result = this.elements.tgSearchList.querySelector(`.tg-search-result[data-tg-id="${id}"]`);
+            if (result) {
+                const name = result.querySelector('.tg-search-result-name').textContent;
+                return { id, name };
+            }
+            return null;
+        }).filter(Boolean);
+
+        // Add each selected talkgroup
+        selectedTalkgroups.forEach(({ id, name }) => {
+            this.toggleTalkGroupSelection(id, name);
+        });
+
+        // Clear search and close results
+        this.elements.tgSearch.value = '';
+        this.hideTalkGroupSearchResults();
+
+        // Show success feedback
+        console.log(`✅ Added ${selectedTalkgroups.length} talk groups to selection`);
     }
 
     toggleTalkGroupSelection(id, name, element = null) {
@@ -3161,6 +3283,7 @@ class BrandmeisterMonitor {
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
                 this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
+                this.config.enableTalkgroupAPI = settings.enableTalkgroupAPI !== undefined ? settings.enableTalkgroupAPI : false;
                 this.config.primaryColor = settings.primaryColor || '#2563eb';
                 
                 // Apply the primary color
@@ -3187,6 +3310,7 @@ class BrandmeisterMonitor {
             verbose: this.config.verbose,
             monitorAllTalkgroups: this.config.monitorAllTalkgroups,
             enableRadioIDLookup: this.config.enableRadioIDLookup,
+            enableTalkgroupAPI: this.config.enableTalkgroupAPI,
             primaryColor: this.config.primaryColor
         };
         
@@ -3285,9 +3409,14 @@ class BrandmeisterMonitor {
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
         }
+        if (this.elements.enableTalkgroupAPICheckbox) {
+            this.elements.enableTalkgroupAPICheckbox.checked = this.config.enableTalkgroupAPI;
+        }
         this.updateColorSelection();
         this.toggleRadioIDSettings();
         this.updateRadioIDStatus();
+        this.toggleTalkgroupSettings();
+        this.updateTalkgroupStatus();
     }
 
     toggleRadioIDSettings() {
@@ -3308,6 +3437,22 @@ class BrandmeisterMonitor {
             } else {
                 // Auto-clear cache when disabled
                 this.clearRadioIDCache();
+            }
+        }
+    }
+
+    toggleTalkgroupSettings() {
+        if (this.elements.talkgroupSettings && this.elements.enableTalkgroupAPICheckbox) {
+            const isEnabled = this.elements.enableTalkgroupAPICheckbox.checked;
+            this.config.enableTalkgroupAPI = isEnabled;
+            this.elements.talkgroupSettings.style.display = isEnabled ? 'block' : 'none';
+            this.saveSettings();
+            
+            // Note: Talkgroup API loads automatically on page load regardless of this setting
+            // This setting only controls the visibility of manual download/cache controls
+            if (isEnabled) {
+                // Update status display when enabled
+                this.updateTalkgroupStatus();
             }
         }
     }
@@ -3693,6 +3838,28 @@ class BrandmeisterMonitor {
         }
     }
 
+    updateTalkgroupStatus(customStatus = null) {
+        const statusElement = document.getElementById('talkgroupStatus');
+        
+        if (!statusElement) return;
+
+        if (customStatus) {
+            statusElement.textContent = customStatus;
+        } else {
+            const stats = this.talkgroupManager.getStatistics();
+            if (stats.isApiDataAvailable && stats.lastUpdate) {
+                const lastUpdate = new Date(stats.lastUpdate);
+                const recordsText = window.t ? window.t('settings.talkgroup.records.loaded') : 'talkgroups loaded';
+                const updatedText = window.t ? window.t('settings.talkgroup.updated') : 'Updated:';
+                const sourceText = stats.apiTalkgroups > 0 ? '(API + Static)' : '(Static only)';
+                statusElement.innerHTML = `${stats.totalTalkgroups.toLocaleString()} ${recordsText} ${sourceText}<br>${updatedText} ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
+            } else {
+                const notLoadedText = window.t ? window.t('settings.talkgroup.status.notloaded') : 'Static data only';
+                statusElement.textContent = `${stats.totalTalkgroups.toLocaleString()} talkgroups (${notLoadedText})`;
+            }
+        }
+    }
+
     // Clear RadioID cache
     clearRadioIDCache() {
         console.log('🗑️ Clearing RadioID database cache...');
@@ -3704,6 +3871,169 @@ class BrandmeisterMonitor {
         localStorage.removeItem('radioIDLastUpdate');
         
         this.updateRadioIDStatus('Cache cleared');
+    }
+
+    // Talkgroup Database Functions
+    
+    // Initialize Talkgroup database
+    async loadTalkgroupDatabase() {
+        console.log('🗂️ Loading Talkgroup database from API...');
+        
+        try {
+            // Try to load cached API data first
+            const cachedData = localStorage.getItem('talkgroupDatabase');
+            const lastUpdate = localStorage.getItem('talkgroupLastUpdate');
+            
+            // Load cached data immediately if available (for instant UI updates)
+            if (cachedData && lastUpdate) {
+                console.log('📋 Loading cached API talkgroup data...');
+                const parsedCachedData = JSON.parse(cachedData);
+                this.talkgroupManager.updateWithApiData(parsedCachedData, parseInt(lastUpdate));
+            }
+            
+            // Always try to download fresh data from API
+            await this.downloadTalkgroupDatabase();
+            
+        } catch (error) {
+            console.error('❌ Failed to load Talkgroup database from API:', error);
+            console.log('🔄 Using static talkgroup data as fallback');
+        }
+    }
+
+    // Download Talkgroup database from Brandmeister API
+    async downloadTalkgroupDatabase() {
+        if (this.talkgroupUpdateInProgress) {
+            console.log('Talkgroup download already in progress');
+            return;
+        }
+
+        this.talkgroupUpdateInProgress = true;
+
+        try {
+            console.log(`📡 Downloading Talkgroup database from ${this.config.talkgroupDatabaseURL}`);
+            
+            const response = await fetch(this.config.talkgroupDatabaseURL);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const jsonData = await response.json();
+            console.log(`📊 Downloaded ${Array.isArray(jsonData) ? jsonData.length : Object.keys(jsonData).length} talkgroups from Brandmeister API`);
+
+            // Convert array to object for faster lookups
+            const parsedData = this.parseTalkgroupJSON(jsonData);
+            console.log(`✅ Parsed ${Object.keys(parsedData).length} Talkgroup records`);
+
+            // Update TalkgroupManager with fresh API data
+            const lastUpdate = Date.now();
+            this.talkgroupManager.updateWithApiData(parsedData, lastUpdate);
+
+            // Try to save to localStorage
+            try {
+                const dataToStore = JSON.stringify(parsedData);
+                const sizeInMB = (dataToStore.length / (1024 * 1024)).toFixed(2);
+                console.log(`💾 Storing ${sizeInMB}MB of Talkgroup data...`);
+                
+                localStorage.setItem('talkgroupDatabase', dataToStore);
+                localStorage.setItem('talkgroupLastUpdate', lastUpdate.toString());
+                
+                console.log('✅ Successfully cached Talkgroup database to localStorage');
+            } catch (storageError) {
+                console.warn('⚠️ Failed to cache Talkgroup database to localStorage:', storageError.message);
+            }
+
+        } catch (error) {
+            console.error('❌ Failed to download Talkgroup database from API:', error);
+            console.log('🔄 Falling back to static talkgroup data for this session');
+            console.log('📋 Error details:', {
+                message: error.message,
+                type: error.constructor.name,
+                url: this.config.talkgroupDatabaseURL
+            });
+            
+            // Update status to indicate fallback
+            this.updateTalkgroupStatus('API failed - using static data');
+            
+            // Don't throw the error, allow application to continue with static data
+            
+        } finally {
+            this.talkgroupUpdateInProgress = false;
+        }
+    }
+
+    // Parse Talkgroup JSON data from Brandmeister API
+    parseTalkgroupJSON(jsonData) {
+        const talkgroups = {};
+        let processedCount = 0;
+        let skippedCount = 0;
+        
+        try {
+            console.log('🔍 Parsing talkgroup data:', {
+                isArray: Array.isArray(jsonData),
+                isObject: typeof jsonData === 'object' && !Array.isArray(jsonData),
+                type: typeof jsonData,
+                keysLength: typeof jsonData === 'object' ? Object.keys(jsonData).length : 'N/A',
+                firstKeys: typeof jsonData === 'object' && !Array.isArray(jsonData) ? Object.keys(jsonData).slice(0, 5) : 'N/A'
+            });
+            
+            // Check if the API returns an object (new format: {"1": "Local", "2": "Cluster"})
+            if (typeof jsonData === 'object' && !Array.isArray(jsonData) && jsonData !== null) {
+                console.log('📦 Processing object format talkgroup data...');
+                Object.entries(jsonData).forEach(([id, name]) => {
+                    if (id && name && typeof name === 'string') {
+                        talkgroups[id.toString()] = name.trim();
+                        processedCount++;
+                    } else {
+                        skippedCount++;
+                        if (skippedCount <= 5) { // Log first 5 problematic entries
+                            console.warn('⚠️ Skipping invalid talkgroup entry:', { id, name });
+                        }
+                    }
+                });
+            }
+            // Fallback: Check if the API returns an array (old format: [{id: 1, name: "Local"}])
+            else if (Array.isArray(jsonData)) {
+                console.log('� Processing array format talkgroup data...');
+                jsonData.forEach((tg, index) => {
+                    if (tg && tg.id && tg.name) {
+                        talkgroups[tg.id.toString()] = tg.name.trim();
+                        processedCount++;
+                    } else {
+                        skippedCount++;
+                        if (index < 5) { // Log first 5 problematic entries
+                            console.warn('⚠️ Skipping invalid talkgroup entry:', tg);
+                        }
+                    }
+                });
+            } else {
+                console.warn('⚠️ Unexpected talkgroup data format, expected object or array, got:', typeof jsonData);
+            }
+                
+            console.log(`📊 Parsing results: ${processedCount} processed, ${skippedCount} skipped`);
+        } catch (error) {
+            console.error('❌ Error parsing talkgroup JSON:', error);
+        }
+
+        return talkgroups;
+    }
+
+    // Get talkgroup name using TalkgroupManager
+    getTalkgroupName(id) {
+        return this.talkgroupManager.getTalkgroupName(id);
+    }
+
+    // Clear Talkgroup cache
+    clearTalkgroupCache() {
+        console.log('🗑️ Clearing Talkgroup database cache...');
+        
+        // Reset the TalkgroupManager to only static data
+        this.talkgroupManager.updateWithApiData({}, null);
+        
+        localStorage.removeItem('talkgroupDatabase');
+        localStorage.removeItem('talkgroupLastUpdate');
+        
+        this.updateTalkgroupStatus('Cache cleared');
+        console.log('✅ Talkgroup cache cleared');
     }
 
     // Enhanced country name mapping with fuzzy matching and comprehensive coverage

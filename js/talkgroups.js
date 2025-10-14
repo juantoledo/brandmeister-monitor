@@ -246,32 +246,36 @@ const POPULAR_TALKGROUPS = [
 
 // Function to get talk group name by ID
 function getTalkgroupName(id) {
+    // First try to use the TalkgroupManager from the monitor instance
+    if (window.brandmeisterMonitor && window.brandmeisterMonitor.talkgroupManager) {
+        return window.brandmeisterMonitor.talkgroupManager.getTalkgroupName(id);
+    }
+    
+    // Fallback to static database
     return BRANDMEISTER_TALKGROUPS[id] || `TG ${id}`;
 }
 
 // Function to search talk groups
 function searchTalkgroups(query) {
+    // First try using the TalkgroupManager from the monitor instance
+    if (window.brandmeisterMonitor && window.brandmeisterMonitor.talkgroupManager) {
+        return window.brandmeisterMonitor.talkgroupManager.searchTalkgroups(query);
+    }
+    
+    // Fallback to static database search
     const results = [];
     const searchTerm = query.toLowerCase();
     
     for (const [id, name] of Object.entries(BRANDMEISTER_TALKGROUPS)) {
         if (id.includes(searchTerm) || name.toLowerCase().includes(searchTerm)) {
-            results.push({ id, name });
+            results.push({ id, name, source: 'static' });
         }
     }
     
-    return results.slice(0, 20); // Limit to 20 results
-}
-
-// Function to get talk groups by category
-function getTalkgroupsByCategory(category) {
-    return TALKGROUP_CATEGORIES[category] || {};
+    return results.slice(0, 50); // Show more results to see API data
 }
 
 // Export for use in main application - Browser environment only
 window.BRANDMEISTER_TALKGROUPS = BRANDMEISTER_TALKGROUPS;
-window.TALKGROUP_CATEGORIES = TALKGROUP_CATEGORIES;
-window.POPULAR_TALKGROUPS = POPULAR_TALKGROUPS;
 window.getTalkgroupName = getTalkgroupName;
 window.searchTalkgroups = searchTalkgroups;
-window.getTalkgroupsByCategory = getTalkgroupsByCategory;

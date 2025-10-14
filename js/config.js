@@ -31,7 +31,12 @@ window.BrandmeisterConfig = {
     // RadioID Database settings
     radioIDDatabaseURL: 'https://radioid.net/static/user.csv',
     radioIDCacheExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-    enableRadioIDLookup: true // Enable RadioID database features
+    enableRadioIDLookup: true, // Enable RadioID database features
+    
+    // Talkgroup Database settings
+    talkgroupDatabaseURL: 'https://api.brandmeister.network/v2/talkgroup',
+    talkgroupCacheExpiry: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    enableTalkgroupAPI: false // Show talkgroup management controls (API loads automatically regardless)
 };
 
 // Country code mapping for flag icons

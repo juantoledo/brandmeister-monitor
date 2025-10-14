@@ -33,6 +33,7 @@
     <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/talkgroups.js"></script>
+    <script src="js/talkgroup-manager.js"></script>
     <script src="js/pwa-install.js"></script>
 </head>
 <body>
@@ -106,39 +107,34 @@
                     <div class="tg-tab-content active" id="browse-tab">
                         <div class="tg-search-container">
                             <input type="text" id="tgSearch" data-i18n="sidebar.search.placeholder" placeholder="Search talk groups..." class="tg-search">
-                            <div class="tg-search-results" id="tgSearchResults"></div>
-                        </div>
-                        
-                        <div class="tg-categories">
-                            <h4 data-i18n="sidebar.recent.title">Recently Selected</h4>
-                            <div class="tg-popular-grid" id="tgPopularGrid">
-                                <!-- Recently selected TGs will be loaded here -->
-                            </div>
-                            
-                            <div class="tg-category-selector">
-                                <label for="tgCategory" data-i18n="sidebar.category.label">Browse by Category:</label>
-                                <select id="tgCategory">
-                                    <option value="" data-i18n="sidebar.category.choose">Choose a category...</option>
-                                    <option value="Popular Global" data-i18n="sidebar.category.popular">Popular Global</option>
-                                    <option value="Major Countries" data-i18n="sidebar.category.countries">Major Countries</option>
-                                    <option value="Languages" data-i18n="sidebar.category.languages">Languages</option>
-                                    <option value="Regional" data-i18n="sidebar.category.regional">Regional</option>
-                                    <option value="Digital Modes" data-i18n="sidebar.category.digital">Digital Modes</option>
-                                    <option value="Special Events" data-i18n="sidebar.category.special">Special Events</option>
-                                </select>
-                            </div>
-                            
-                            <div class="tg-category-grid" id="tgCategoryGrid">
-                                <!-- Category TGs will be loaded here -->
+                            <div class="tg-search-results" id="tgSearchResults">
+                                <div class="tg-search-controls" id="tgSearchControls" style="display: none;">
+                                    <div class="tg-search-actions">
+                                        <button class="tg-select-all" id="tgSelectAll">Select All</button>
+                                        <button class="tg-deselect-all" id="tgDeselectAll">Deselect All</button>
+                                        <button class="tg-add-selected" id="tgAddSelected">Add Selected (0)</button>
+                                        <button class="tg-close-search" id="tgCloseSearch">&times;</button>
+                                    </div>
+                                </div>
+                                <div class="tg-search-list" id="tgSearchList"></div>
                             </div>
                         </div>
                         
-                        <div class="tg-selected">
-                            <h4 data-i18n="sidebar.selected.title">Selected Talk Groups</h4>
-                            <div class="tg-selected-list" id="tgSelectedList">
-                                <span class="tg-selected-empty" data-i18n="sidebar.selected.empty">No talk groups selected</span>
+                        <div class="tg-sections">
+                            <div class="tg-recent">
+                                <h4 data-i18n="sidebar.recent.title">Recently Selected</h4>
+                                <div class="tg-popular-grid" id="tgPopularGrid">
+                                    <!-- Recently selected TGs will be loaded here -->
+                                </div>
                             </div>
-                            <button id="clearSelection" class="tg-btn secondary" data-i18n="sidebar.clear">Clear All</button>
+                            
+                            <div class="tg-selected">
+                                <h4 data-i18n="sidebar.selected.title">Selected Talk Groups</h4>
+                                <div class="tg-selected-list" id="tgSelectedList">
+                                    <span class="tg-selected-empty" data-i18n="sidebar.selected.empty">No talk groups selected</span>
+                                </div>
+                                <button id="clearSelection" class="tg-btn secondary" data-i18n="sidebar.clear">Clear All</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -235,6 +231,26 @@
                             <div class="radioID-status">
                                 <span id="radioIDStatus" data-i18n="settings.radioid.status.notloaded">Not loaded</span>
                                 <span id="radioIDLastUpdate"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="enableTalkgroupAPI">
+                                <span class="toggle-slider"></span>
+                                <span data-i18n="settings.talkgroup.label">Enable Official Talkgroup Database</span>
+                            </label>
+                            <span class="setting-description" data-i18n="settings.talkgroup.description">Download latest talkgroups from Brandmeister API</span>
+                        </div>
+                        
+                        <div class="setting-group" id="talkgroupSettings" style="display: none;">
+                            <div class="talkgroup-status">
+                                <span id="talkgroupStatus" data-i18n="settings.talkgroup.status.notloaded">Not loaded</span>
+                                <span id="talkgroupLastUpdate"></span>
+                            </div>
+                            <div class="setting-actions">
+                                <button id="downloadTalkgroups" class="setting-btn" data-i18n="settings.talkgroup.download">Download Talkgroups</button>
+                                <button id="clearTalkgroupCache" class="setting-btn secondary" data-i18n="settings.talkgroup.clear">Clear Cache</button>
                             </div>
                         </div>
                         
