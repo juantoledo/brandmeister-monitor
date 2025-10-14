@@ -685,7 +685,7 @@ class BrandmeisterMonitor {
             return `
                 <span class="tg-selected-tag">
                     <span class="tg-selected-tag-id">${id}</span>
-                    <span class="tg-selected-tag-remove" data-tg-id="${id}">×</span>
+                    <span class="tg-selected-tag-remove" data-tg-id="${id}"><span class="material-icons small">close</span></span>
                 </span>
             `;
         }).join('');
@@ -803,8 +803,8 @@ class BrandmeisterMonitor {
 
     // Reusable HTML fragments stored to reduce template creation
     _htmlFragments = {
-        statusLive: '<span class="card-status live">🔴 LIVE</span>',
-        statusCompleted: '<span class="card-status completed">✅ COMPLETED</span>',
+        statusLive: '<span class="card-status live"><span class="material-icons small">fiber_manual_record</span> LIVE</span>',
+        statusCompleted: '<span class="card-status completed"><span class="material-icons small">check_circle</span> COMPLETED</span>',
         noActivityActive: 'No active transmissions',
         noActivityLog: 'No transmissions yet. Configure a talkgroup and connect to start monitoring.'
     };
@@ -1958,7 +1958,7 @@ class BrandmeisterMonitor {
                     controlsElement.innerHTML = `
                         ${qrzLink}
                         <span class="card-tg">TG ${tg || '?'}</span>
-                        <span class="card-status live">🔴 LIVE</span>
+                        <span class="card-status live"><span class="material-icons small">fiber_manual_record</span> LIVE</span>
                     `;
                 }
                 
@@ -2014,8 +2014,8 @@ class BrandmeisterMonitor {
                         // Add time and weather info placeholder only if not monitoring all talkgroups
                         if (!this.config.monitorAllTalkgroups) {
                             timeWeatherInfo = `<div class="card-time-weather" data-city="${city}" data-state="${state}" data-country="${country}">
-                                <span class="time-info">⏰ Loading...</span>
-                                <span class="weather-info">🌍 --°</span>
+                                <span class="time-info"><span class="material-icons small">schedule</span> Loading...</span>
+                                <span class="weather-info"><span class="material-icons small">public</span> --°</span>
                             </div>`;
                             
                             // Async load time and weather
@@ -2034,7 +2034,7 @@ class BrandmeisterMonitor {
                             <div class="card-controls">
                                 ${qrzLink}
                                 <span class="card-tg">TG ${tg || '?'}</span>
-                                <span class="card-status live">🔴 LIVE</span>
+                                <span class="card-status live"><span class="material-icons small">fiber_manual_record</span> LIVE</span>
                             </div>
                         </div>
                         <div class="card-content">
@@ -2925,7 +2925,7 @@ class BrandmeisterMonitor {
     createQRZLogbookLink(callsign) {
         if (!callsign) return '';
         const cleanCallsign = callsign.toUpperCase().trim();
-        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Look up ${cleanCallsign} on QRZ.com">📋 QRZ</a>`;
+        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Look up ${cleanCallsign} on QRZ.com"><span class="material-icons small">assignment</span> QRZ</a>`;
     }
 
     addLogHeader() {
@@ -2994,7 +2994,7 @@ class BrandmeisterMonitor {
         // Lookup RadioID information
         const radioIdInfo = radioID ? this.lookupRadioID(radioID) : null;
         let locationText = '-';
-        let flagIcon = '🌍';
+        let flagIcon = '<span class="material-icons small">public</span>';
         
         if (radioIdInfo) {
             const city = radioIdInfo.city;
@@ -3005,7 +3005,7 @@ class BrandmeisterMonitor {
             if (locationParts.length > 0) {
                 locationText = locationParts.join(', ');
                 const countryCode = this.getCountryCode(country);
-                flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '🌍';
+                flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '<span class="material-icons small">public</span>';
             }
         }
         
@@ -3023,7 +3023,7 @@ class BrandmeisterMonitor {
         
         // Status indicator
         const isActive = fieldData.status === 'Active';
-        const statusIcon = isActive ? '🔴' : '✅';
+        const statusIcon = isActive ? '<span class="material-icons small">fiber_manual_record</span>' : '<span class="material-icons small">check_circle</span>';
         
         // Get country code for background flag
         let countryCode = '';
@@ -3106,7 +3106,7 @@ class BrandmeisterMonitor {
         if (statusElement) {
             const isActive = fieldData.status === 'Active';
             statusElement.className = `log-card-status ${isActive ? 'live' : 'completed'}`;
-            statusElement.innerHTML = isActive ? '🔴 LIVE' : '✅ COMPLETED';
+            statusElement.innerHTML = isActive ? '<span class="material-icons small">fiber_manual_record</span> LIVE' : '<span class="material-icons small">check_circle</span> COMPLETED';
         }
     }
 
@@ -4117,7 +4117,7 @@ class BrandmeisterMonitor {
                     const locationInfo = await this.locationWeatherService.getLocationInfo(city, state, country);
                     
                     if (locationInfo && locationInfo.localTime) {
-                        timeElement.textContent = `⏰ ${locationInfo.localTime}`;
+                        timeElement.innerHTML = `<span class="material-icons small">schedule</span> ${locationInfo.localTime}`;
                         timeElement.style.cursor = 'pointer';
                         timeElement.title = 'Powered by World Time API';
                         timeElement.onclick = (e) => {
@@ -4198,7 +4198,7 @@ class BrandmeisterMonitor {
                     const weatherInfo = timeWeatherElement.querySelector('.weather-info');
 
                     if (timeInfo) {
-                        timeInfo.textContent = `⏰ ${locationInfo.localTime}`;
+                        timeInfo.innerHTML = `<span class="material-icons small">schedule</span> ${locationInfo.localTime}`;
                         timeInfo.title = `Local time in ${locationInfo.timezone} - Powered by World Time API`;
                         timeInfo.style.cursor = 'pointer';
                         
@@ -4227,8 +4227,8 @@ class BrandmeisterMonitor {
                     const timeInfo = timeWeatherElement.querySelector('.time-info');
                     const weatherInfo = timeWeatherElement.querySelector('.weather-info');
                     
-                    if (timeInfo) timeInfo.textContent = '⏰ --:--';
-                    if (weatherInfo) weatherInfo.textContent = '🌍 --°';
+                    if (timeInfo) timeInfo.innerHTML = '<span class="material-icons small">schedule</span> --:--';
+                    if (weatherInfo) weatherInfo.innerHTML = '<span class="material-icons small">public</span> --°';
                 }
             } catch (error) {
                 console.warn('Failed to load time/weather info:', error);
@@ -4241,8 +4241,8 @@ class BrandmeisterMonitor {
                         const timeInfo = timeWeatherElement.querySelector('.time-info');
                         const weatherInfo = timeWeatherElement.querySelector('.weather-info');
                         
-                        if (timeInfo) timeInfo.textContent = '⏰ --:--';
-                        if (weatherInfo) weatherInfo.textContent = '🌍 --°';
+                        if (timeInfo) timeInfo.innerHTML = '<span class="material-icons small">schedule</span> --:--';
+                        if (weatherInfo) weatherInfo.innerHTML = '<span class="material-icons small">public</span> --°';
                     }
                 }
             } finally {

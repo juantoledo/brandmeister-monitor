@@ -187,7 +187,7 @@ class LocationWeatherService {
             99: '⛈️'    // Thunderstorm with heavy hail
         };
         
-        return weatherMap[weathercode] || '🌍';
+        return weatherMap[weathercode] || '<span class="material-icons small">wb_cloudy</span>';
     }
 
     /**

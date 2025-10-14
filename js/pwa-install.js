@@ -135,7 +135,7 @@ function showInstallSuccessMessage() {
     notification.className = 'install-success-notification';
     notification.innerHTML = `
         <div class="notification-content">
-            <span class="notification-icon">✅</span>
+            <span class="notification-icon"><span class="material-icons">check_circle</span></span>
             <span class="notification-text">App installed successfully!</span>
         </div>
     `;

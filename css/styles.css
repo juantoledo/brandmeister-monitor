@@ -2,6 +2,67 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
+/* Material Icons Styles */
+.material-icons,
+.material-symbols-outlined {
+    font-family: 'Material Icons', 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+}
+
+.material-icons.small,
+.material-symbols-outlined.small { font-size: 18px; }
+.material-icons.medium,
+.material-symbols-outlined.medium { font-size: 24px; }
+.material-icons.large,
+.material-symbols-outlined.large { font-size: 36px; }
+
+/* Material Icons in specific contexts */
+.app-header .material-icons {
+    margin-right: 8px;
+    vertical-align: text-bottom;
+}
+
+.card-status .material-icons {
+    margin-right: 4px;
+    vertical-align: text-bottom;
+}
+
+.time-info .material-icons,
+.weather-info .material-icons {
+    margin-right: 4px;
+    vertical-align: text-bottom;
+}
+
+.qrz-link .material-icons {
+    margin-right: 4px;
+    vertical-align: text-bottom;
+    font-size: 16px;
+}
+
+.tg-selected-tag-remove .material-icons {
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+.notification-icon .material-icons {
+    font-size: 20px;
+    vertical-align: middle;
+    color: var(--success);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -297,12 +358,6 @@
     border-color: var(--gray-600);
     color: var(--text);
 }
-
-/* Dark mode log entries and card styles */
-[data-theme="dark"] .log-entry {
-    background: var(--gray-800);
-}
-
 
 [data-theme="dark"] .log-entry.error {
     background: rgba(239, 68, 68, 0.15);
@@ -1949,14 +2004,6 @@ button:disabled {
     justify-content: center;
     min-width: 0;
 }
-
-
-
-/* Dark mode support for compact logs */
-[data-theme="dark"] .log-entry-compact {
-    background: var(--gray-800);
-}
-
 
 /* Responsive design for compact logs */
 @media (max-width: 1200px) {
