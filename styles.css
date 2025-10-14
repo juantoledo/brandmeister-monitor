@@ -2883,6 +2883,7 @@ button:disabled {
         gap: 4px;
         flex: 1;
         min-width: 0; /* Allow text to shrink */
+        padding-top: 20px;
     }
     
     .header-right {
