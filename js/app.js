@@ -80,6 +80,9 @@ class BrandmeisterMonitor {
             // Update talkgroup status display
             this.updateTalkgroupStatus();
             
+            // Initialize local/UTC time display
+            this.initializeTimeDisplay();
+            
             console.log('✅ Brandmeister Monitor initialization complete');
         } catch (error) {
             console.error('❌ Error during initialization:', error);
@@ -105,6 +108,7 @@ class BrandmeisterMonitor {
             connectionStatus: document.getElementById('connectionStatus'),
             statusText: document.getElementById('statusText'),
             currentTg: document.getElementById('currentTg'),
+            localUtc: document.querySelector('.local-utc'),
             logContainer: document.getElementById('logContainer'),
             activeContainer: document.getElementById('activeContainer'),
             totalCalls: document.getElementById('totalCalls'),
@@ -1305,6 +1309,9 @@ class BrandmeisterMonitor {
         if (this.socket) {
             this.socket.disconnect();
         }
+        
+        // Cleanup time display interval
+        this.cleanupTimeDisplay();
         
         // Clear all memory references
         this.transmissionGroups = {};
@@ -4253,6 +4260,75 @@ class BrandmeisterMonitor {
 
         // Store the timer reference
         this.weatherLoadTimers.set(timerKey, timerId);
+    }
+
+    /**
+     * Initialize local/UTC time display in header
+     */
+    initializeTimeDisplay() {
+        if (!this.elements.localUtc) return;
+
+        // Update time immediately
+        this.updateTimeDisplay();
+
+        // Update every second
+        this.timeDisplayInterval = setInterval(() => {
+            this.updateTimeDisplay();
+        }, 1000);
+    }
+
+    /**
+     * Update the local/UTC time display
+     */
+    updateTimeDisplay() {
+        if (!this.elements.localUtc) return;
+
+        const now = new Date();
+        
+        // Get current language from i18n system (fallback to 'en')
+        const currentLang = window.I18n ? window.I18n.getCurrentLanguage()?.code || 'en' : 'en';
+        
+        // Format local time
+        const localTime = now.toLocaleString(currentLang, {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+
+        // Format UTC time
+        const utcTime = now.toLocaleString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZone: 'UTC'
+        });
+
+        // Update display
+        this.elements.localUtc.innerHTML = `
+            <span class="time-local" title="Local Time">🕐 ${localTime}</span>
+            <span class="time-separator">|</span>
+            <span class="time-utc" title="UTC Time">🌍 ${utcTime} UTC</span>
+        `;
+    }
+
+    /**
+     * Cleanup time display interval
+     */
+    cleanupTimeDisplay() {
+        if (this.timeDisplayInterval) {
+            clearInterval(this.timeDisplayInterval);
+            this.timeDisplayInterval = null;
+        }
     }
 }
 
