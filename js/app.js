@@ -1635,7 +1635,16 @@ class BrandmeisterMonitor {
             const sessionID = call.SessionID; // Use SessionID as unique identifier
             const event = call.Event;
             const callsign = call.SourceCall;
+            const flagSet = call.FlagSet;
             
+            // FLAGSET FILTER: Skip transmissions with FlagSet == 1 (indicates transmission errors)
+            if (flagSet === 1) {
+                if (this.config.verbose) {
+                    console.log(`Skipping transmission from ${callsign} on TG ${tg} - FlagSet indicates transmission error`);
+                }
+                this.endPerformanceTimer('messageProcessing', { result: 'flagset_filtered', tg, sessionID, flagSet });
+                return;
+            }
             
             // Only proceed if we should monitor this talkgroup
             if (!this.config.monitorAllTalkgroups && this.monitoredTalkgroups.length > 0 && !this.monitoredTalkgroups.includes(tg)) {
