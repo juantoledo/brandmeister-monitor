@@ -1101,7 +1101,7 @@ body {
 .tg-search-result-id {
     font-weight: 600;
     color: var(--primary);
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
 }
 
 .tg-search-result-name {
@@ -1142,7 +1142,7 @@ body {
 
 .tg-popular-id {
     font-weight: 600;
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
 }
 
@@ -1217,7 +1217,7 @@ body {
 
 .tg-category-id {
     font-weight: 600;
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
 }
 
@@ -1278,7 +1278,7 @@ body {
 }
 
 .tg-selected-tag-id {
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
 }
 
 .tg-selected-tag-remove {
@@ -1503,7 +1503,7 @@ button:disabled {
 }
 
 .color-value {
-    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-muted);
@@ -1926,7 +1926,7 @@ button:disabled {
 }
 
 .compact-timestamp {
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8125rem; /* Slightly larger for better readability */
     color: var(--text-muted);
     font-weight: 500;
@@ -1938,7 +1938,7 @@ button:disabled {
 .compact-callsign {
     font-weight: 600;
     color: var(--primary);
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1951,7 +1951,7 @@ button:disabled {
     text-decoration: none;
     color: var(--primary);
     font-weight: 600;
-    font-family: 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     border-radius: 3px;
     padding: 2px 4px;
     transition: all 0.2s ease;
@@ -2441,7 +2441,7 @@ button:disabled {
 
 /* Debug Info */
 .debug-info {
-    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.8125rem;
     line-height: 1.5;
 }
@@ -3464,12 +3464,36 @@ button:disabled {
     align-items: center;
 }
 
+.overlay-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    justify-content: space-between;
+}
+
 .overlay .local-utc {
     margin: 0;
     color: var(--text-muted);
+    font-size: 0.75rem;
     font-weight: 400;
     display: flex;
+    align-items: center;
     gap: 12px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.overlay .local-weather {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
     letter-spacing: 0.5px;
 }
 
@@ -3480,7 +3504,8 @@ button:disabled {
 }
 
 .overlay .local-utc .time-local,
-.overlay .local-utc .time-utc {
+.overlay .local-utc .time-utc,
+.overlay .local-weather .weather-info {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -3488,10 +3513,12 @@ button:disabled {
     background: var(--gray-100);
     border-radius: 4px;
     transition: background-color 0.2s ease;
+    cursor: pointer;
 }
 
 [data-theme="dark"] .overlay .local-utc .time-local,
-[data-theme="dark"] .overlay .local-utc .time-utc {
+[data-theme="dark"] .overlay .local-utc .time-utc,
+[data-theme="dark"] .overlay .local-weather .weather-info {
     background: var(--gray-800);
 }
 
@@ -3504,13 +3531,22 @@ button:disabled {
     color: var(--text-muted);
 }
 
+.overlay .local-weather .weather-info {
+    color: var(--success);
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
 .overlay .local-utc .time-local:hover,
-.overlay .local-utc .time-utc:hover {
+.overlay .local-utc .time-utc:hover,
+.overlay .local-weather .weather-info:hover {
     background: var(--gray-200);
 }
 
 [data-theme="dark"] .overlay .local-utc .time-local:hover,
-[data-theme="dark"] .overlay .local-utc .time-utc:hover {
+[data-theme="dark"] .overlay .local-utc .time-utc:hover,
+[data-theme="dark"] .overlay .local-weather .weather-info:hover {
     background: var(--gray-700);
 }
 
@@ -3520,9 +3556,20 @@ button:disabled {
         padding: 6px 12px;
     }
     
+    .overlay-content {
+        gap: 8px;
+        justify-content: space-between;
+    }
+    
     .overlay .local-utc {
         font-size: 0.7rem;
-        align-items: center;
+        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .overlay .local-weather {
+        font-size: 0.7rem;
     }
     
     .overlay .local-utc .time-separator {
@@ -3530,7 +3577,8 @@ button:disabled {
     }
     
     .overlay .local-utc .time-local,
-    .overlay .local-utc .time-utc {
+    .overlay .local-utc .time-utc,
+    .overlay .local-weather .weather-info {
         padding: 3px 6px;
         font-size: 0.65rem;
     }
@@ -3546,9 +3594,16 @@ button:disabled {
     }
     
     .overlay .local-utc .time-local,
-    .overlay .local-utc .time-utc {
+    .overlay .local-utc .time-utc,
+    .overlay .local-weather .weather-info {
         padding: 2px 4px;
         font-size: 0.6rem;
+    }
+    
+    /* Ensure weather text doesn't overflow on very small screens */
+    .overlay .local-weather .weather-info {
+        font-size: 0.55rem;
+        letter-spacing: 0.2px;
     }
 }
 
@@ -3559,7 +3614,7 @@ button:disabled {
 
 @media (max-width: 768px) {
     .app-layout {
-        padding-bottom: 80px; /* More space for stacked mobile layout */
+        padding-bottom: 70px; /* Slightly more space for mobile layout */
     }
 }
 

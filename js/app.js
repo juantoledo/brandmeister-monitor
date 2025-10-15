@@ -83,6 +83,9 @@ class BrandmeisterMonitor {
             // Initialize local/UTC time display
             this.initializeTimeDisplay();
             
+            // Initialize local weather display
+            this.initializeLocalWeather();
+            
             console.log('✅ Brandmeister Monitor initialization complete');
         } catch (error) {
             console.error('❌ Error during initialization:', error);
@@ -109,6 +112,7 @@ class BrandmeisterMonitor {
             statusText: document.getElementById('statusText'),
             currentTg: document.getElementById('currentTg'),
             localUtc: document.querySelector('.local-utc'),
+            localWeather: document.getElementById('localWeather'),
             logContainer: document.getElementById('logContainer'),
             activeContainer: document.getElementById('activeContainer'),
             totalCalls: document.getElementById('totalCalls'),
@@ -4328,6 +4332,86 @@ class BrandmeisterMonitor {
         if (this.timeDisplayInterval) {
             clearInterval(this.timeDisplayInterval);
             this.timeDisplayInterval = null;
+        }
+    }
+
+    /**
+     * Initialize local weather display in footer
+     */
+    async initializeLocalWeather() {
+        if (!this.elements.localWeather || !this.locationWeatherService) return;
+
+        try {
+            // Try to get user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        await this.updateLocalWeather(lat, lon);
+                    },
+                    (error) => {
+                        console.warn('Geolocation failed:', error);
+                        this.showDefaultWeather();
+                    },
+                    { timeout: 10000, enableHighAccuracy: false }
+                );
+            } else {
+                this.showDefaultWeather();
+            }
+        } catch (error) {
+            console.warn('Failed to initialize local weather:', error);
+            this.showDefaultWeather();
+        }
+    }
+
+    /**
+     * Update local weather display with coordinates
+     */
+    async updateLocalWeather(lat, lon) {
+        if (!this.elements.localWeather || !this.locationWeatherService) return;
+
+        try {
+            const weather = await this.locationWeatherService.getWeather(lat, lon);
+            
+            if (weather) {
+                const weatherEmoji = this.locationWeatherService.getWeatherEmoji(weather.weathercode);
+                const tempC = weather.temperature;
+                const tempF = Math.round((tempC * 9/5) + 32);
+                const weatherElement = this.elements.localWeather.querySelector('.weather-info');
+                
+                if (weatherElement) {
+                    weatherElement.innerHTML = `${weatherEmoji} ${tempC}°C / ${tempF}°F`;
+                    weatherElement.title = `Local weather conditions - Powered by Open-Meteo`;
+                    weatherElement.style.cursor = 'pointer';
+                    
+                    // Make weather clickable to Open-Meteo
+                    weatherElement.onclick = (e) => {
+                        e.stopPropagation();
+                        window.open('https://open-meteo.com/', '_blank');
+                    };
+                }
+            } else {
+                this.showDefaultWeather();
+            }
+        } catch (error) {
+            console.warn('Failed to update local weather:', error);
+            this.showDefaultWeather();
+        }
+    }
+
+    /**
+     * Show default weather when location/weather unavailable
+     */
+    showDefaultWeather() {
+        if (!this.elements.localWeather) return;
+        
+        const weatherElement = this.elements.localWeather.querySelector('.weather-info');
+        if (weatherElement) {
+            weatherElement.innerHTML = `<span class="material-icons small">location_off</span> Local weather unavailable`;
+            weatherElement.title = 'Unable to get local weather';
+            weatherElement.style.cursor = 'default';
+            weatherElement.onclick = null;
         }
     }
 }
