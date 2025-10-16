@@ -18,13 +18,140 @@ class LocationWeatherService {
             weather: 'https://api.open-meteo.com/v1/forecast',
             timezone: 'https://worldtimeapi.org/api/timezone'
         };
+        
+        // Country name mappings for geocoding normalization
+        this.countryNameMapping = {
+            // Common variations and official names that need normalization
+            'korea republic of': 'south korea',
+            'republic of korea': 'south korea',
+            'korea south': 'south korea',
+            'argentina republic': 'argentina',
+            'argentine republic': 'argentina',
+            'republic of argentina': 'argentina',
+            'brazil federative republic': 'brazil',
+            'federative republic of brazil': 'brazil',
+            'china people\'s republic': 'china',
+            'people\'s republic of china': 'china',
+            'russian federation': 'russia',
+            'russia federation': 'russia',
+            'united states of america': 'united states',
+            'usa': 'united states',
+            'united kingdom great britain': 'united kingdom',
+            'great britain': 'united kingdom',
+            'britain': 'united kingdom',
+            'england': 'united kingdom',
+            'scotland': 'united kingdom',
+            'wales': 'united kingdom',
+            'northern ireland': 'united kingdom',
+            'germany federal republic': 'germany',
+            'federal republic of germany': 'germany',
+            'deutschland': 'germany',
+            'france republic': 'france',
+            'french republic': 'france',
+            'spain kingdom': 'spain',
+            'kingdom of spain': 'spain',
+            'españa': 'spain',
+            'italy republic': 'italy',
+            'italian republic': 'italy',
+            'italia': 'italy',
+            'netherlands kingdom': 'netherlands',
+            'kingdom of the netherlands': 'netherlands',
+            'holland': 'netherlands',
+            'czech republic': 'czechia',
+            'slovak republic': 'slovakia',
+            'republic of poland': 'poland',
+            'polska': 'poland',
+            'hungary republic': 'hungary',
+            'republic of hungary': 'hungary',
+            'romania republic': 'romania',
+            'republic of romania': 'romania',
+            'ukraine republic': 'ukraine',
+            'republic of ukraine': 'ukraine',
+            'belarus republic': 'belarus',
+            'republic of belarus': 'belarus',
+            'turkey republic': 'turkey',
+            'republic of turkey': 'turkey',
+            'islamic republic of iran': 'iran',
+            'iran islamic republic': 'iran',
+            'democratic people\'s republic of korea': 'north korea',
+            'north korea democratic': 'north korea',
+            'vietnam socialist republic': 'vietnam',
+            'socialist republic of vietnam': 'vietnam',
+            'india republic': 'india',
+            'republic of india': 'india',
+            'japan state': 'japan',
+            'state of japan': 'japan',
+            'australia commonwealth': 'australia',
+            'commonwealth of australia': 'australia',
+            'new zealand dominion': 'new zealand',
+            'dominion of new zealand': 'new zealand',
+            'canada dominion': 'canada',
+            'dominion of canada': 'canada',
+            'south africa republic': 'south africa',
+            'republic of south africa': 'south africa',
+            'egypt arab republic': 'egypt',
+            'arab republic of egypt': 'egypt',
+            'united arab emirates': 'uae',
+            'emirates': 'uae',
+            'saudi arabia kingdom': 'saudi arabia',
+            'kingdom of saudi arabia': 'saudi arabia'
+        };
+    }
+
+    /**
+     * Normalize country name for better geocoding results
+     * @param {string} countryName - Original country name
+     * @returns {string} - Normalized country name
+     */
+    normalizeCountryName(countryName) {
+        if (!countryName) return '';
+        
+        // Convert to lowercase and trim
+        let normalized = countryName.trim().toLowerCase();
+        
+        // Remove common prefixes and suffixes that can confuse geocoding
+        normalized = normalized
+            .replace(/^(republic of|kingdom of|state of|united|federal republic of|people's republic of|islamic republic of|democratic republic of|socialist republic of|dominion of|commonwealth of|arab republic of)\s+/i, '')
+            .replace(/\s+(republic|kingdom|state|federation|emirate|principality|dominion|commonwealth)$/i, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        // Check direct mapping first
+        if (this.countryNameMapping[normalized]) {
+            return this.countryNameMapping[normalized];
+        }
+        
+        // Check if any mapping key contains or is contained in the normalized name
+        for (const [variant, standardName] of Object.entries(this.countryNameMapping)) {
+            if (normalized.includes(variant) || variant.includes(normalized)) {
+                return standardName;
+            }
+        }
+        
+        // Try substring matching for compound names
+        const words = normalized.split(' ').filter(word => word.length > 2);
+        for (const [variant, standardName] of Object.entries(this.countryNameMapping)) {
+            const variantWords = variant.split(' ');
+            // If most significant words match, use the mapping
+            const matchingWords = words.filter(word => 
+                variantWords.some(vw => vw.includes(word) || word.includes(vw))
+            );
+            if (matchingWords.length >= Math.min(2, words.length)) {
+                return standardName;
+            }
+        }
+        
+        // Return the cleaned normalized name if no mapping found
+        return normalized;
     }
 
     /**
      * Get location coordinates from city, state, country
      */
     async getCoordinates(city, state, country) {
-        const locationKey = `${city}, ${state}, ${country}`.toLowerCase();
+        // Normalize country name for better geocoding results
+        const normalizedCountry = this.normalizeCountryName(country);
+        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
         
         // Check cache first
         const cached = this.geocodeCache.get(locationKey);
@@ -33,7 +160,7 @@ class LocationWeatherService {
         }
 
         try {
-            const query = [city, state, country].filter(Boolean).join(', ');
+            const query = [city, state, normalizedCountry].filter(Boolean).join(', ');
             const url = `${this.apis.geocoding}?q=${encodeURIComponent(query)}&format=json&limit=1`;
             
             const response = await fetch(url);
@@ -194,7 +321,9 @@ class LocationWeatherService {
      * Get complete location info with time and weather
      */
     async getLocationInfo(city, state, country) {
-        const locationKey = `${city}, ${state}, ${country}`.toLowerCase();
+        // Normalize country name for consistent caching and better geocoding
+        const normalizedCountry = this.normalizeCountryName(country);
+        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
         
         // Check if we have cached location info
         const cachedLocationInfo = this.locationInfoCache.get(locationKey);
@@ -217,7 +346,7 @@ class LocationWeatherService {
 
         try {
             // Get coordinates
-            const coords = await this.getCoordinates(city, state, country);
+            const coords = await this.getCoordinates(city, state, normalizedCountry);
             if (!coords) return null;
 
             // Get weather and timezone in parallel
@@ -305,7 +434,9 @@ class LocationWeatherService {
      * Check if location info is cached (without fetching)
      */
     isLocationInfoCached(city, state, country) {
-        const locationKey = `${city}, ${state}, ${country}`.toLowerCase();
+        // Normalize country name for consistent cache lookup
+        const normalizedCountry = this.normalizeCountryName(country);
+        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
         const cachedLocationInfo = this.locationInfoCache.get(locationKey);
         return cachedLocationInfo && (Date.now() - cachedLocationInfo.timestamp) < this.cacheExpiry;
     }
