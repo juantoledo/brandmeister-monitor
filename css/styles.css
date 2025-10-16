@@ -1717,6 +1717,8 @@ button:disabled {
     flex-direction: column;
     transition: height 0.3s ease, border-top-width 0.3s ease;
     overflow: hidden;
+    position: relative;
+    bottom: 44px; /* Position above overlay footer */
 }
 
 .console-panel.minimized {
@@ -1727,6 +1729,19 @@ button:disabled {
 .console-panel.minimized .console-minimize {
     background: rgba(255, 255, 255, 0.2);
     animation: minimizedPulse 2s infinite;
+}
+
+/* Responsive console positioning above overlay */
+@media (max-width: 768px) {
+    .console-panel {
+        bottom: 65px; /* Position above mobile overlay height */
+    }
+}
+
+@media (max-width: 480px) {
+    .console-panel {
+        bottom: 65px; /* Position above mobile overlay height */
+    }
 }
 
 @keyframes minimizedPulse {
@@ -3457,7 +3472,7 @@ button:disabled {
     border-top: 1px solid var(--border);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    z-index: 1000;
+    z-index: 1100;
     padding: 8px 16px;
     display: flex;
     justify-content: center;
