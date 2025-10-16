@@ -77,6 +77,9 @@ class BrandmeisterMonitor {
             this.loadAliasesFromStorage();
             this.loadRadioIDDatabase();
             
+            // Clean old RadioID cache entries on startup
+            this.cleanRadioIDCache();
+            
             // Update talkgroup status display
             this.updateTalkgroupStatus();
             
@@ -1282,7 +1285,8 @@ class BrandmeisterMonitor {
                 callsignAliases: Object.keys(this.callsignAliases).length,
                 domElements: document.querySelectorAll('*').length,
                 activeTransmissions: document.querySelectorAll('.active-transmission').length,
-                logEntries: document.querySelectorAll('.log-entry').length
+                logEntries: document.querySelectorAll('.log-entry').length,
+                radioIDCache: this.getRadioIDCacheStats()
             }
         };
     }
@@ -2044,6 +2048,9 @@ class BrandmeisterMonitor {
                     }
                 }
                 
+                // Use RadioID name if available, otherwise fallback to group sourceName
+                const displayName = radioIdInfo?.name || sourceName;
+                
                 activeEntry.innerHTML = `
                     <div class="card-main">
                         <div class="card-header">
@@ -2059,7 +2066,7 @@ class BrandmeisterMonitor {
                         </div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${sourceName ? `<div class="card-source-name">${sourceName}</div>` : ''}
+                                ${displayName ? `<div class="card-source-name">${displayName}</div>` : ''}
                                 ${locationInfo}
                                 ${timeWeatherInfo}
                                 <div class="card-details">
@@ -3827,13 +3834,19 @@ class BrandmeisterMonitor {
             const city = cityIndex >= 0 ? columns[cityIndex] : '';
             const state = stateIndex >= 0 ? columns[stateIndex] : '';
             const country = countryIndex >= 0 ? columns[countryIndex] : '';
+            
+            // Build full name from first and last name
+            const firstName = firstNameIndex >= 0 ? columns[firstNameIndex] : '';
+            const lastName = lastNameIndex >= 0 ? columns[lastNameIndex] : '';
+            const fullName = [firstName, lastName].filter(n => n && n.trim()).join(' ').trim();
 
-            // Only store record if we have location data
-            if (city || state || country) {
+            // Only store record if we have location data or name
+            if (city || state || country || fullName) {
                 database[radioId] = {
                     c: city || '',      // Use short keys to save space
                     s: state || '',     
-                    n: country || ''    // 'n' for nation/country
+                    n: country || '',   // 'n' for nation/country
+                    m: fullName || ''   // 'm' for name (person)
                 };
                 recordCount++;
             } else {
@@ -3847,21 +3860,206 @@ class BrandmeisterMonitor {
 
     // Lookup RadioID information
     lookupRadioID(radioId) {
-        if (!this.config.enableRadioIDLookup || !this.radioIDDatabase) {
+        if (!this.config.enableRadioIDLookup) {
             return null;
         }
 
         const id = radioId.toString();
-        const record = this.radioIDDatabase[id];
         
+        // First check localStorage cache for resolved data
+        const cachedData = this.getRadioIDFromCache(id);
+        if (cachedData) {
+            if (this.config.verbose) {
+                console.log(`📱 Using cached RadioID data for ${id}:`, cachedData);
+            }
+            return cachedData;
+        }
+        
+        // If not in cache, lookup from database
+        if (!this.radioIDDatabase) {
+            return null;
+        }
+        
+        const record = this.radioIDDatabase[id];
         if (!record) return null;
         
         // Convert short keys back to full names
-        return {
+        const resolvedData = {
+            radioId: id,
             city: record.c || '',
             state: record.s || '',
-            country: record.n || ''
+            country: record.n || '',
+            name: record.m || '', // 'm' field contains the full name
+            timestamp: Date.now()
         };
+        
+        // Cache the resolved data in localStorage
+        this.saveRadioIDToCache(id, resolvedData);
+        
+        if (this.config.verbose) {
+            console.log(`📱 Resolved and cached RadioID data for ${id}:`, resolvedData);
+        }
+        
+        return resolvedData;
+    }
+
+    /**
+     * Get RadioID data from localStorage cache
+     */
+    getRadioIDFromCache(radioId) {
+        try {
+            const cacheKey = `radioID_${radioId}`;
+            const cachedData = localStorage.getItem(cacheKey);
+            
+            if (cachedData) {
+                const parsed = JSON.parse(cachedData);
+                
+                // Cache version check - invalidate old cache format
+                const currentCacheVersion = 2; // Increment when structure changes
+                if (!parsed.version || parsed.version < currentCacheVersion) {
+                    if (this.config.verbose) {
+                        console.log(`🔄 Invalidating old cache version for RadioID ${radioId} (v${parsed.version || 1} → v${currentCacheVersion})`);
+                    }
+                    localStorage.removeItem(cacheKey);
+                    return null;
+                }
+                
+                // Check if cache is still valid (30 days)
+                const cacheAge = Date.now() - parsed.timestamp;
+                const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+                
+                if (cacheAge < maxAge) {
+                    return {
+                        radioId: parsed.radioId,
+                        city: parsed.city || '',
+                        state: parsed.state || '',
+                        country: parsed.country || '',
+                        name: parsed.name || ''
+                    };
+                } else {
+                    // Remove expired cache entry
+                    localStorage.removeItem(cacheKey);
+                }
+            }
+        } catch (error) {
+            console.warn('Error reading RadioID cache:', error);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Save RadioID data to localStorage cache
+     */
+    saveRadioIDToCache(radioId, data) {
+        try {
+            const cacheKey = `radioID_${radioId}`;
+            const cacheData = {
+                version: 2, // Cache version for future compatibility
+                radioId: data.radioId,
+                city: data.city || '',
+                state: data.state || '',
+                country: data.country || '',
+                name: data.name || '',
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            
+            if (this.config.verbose) {
+                console.log(`💾 Cached RadioID data for ${radioId}`);
+            }
+        } catch (error) {
+            console.warn('Error saving RadioID cache:', error);
+            // If localStorage is full, try to clean old entries
+            this.cleanRadioIDCache();
+        }
+    }
+
+    /**
+     * Clean old RadioID cache entries
+     */
+    cleanRadioIDCache() {
+        try {
+            const keysToRemove = [];
+            const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+            const currentCacheVersion = 2;
+            let versionUpgrades = 0;
+            
+            // Find old cache entries
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('radioID_')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        
+                        // Remove entries with old cache version
+                        if (!data.version || data.version < currentCacheVersion) {
+                            keysToRemove.push(key);
+                            versionUpgrades++;
+                        }
+                        // Remove entries that are too old
+                        else if (data.timestamp && (Date.now() - data.timestamp) > maxAge) {
+                            keysToRemove.push(key);
+                        }
+                    } catch (e) {
+                        // Invalid data, mark for removal
+                        keysToRemove.push(key);
+                    }
+                }
+            }
+            
+            // Remove old entries
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            if (keysToRemove.length > 0) {
+                console.log(`🧹 Cleaned ${keysToRemove.length} old RadioID cache entries (${versionUpgrades} version upgrades, ${keysToRemove.length - versionUpgrades} expired)`);
+            }
+        } catch (error) {
+            console.warn('Error cleaning RadioID cache:', error);
+        }
+    }
+
+    /**
+     * Get RadioID cache statistics
+     */
+    getRadioIDCacheStats() {
+        try {
+            let totalCached = 0;
+            let totalSize = 0;
+            const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+            let expiredEntries = 0;
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('radioID_')) {
+                    totalCached++;
+                    const data = localStorage.getItem(key);
+                    totalSize += data.length;
+                    
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (parsed.timestamp && (Date.now() - parsed.timestamp) > maxAge) {
+                            expiredEntries++;
+                        }
+                    } catch (e) {
+                        expiredEntries++;
+                    }
+                }
+            }
+            
+            return {
+                totalCached,
+                totalSize,
+                expiredEntries,
+                sizeKB: Math.round(totalSize / 1024 * 100) / 100
+            };
+        } catch (error) {
+            console.warn('Error getting RadioID cache stats:', error);
+            return { totalCached: 0, totalSize: 0, expiredEntries: 0, sizeKB: 0 };
+        }
     }
 
     // Update RadioID status display
