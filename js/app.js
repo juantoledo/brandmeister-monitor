@@ -4708,12 +4708,17 @@ function initializeNewInterface() {
     
     consoleToggle.addEventListener('click', () => {
         const isMinimized = consolePanel.classList.contains('minimized');
+        const isAutoCollapsed = consolePanel.classList.contains('auto-collapsed');
+        const isCollapsed = isMinimized || isAutoCollapsed;
         
-        if (isMinimized) {
+        if (isCollapsed) {
+            // Expanding console - remove both minimized and auto-collapsed
             consolePanel.classList.remove('minimized');
+            consolePanel.classList.remove('auto-collapsed');
             appLayout.classList.remove('console-minimized');
             consoleToggle.textContent = '▼';
         } else {
+            // Collapsing console - add minimized (but not auto-collapsed)
             consolePanel.classList.add('minimized');
             appLayout.classList.add('console-minimized');
             consoleToggle.textContent = '▲';
@@ -4730,6 +4735,13 @@ function initializeNewInterface() {
     consolePanel.classList.remove('minimized');
     appLayout.classList.remove('console-minimized');
     consoleToggle.textContent = '▼';
+    
+    // Check initial sidebar state and auto-collapse console if needed
+    const sidebarElement = document.getElementById('sidebar');
+    const initialSidebarExpanded = sidebarElement && !sidebarElement.classList.contains('collapsed') && !appLayout.classList.contains('sidebar-collapsed');
+    if (initialSidebarExpanded) {
+        consolePanel.classList.add('auto-collapsed');
+    }
     
     // Theme toggle functionality
     const themeToggle = document.getElementById('themeToggle');
@@ -4766,20 +4778,67 @@ function initializeNewInterface() {
     sidebarToggle.addEventListener('click', () => {
         const isCollapsed = sidebar.classList.contains('collapsed');
         const isMobile = window.innerWidth <= 768;
+        const consolePanelElement = document.getElementById('consolePanel');
+        
+        console.log('Sidebar toggle clicked:', {
+            isCollapsed,
+            isMobile,
+            windowWidth: window.innerWidth,
+            consolePanelElement: !!consolePanelElement
+        });
         
         if (isMobile) {
             // Mobile behavior: toggle open/closed
+            console.log('Using mobile behavior');
+            const wasOpen = sidebar.classList.contains('open');
             sidebar.classList.toggle('open');
+            
+            // Auto-collapse console logic for mobile
+            if (!wasOpen) {
+                // Sidebar is now opening - auto-collapse console
+                console.log('Mobile: Sidebar opening - auto-collapsing console');
+                if (consolePanelElement && !consolePanelElement.classList.contains('minimized')) {
+                    consolePanelElement.classList.add('auto-collapsed');
+                }
+            } else {
+                // Sidebar is now closing - remove auto-collapse
+                console.log('Mobile: Sidebar closing - removing auto-collapse');
+                if (consolePanelElement) {
+                    consolePanelElement.classList.remove('auto-collapsed');
+                }
+            }
         } else {
+            console.log('Using desktop behavior');
             // Desktop behavior: toggle collapsed/expanded
             if (isCollapsed) {
+                // Expanding sidebar (was collapsed, now expanding)
+                console.log('Expanding sidebar - should auto-collapse console');
                 sidebar.classList.remove('collapsed');
                 appLayout.classList.remove('sidebar-collapsed');
                 sidebarToggle.innerHTML = '<span class="hamburger-icon">☰</span>';
+                
+                // Auto-collapse console when sidebar expands (unless manually minimized)
+                if (consolePanelElement && !consolePanelElement.classList.contains('minimized')) {
+                    console.log('Adding auto-collapsed class to console');
+                    consolePanelElement.classList.add('auto-collapsed');
+                } else {
+                    console.log('Console not auto-collapsed because:', {
+                        consolePanelElement: !!consolePanelElement,
+                        isMinimized: consolePanelElement?.classList.contains('minimized')
+                    });
+                }
             } else {
+                // Collapsing sidebar (was expanded, now collapsing)
+                console.log('Collapsing sidebar - should remove auto-collapse from console');
                 sidebar.classList.add('collapsed');
                 appLayout.classList.add('sidebar-collapsed');
                 sidebarToggle.innerHTML = '<span class="hamburger-icon">☰</span>';
+                
+                // Remove auto-collapse when sidebar is collapsed
+                if (consolePanelElement) {
+                    console.log('Removing auto-collapsed class from console');
+                    consolePanelElement.classList.remove('auto-collapsed');
+                }
             }
         }
         

@@ -871,6 +871,16 @@ body {
     grid-template-columns: 0 1fr;
 }
 
+/* Auto-minimize console when sidebar is expanded */
+.app-layout .console-panel.auto-collapsed {
+    height: 44px !important; /* Height for just the header */
+    overflow: hidden !important;
+}
+
+.app-layout .console-panel.auto-collapsed .console-content {
+    display: none !important;
+}
+
 .sidebar-content {
     padding: 24px;
 }
