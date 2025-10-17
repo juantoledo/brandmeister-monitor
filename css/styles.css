@@ -502,10 +502,11 @@ body {
     grid-template-areas: 
         "header header"
         "sidebar main"
-        "console console";
+        "bottom bottom";
     grid-template-columns: var(--sidebar-width) 1fr;
-    grid-template-rows: var(--header-height) 1fr var(--console-height);
+    grid-template-rows: var(--header-height) 1fr auto;
     height: 100vh;
+    max-height: 100vh; /* Prevent overflow */
     overflow: hidden;
     transition: grid-template-rows 0.3s ease, grid-template-columns 0.3s ease;
 }
@@ -1655,6 +1656,15 @@ button:disabled {
     z-index: 1; /* Below console panel */
 }
 
+/* BOTTOM CONTAINER */
+.bottom-container {
+    grid-area: bottom;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    min-height: 0; /* Allow container to shrink */
+}
+
 .active-transmissions {
     height: 100%;
     background: var(--surface);
@@ -1711,7 +1721,6 @@ button:disabled {
 
 /* CONSOLE PANEL */
 .console-panel {
-    grid-area: console;
     background: var(--surface);
     border-top: 3px solid var(--border);
     box-shadow: var(--shadow-lg);
@@ -1720,7 +1729,8 @@ button:disabled {
     transition: height 0.3s ease, border-top-width 0.3s ease;
     overflow: hidden;
     position: relative;
-    z-index: 10; /* Ensure console stays above main content */
+    height: var(--console-height);
+    order: 1; /* Console above overlay */
 }
 
 .console-panel.minimized {
@@ -1733,22 +1743,15 @@ button:disabled {
     animation: minimizedPulse 2s infinite;
 }
 
-/* Responsive console positioning - grid layout handles positioning automatically */
+/* Bottom container handles responsive stacking automatically */
 
 @keyframes minimizedPulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
 
-/* Update grid when console is minimized */
-.app-layout:has(.console-panel.minimized) {
-    grid-template-rows: var(--header-height) 1fr 44px;
-}
-
-/* Fallback for browsers without :has() support */
-.app-layout.console-minimized {
-    grid-template-rows: var(--header-height) 1fr 44px;
-}
+/* Grid layout remains stable with bottom-container approach */
+/* Console minimization is handled within the bottom-container */
 
 .console-header {
     display: flex;
@@ -1820,6 +1823,7 @@ button:disabled {
 .console-content {
     flex: 1;
     overflow: hidden;
+    min-height: 0; /* Allow content to shrink below its natural size */
 }
 
 .console-panel.minimized .console-content {
@@ -3001,9 +3005,9 @@ button:disabled {
         grid-template-areas: 
             "header"
             "main"
-            "console";
+            "bottom";
         grid-template-columns: 1fr !important; /* Override desktop collapsed state */
-        grid-template-rows: var(--header-height) 1fr var(--console-height);
+        grid-template-rows: var(--header-height) 1fr auto;
     }
     
     .sidebar {
@@ -3086,6 +3090,21 @@ button:disabled {
         flex-shrink: 0;
         padding: 4px 8px;
         font-size: 0.75rem;
+    }
+    
+    /* Bottom container responsive behavior */
+    .bottom-container {
+        max-height: 50vh; /* Limit height on mobile */
+    }
+    
+    .console-panel {
+        height: var(--console-height);
+        max-height: 40vh; /* Prevent console from taking too much space */
+    }
+    
+    .console-panel.minimized {
+        height: 44px;
+        max-height: 44px;
     }
 }
 
@@ -3231,6 +3250,15 @@ button:disabled {
     display: inline-flex;
     align-items: center;
     white-space: nowrap;
+    
+    /* Bottom container on very small screens */
+    .bottom-container {
+        max-height: 45vh; /* Even more restrictive on small screens */
+    }
+    
+    .console-panel {
+        max-height: 35vh; /* Smaller console on mobile */
+    }
 }
 
 
@@ -3455,19 +3483,15 @@ button:disabled {
 
 /* OVERLAY FOOTER */
 .overlay {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
     background: var(--surface);
     border-top: 1px solid var(--border);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    z-index: 1100;
     padding: 8px 16px;
     display: flex;
     justify-content: center;
     align-items: center;
+    order: 2; /* Overlay below console */
 }
 
 .overlay-content {

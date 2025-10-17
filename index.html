@@ -267,8 +267,10 @@
             </div>
         </main>
 
-        <!-- Console Panel -->
-        <div class="console-panel" id="consolePanel">
+        <!-- Bottom Container for Console and Overlay -->
+        <div class="bottom-container">
+            <!-- Console Panel -->
+            <div class="console-panel" id="consolePanel">
             <div class="console-header">
                 <div class="console-tabs">
                     <button class="console-tab active" data-tab="activity" data-i18n="console.tab.activity">Activity Log</button>
@@ -374,12 +376,14 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="overlay" id="overlay">
-            <div class="overlay-content">
-                <p class="local-utc"></p>
-                <div class="local-weather" id="localWeather">
-                    <span class="weather-info">🌍 Loading...</span>
+            
+            <!-- Overlay Footer -->
+            <div class="overlay" id="overlay">
+                <div class="overlay-content">
+                    <p class="local-utc"></p>
+                    <div class="local-weather" id="localWeather">
+                        <span class="weather-info">🌍 Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
