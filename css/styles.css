@@ -1846,16 +1846,16 @@ button:disabled {
     height: 100%;
 }
 
-/* TRANSMISSION LOG CARDS - New Card-Based Design */
+/* TRANSMISSION LOG ENTRIES - Unified Base Styling */
 
-.log-entry {
+.log-entry,
+.log-entry-compact {
     background: var(--surface);
     border: none;
     box-shadow: none;
     overflow: hidden;
     position: relative;
 }
-
 
 /* Status-specific border colors */
 .log-entry.error {
@@ -1866,17 +1866,21 @@ button:disabled {
     background: rgba(245, 158, 11, 0.05);
 }
 
-/* COMPACT LOG ENTRIES - One-line design */
+/* Compact-specific styling */
 .log-entry-compact {
-    background: var(--surface);
-    border: none;
     margin-bottom: 0;
     font-size: 0.875rem;
 }
 
+/* New entry states - unified */
+.log-entry.new,
 .log-entry-compact.new {
     background: rgba(37, 99, 235, 0.1);
-    /* Removed animation for cleaner appearance */
+}
+
+/* Full cards get animation, compact entries just highlight */
+.log-entry.new {
+    animation: slideInLogCard 0.4s ease-out;
 }
 
 .log-header-compact {
@@ -1892,19 +1896,23 @@ button:disabled {
 }
 
 .compact-log-line {
-    display: grid;
-    grid-template-columns: 
-        125px     /* timestamp - full MM/dd/yy, HH:mm:ss format */
-        80px      /* callsign (now QRZ link) */
-        1fr       /* name from location */
-        120px     /* alias */
-        60px;     /* duration */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
     padding: 6px 12px;
     min-height: 36px;
     box-sizing: border-box;
     position: relative;
+}
+
+.compact-log-line-left {
+    display: flex;
+    gap: 8px; /* adjust spacing as you like */
+}
+
+.compact-log-line-right {
+    display: flex;
+    gap: 8px;
 }
 
 /* Dynamic flag backgrounds */
@@ -1944,6 +1952,7 @@ button:disabled {
     overflow: hidden;
     position: relative;
     z-index: 1;
+    text-align: left; /* Left align timestamp */
 }
 
 .compact-callsign {
@@ -1955,6 +1964,7 @@ button:disabled {
     position: relative;
     z-index: 1;
     line-height: 1.3;
+    text-align: left; /* Left align callsign */
 }
 
 /* QRZ Callsign Link Styles */
@@ -1994,19 +2004,34 @@ button:disabled {
     position: relative;
     z-index: 1;
     line-height: 1.3;
+    text-align: left; /* Left align name-location */
+}
+
+.compact-talkgroup {
+    color: var(--success);
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-size: 0.75rem;
+    text-align: left; /* Left align talkgroup */
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .compact-alias {
     color: var(--text-muted);
-    font-style: italic;
     white-space: normal; /* Allow wrapping to show full alias */
     word-break: break-word; /* Break long aliases if needed */
     font-size: 0.8125rem;
     min-width: 0;
     position: relative;
     z-index: 1;
-    line-height: 1.3;
-    text-align: right; /* Right align alias */
 }
 
 .compact-alias-empty {
@@ -2025,24 +2050,6 @@ button:disabled {
     z-index: 1;
 }
 
-
-
-.compact-alias {
-    color: var(--text-muted);
-    font-style: italic;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.8125rem;
-    min-width: 0;
-}
-
-.compact-alias-empty {
-    color: var(--text-light);
-    text-align: center;
-    font-size: 0.8125rem;
-}
-
 .compact-duration {
     background: var(--warning);
     color: white;
@@ -2055,7 +2062,6 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: flex-end; /* Align content to the right */
-    justify-content: center;
     min-width: 0;
 }
 
@@ -2065,9 +2071,8 @@ button:disabled {
         grid-template-columns: 
             115px     /* timestamp - full date format */
             70px      /* callsign */
-            1fr       /* name from location */
-            100px     /* alias */
             55px      /* talkgroup */
+            100px     /* alias */
             55px      /* duration */
             45px;     /* qrz */
         gap: 6px;
@@ -2079,9 +2084,8 @@ button:disabled {
         grid-template-columns: 
             100px     /* timestamp - full date format */
             65px      /* callsign */
-            1fr       /* name from location */
-            80px      /* alias - now visible */
             45px      /* talkgroup */
+            80px      /* alias - now visible */
             50px      /* duration - now visible */
             35px;     /* qrz */
     }
@@ -2114,9 +2118,8 @@ button:disabled {
         grid-template-columns: 
             90px      /* timestamp - full date format */
             60px      /* callsign */
-            1fr       /* name from location */
-            70px      /* alias - now visible on small mobile */
             40px      /* talkgroup */
+            70px      /* alias - now visible on small mobile */
             45px      /* duration - now visible on small mobile */
             30px;     /* qrz */
         font-size: 0.8125rem;
@@ -2364,11 +2367,6 @@ button:disabled {
     border-color: rgba(16, 185, 129, 0.2);
 }
 
-/* Animation for new entries */
-.log-entry.new {
-    animation: slideInLogCard 0.4s ease-out;
-}
-
 @keyframes slideInLogCard {
     from {
         opacity: 0;
@@ -2398,12 +2396,13 @@ button:disabled {
         padding: 4px;
     }
     
-    /* Log entries */
+    /* Log entries unified responsive */
     .log-entry {
         margin-bottom: 8px;
     }
     
     .log-entry-compact {
+        margin-bottom: 8px;
         padding: 8px 12px;
     }
     
@@ -2532,6 +2531,7 @@ button:disabled {
     }
     
     .log-entry-compact {
+        margin-bottom: 6px;
         padding: 6px 8px;
         font-size: 0.8rem;
     }

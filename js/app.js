@@ -3069,11 +3069,15 @@ class BrandmeisterMonitor {
         // Create one-line compact layout with flag background and callsign as QRZ link
         logEntry.innerHTML = `
             <div class="compact-log-line" data-country="${countryCode}" title="${radioIdInfo?.country || '-'}">
-                <span class="compact-timestamp">${timestamp}</span>
-                <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>
-                <span class="compact-name-location">${nameLocationText}</span>
-                ${talkerAlias ? `<span class="compact-alias">💬 ${talkerAlias}</span>` : '<span class="compact-alias-empty">—</span>'}
-                ${durationText ? `<span class="compact-duration">${durationText}</span>` : '<span class="compact-duration-empty">—</span>'}
+                <div class="compact-log-line-left">
+                    <span class="compact-timestamp">${timestamp}</span>
+                    <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>
+                    <span class="compact-talkgroup">${talkGroup}</span>
+                </div>
+                <div class="compact-log-line-right">
+                    ${talkerAlias ? `<span class="compact-alias">💬 ${talkerAlias}</span>` : '<span class="compact-alias-empty">—</span>'}
+                    ${durationText ? `<span class="compact-duration">${durationText}</span>` : '<span class="compact-duration-empty">—</span>'}
+                </div>
             </div>
         `;
 
