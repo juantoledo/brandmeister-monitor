@@ -1950,11 +1950,11 @@ button:disabled {
     font-weight: 600;
     color: var(--primary);
     font-family: 'Inter', sans-serif;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Allow wrapping for full visibility */
+    word-break: break-word; /* Break long callsigns if needed */
     position: relative;
     z-index: 1;
+    line-height: 1.3;
 }
 
 /* QRZ Callsign Link Styles */
@@ -1964,14 +1964,13 @@ button:disabled {
     font-weight: 600;
     font-family: 'Inter', sans-serif;
     border-radius: 3px;
-    padding: 2px 4px;
     transition: all 0.2s ease;
     display: inline-block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Allow wrapping for full visibility */
+    word-break: break-word; /* Break long callsigns if needed */
     position: relative;
     z-index: 1;
+    line-height: 1.3;
 }
 
 .qrz-callsign:hover {
@@ -1987,31 +1986,32 @@ button:disabled {
 
 .compact-name-location {
     color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 400; /* Reduced weight */
-    font-size: 0.75rem; /* Reduced font size */
+    white-space: normal; /* Allow wrapping to show full location */
+    word-break: break-word; /* Break long locations if needed */
+    font-weight: 400;
+    font-size: 0.75rem;
     min-width: 0;
     position: relative;
     z-index: 1;
+    line-height: 1.3;
 }
 
 .compact-alias {
     color: var(--text-muted);
     font-style: italic;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Allow wrapping to show full alias */
+    word-break: break-word; /* Break long aliases if needed */
     font-size: 0.8125rem;
     min-width: 0;
     position: relative;
     z-index: 1;
+    line-height: 1.3;
+    text-align: right; /* Right align alias */
 }
 
 .compact-alias-empty {
     color: var(--text-light);
-    text-align: center;
+    text-align: right; /* Right align empty alias */
     font-size: 0.8125rem;
     position: relative;
     z-index: 1;
@@ -2019,7 +2019,7 @@ button:disabled {
 
 .compact-duration-empty {
     color: var(--text-light);
-    text-align: center;
+    text-align: right; /* Right align empty duration */
     font-size: 0.8125rem;
     position: relative;
     z-index: 1;
@@ -2050,10 +2050,11 @@ button:disabled {
     border-radius: 4px;
     font-weight: 600;
     font-size: 0.75rem;
-    text-align: center;
+    text-align: right; /* Right align duration */
     white-space: nowrap;
     display: flex;
     align-items: center;
+    justify-content: flex-end; /* Align content to the right */
     justify-content: center;
     min-width: 0;
 }
@@ -2076,32 +2077,74 @@ button:disabled {
 @media (max-width: 768px) {
     .compact-log-line {
         grid-template-columns: 
-            105px     /* timestamp - full date format */
-            70px      /* callsign */
+            100px     /* timestamp - full date format */
+            65px      /* callsign */
             1fr       /* name from location */
-            50px      /* talkgroup */
-            40px;     /* qrz */
+            80px      /* alias - now visible */
+            45px      /* talkgroup */
+            50px      /* duration - now visible */
+            35px;     /* qrz */
     }
     
     .compact-alias,
     .compact-duration,
     .compact-alias-empty,
     .compact-duration-empty {
-        display: none;
+        display: flex; /* Make visible on mobile */
+        font-size: 0.7rem; /* Smaller but visible */
+        min-width: 0;
+    }
+    
+    .compact-duration {
+        padding: 2px 4px; /* More compact padding */
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+    
+    .compact-alias {
+        white-space: normal; /* Allow wrapping */
+        word-break: break-word;
+        line-height: 1.2;
     }
 }
 
 @media (max-width: 480px) {
     .compact-log-line {
         grid-template-columns: 
-            95px      /* timestamp - full date format */
-            65px      /* callsign */
+            90px      /* timestamp - full date format */
+            60px      /* callsign */
             1fr       /* name from location */
-            45px      /* talkgroup */
-            35px;     /* qrz */
+            70px      /* alias - now visible on small mobile */
+            40px      /* talkgroup */
+            45px      /* duration - now visible on small mobile */
+            30px;     /* qrz */
         font-size: 0.8125rem;
-        gap: 4px;
-        min-height: 32px;
+        gap: 3px;
+        min-height: 34px; /* Slightly taller to accommodate content */
+    }
+    
+    .compact-alias,
+    .compact-duration,
+    .compact-alias-empty,
+    .compact-duration-empty {
+        display: flex; /* Ensure visibility on very small screens */
+        font-size: 0.65rem; /* Very compact but readable */
+        min-width: 0;
+        line-height: 1.1;
+    }
+    
+    .compact-duration {
+        padding: 1px 3px; /* Very compact padding */
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    .compact-alias {
+        white-space: normal; /* Allow wrapping */
+        word-break: break-word;
+        text-overflow: unset; /* Remove ellipsis */
+        overflow: visible; /* Show full content */
     }
     
     .compact-log-line[data-country]::before {
@@ -2180,7 +2223,9 @@ button:disabled {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    white-space: nowrap;
+    white-space: normal; /* Allow text wrapping for full TG display */
+    word-break: break-word; /* Break long TG names if needed */
+    line-height: 1.2;
 }
 
 .log-card-status.live {
@@ -2209,11 +2254,12 @@ button:disabled {
 .log-card-timestamp {
     font-size: 0.75rem;
     color: var(--text-light);
-    white-space: nowrap;
+    white-space: normal; /* Allow timestamp wrapping if needed */
     background: var(--gray-100);
     padding: 3px 6px;
     border-radius: 3px;
     font-weight: 500;
+    line-height: 1.2;
 }
 
 /* Log Card Source Name - Prominently displayed */
@@ -2224,6 +2270,8 @@ button:disabled {
     padding: 0 16px;
     margin-top: -2px;
     line-height: 1.3;
+    white-space: normal; /* Allow wrapping for full name display */
+    word-break: break-word; /* Break long names if needed */
 }
 
 /* Log Card Location Info from RadioID database */
@@ -2298,7 +2346,10 @@ button:disabled {
     font-size: 0.75rem;
     font-weight: 500;
     border: 1px solid rgba(37, 99, 235, 0.2);
-    white-space: nowrap;
+    white-space: normal; /* Allow field wrapping for full display */
+    word-break: break-word; /* Break long field values if needed */
+    line-height: 1.3;
+    flex: 0 0 auto; /* Prevent shrinking */
 }
 
 .log-card-fields .field.duration {
@@ -2386,6 +2437,7 @@ button:disabled {
         min-width: 100%;
         order: 3;
         justify-content: flex-start;
+        flex-wrap: wrap; /* Allow wrapping for full visibility */
     }
     
     .log-card-tg,
@@ -2393,11 +2445,15 @@ button:disabled {
     .log-card-status.completed {
         font-size: 0.7rem;
         padding: 3px 6px;
+        white-space: normal; /* Override nowrap for mobile */
+        min-width: fit-content;
     }
     
     .log-card-timestamp {
         font-size: 0.7rem;
         padding: 2px 5px;
+        white-space: normal; /* Override nowrap for mobile */
+        min-width: fit-content;
     }
     
     /* Content areas */
@@ -2435,6 +2491,10 @@ button:disabled {
     .log-card-fields .field {
         font-size: 0.7rem;
         padding: 2px 4px;
+        white-space: normal; /* Allow wrapping on mobile */
+        word-break: break-word; /* Break long values */
+        flex: 0 0 auto; /* Maintain natural width */
+        min-width: fit-content;
     }
     
     .log-card-event {
@@ -2513,16 +2573,20 @@ button:disabled {
     .log-card-status.completed {
         font-size: 0.65rem;
         padding: 2px 5px;
-        flex: 1;
+        flex: 0 1 auto; /* Allow flexible sizing */
         text-align: center;
         min-width: fit-content;
+        white-space: normal; /* Ensure no truncation on small screens */
+        word-break: break-word;
     }
     
     .log-card-timestamp {
         font-size: 0.65rem;
         padding: 2px 4px;
-        flex: 1;
+        flex: 0 1 auto; /* Allow flexible sizing */
         text-align: center;
+        min-width: fit-content;
+        white-space: normal; /* Ensure no truncation on small screens */
     }
     
     /* Content more compact */
@@ -2562,6 +2626,11 @@ button:disabled {
     .log-card-fields .field {
         font-size: 0.65rem;
         padding: 1px 3px;
+        white-space: normal; /* Allow wrapping on very small screens */
+        word-break: break-word; /* Break long values */
+        flex: 0 0 auto; /* Maintain natural width */
+        min-width: fit-content;
+        line-height: 1.2;
     }
     
     .log-card-event {
