@@ -1651,6 +1651,8 @@ button:disabled {
     grid-area: main;
     background: var(--background);
     overflow: hidden;
+    position: relative;
+    z-index: 1; /* Below console panel */
 }
 
 .active-transmissions {
@@ -1718,7 +1720,7 @@ button:disabled {
     transition: height 0.3s ease, border-top-width 0.3s ease;
     overflow: hidden;
     position: relative;
-    bottom: 44px; /* Position above overlay footer */
+    z-index: 10; /* Ensure console stays above main content */
 }
 
 .console-panel.minimized {
@@ -1731,18 +1733,7 @@ button:disabled {
     animation: minimizedPulse 2s infinite;
 }
 
-/* Responsive console positioning above overlay */
-@media (max-width: 768px) {
-    .console-panel {
-        bottom: 65px; /* Position above mobile overlay height */
-    }
-}
-
-@media (max-width: 480px) {
-    .console-panel {
-        bottom: 65px; /* Position above mobile overlay height */
-    }
-}
+/* Responsive console positioning - grid layout handles positioning automatically */
 
 @keyframes minimizedPulse {
     0%, 100% { opacity: 1; }
