@@ -146,12 +146,14 @@ class LocationWeatherService {
     }
 
     /**
-     * Get location coordinates from city, state, country
+     * Get location coordinates from city and country (state ignored for better results)
      */
     async getCoordinates(city, state, country) {
         // Normalize country name for better geocoding results
         const normalizedCountry = this.normalizeCountryName(country);
-        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
+        
+        // Use only city and country for better geocoding success
+        const locationKey = `${city}, ${normalizedCountry}`.toLowerCase();
         
         // Check cache first
         const cached = this.geocodeCache.get(locationKey);
@@ -160,7 +162,8 @@ class LocationWeatherService {
         }
 
         try {
-            const query = [city, state, normalizedCountry].filter(Boolean).join(', ');
+            // Build query with only city and country (skip state)
+            const query = [city, normalizedCountry].filter(Boolean).join(', ');
             const url = `${this.apis.geocoding}?q=${encodeURIComponent(query)}&format=json&limit=1`;
             
             const response = await fetch(url);
@@ -323,7 +326,9 @@ class LocationWeatherService {
     async getLocationInfo(city, state, country) {
         // Normalize country name for consistent caching and better geocoding
         const normalizedCountry = this.normalizeCountryName(country);
-        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
+        
+        // Use only city and country for consistent caching and better geocoding
+        const locationKey = `${city}, ${normalizedCountry}`.toLowerCase();
         
         // Check if we have cached location info
         const cachedLocationInfo = this.locationInfoCache.get(locationKey);
@@ -345,8 +350,8 @@ class LocationWeatherService {
         }
 
         try {
-            // Get coordinates
-            const coords = await this.getCoordinates(city, state, normalizedCountry);
+            // Get coordinates using only city and country
+            const coords = await this.getCoordinates(city, null, normalizedCountry);
             if (!coords) return null;
 
             // Get weather and timezone in parallel
@@ -436,7 +441,9 @@ class LocationWeatherService {
     isLocationInfoCached(city, state, country) {
         // Normalize country name for consistent cache lookup
         const normalizedCountry = this.normalizeCountryName(country);
-        const locationKey = `${city}, ${state}, ${normalizedCountry}`.toLowerCase();
+        
+        // Use only city and country for consistent cache lookup
+        const locationKey = `${city}, ${normalizedCountry}`.toLowerCase();
         const cachedLocationInfo = this.locationInfoCache.get(locationKey);
         return cachedLocationInfo && (Date.now() - cachedLocationInfo.timestamp) < this.cacheExpiry;
     }
