@@ -1,0 +1,15 @@
+{
+  "name": "brandmeister-monitor",
+  "version": "1.0.1",
+  "description": "Real-time DMR Talkgroup Activity Monitor for Brandmeister Network",
+  "main": "index.html",
+  "scripts": {
+    "update-version": "node update-version.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juantoledo/brandmeister-monitor.git"
+  },
+  "author": "Juan Toledo",
+  "license": "MIT"
+}
