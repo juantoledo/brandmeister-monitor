@@ -4959,3 +4959,499 @@ button:disabled {
         padding: 6px 8px;
     }
 }
+
+/* ======================================
+   ABOUT MODAL STYLES
+====================================== */
+
+/* About Modal Button Styling */
+.about-modal-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    position: relative;
+}
+
+.about-modal-btn:hover {
+    background-color: var(--surface);
+    color: var(--text);
+    transform: scale(1.05);
+}
+
+.about-modal-btn:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.about-modal-btn .material-icons {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal Dialog */
+.modal-dialog {
+    background-color: var(--background);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.modal-overlay.show .modal-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--surface);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+.modal-close:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 24px;
+    max-height: calc(90vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 3px;
+}
+
+/* Modal About Header */
+.about-header-modal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.1), var(--surface));
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.about-logo-modal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.about-logo-modal .app-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--border);
+}
+
+.about-version-modal {
+    background-color: var(--background);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Modal About Content */
+.about-content-modal {
+    display: grid;
+    gap: 24px;
+}
+
+.about-section-modal {
+    background-color: var(--surface);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.about-section-modal:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.about-section-modal h4 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.about-section-modal p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* Developer Info Modal */
+.developer-info-modal {
+    margin-top: 8px;
+}
+
+.callsign-info-modal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.callsign-badge {
+    background: var(--primary);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.website-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.website-link:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background-color: var(--background);
+}
+
+/* GitHub Link Modal */
+.source-links-modal {
+    margin-top: 8px;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+    background-color: var(--background);
+}
+
+.github-link:hover {
+    color: var(--text);
+    border-color: var(--primary);
+    background-color: var(--surface);
+}
+
+.github-link svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Features List Modal */
+.features-list-modal {
+    margin: 8px 0 0 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.features-list-modal li {
+    padding: 8px 0;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    padding-left: 24px;
+}
+
+.features-list-modal li:before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Responsive Modal Design */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 16px;
+        align-items: flex-start;
+        padding-top: 40px;
+    }
+    
+    .modal-dialog {
+        max-height: 85vh;
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    
+    .modal-header {
+        padding: 20px 20px 16px 20px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .about-header-modal {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+        padding: 16px;
+    }
+    
+    .callsign-info-modal {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .about-section-modal {
+        padding: 16px;
+    }
+}
+
+/* Small devices (phones) */
+@media (max-width: 480px) {
+    .about-modal-btn {
+        width: 32px;
+        height: 32px;
+        padding: 6px;
+    }
+    
+    .about-modal-btn .material-icons {
+        font-size: 18px;
+    }
+    
+    .modal-overlay {
+        padding: 12px;
+        padding-top: 20px;
+    }
+    
+    .modal-dialog {
+        max-height: 90vh;
+        border-radius: 6px;
+    }
+    
+    .modal-header {
+        padding: 16px 16px 12px 16px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .about-content-modal {
+        gap: 16px;
+    }
+    
+    .about-section-modal {
+        padding: 12px;
+    }
+    
+    .about-section-modal h4 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .about-header-modal {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .about-logo-modal .app-icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Ultra-small devices (iPhone 13 mini - 390px) */
+@media (max-width: 390px) {
+    .about-modal-btn {
+        width: 30px;
+        height: 30px;
+        padding: 5px;
+    }
+    
+    .about-modal-btn .material-icons {
+        font-size: 16px;
+    }
+    
+    .modal-overlay {
+        padding: 8px;
+        padding-top: 16px;
+    }
+    
+    .modal-dialog {
+        max-height: 92vh;
+    }
+    
+    .modal-header {
+        padding: 12px 12px 8px 12px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .modal-body {
+        padding: 12px;
+    }
+    
+    .about-content-modal {
+        gap: 12px;
+    }
+    
+    .about-section-modal {
+        padding: 10px;
+    }
+    
+    .about-section-modal h4 {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+    }
+    
+    .about-section-modal p,
+    .features-list-modal li {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    .about-header-modal {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .about-logo-modal .app-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .about-version-modal {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+    
+    .callsign-badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+    
+    .website-link, .github-link {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+}

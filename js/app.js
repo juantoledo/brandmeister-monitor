@@ -4817,6 +4817,61 @@ function initializeNewInterface() {
             });
         });
     });
+
+    // About Modal functionality
+    const aboutModalBtn = document.getElementById('aboutModalBtn');
+    const aboutModal = document.getElementById('aboutModal');
+    const aboutModalClose = document.getElementById('aboutModalClose');
+    
+    if (aboutModalBtn && aboutModal && aboutModalClose) {
+        // Open modal
+        aboutModalBtn.addEventListener('click', () => {
+            aboutModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            
+            window.brandmeisterMonitor.logWithAttributes('About modal opened', {
+                sessionID: window.brandmeisterMonitor.sessionID,
+                action: 'modal_open'
+            });
+        });
+        
+        // Close modal via close button
+        aboutModalClose.addEventListener('click', () => {
+            aboutModal.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+            
+            window.brandmeisterMonitor.logWithAttributes('About modal closed', {
+                sessionID: window.brandmeisterMonitor.sessionID,
+                action: 'modal_close'
+            });
+        });
+        
+        // Close modal via overlay click
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) {
+                aboutModal.classList.remove('show');
+                document.body.style.overflow = '';
+                
+                window.brandmeisterMonitor.logWithAttributes('About modal closed via overlay', {
+                    sessionID: window.brandmeisterMonitor.sessionID,
+                    action: 'modal_close_overlay'
+                });
+            }
+        });
+        
+        // Close modal via ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && aboutModal.classList.contains('show')) {
+                aboutModal.classList.remove('show');
+                document.body.style.overflow = '';
+                
+                window.brandmeisterMonitor.logWithAttributes('About modal closed via ESC', {
+                    sessionID: window.brandmeisterMonitor.sessionID,
+                    action: 'modal_close_esc'
+                });
+            }
+        });
+    }
     
     // Console minimize/maximize toggle
     const consoleToggle = document.getElementById('consoleToggle');

@@ -276,7 +276,9 @@
                     <button class="console-tab active" data-tab="activity" data-i18n="console.tab.activity">Activity Log</button>
                     <button class="console-tab" data-tab="stats" data-i18n="console.tab.stats" style="display: none;">Statistics</button>
                     <!-- <button class="console-tab" data-tab="debug" data-i18n="console.tab.debug">Debug</button> -->
-                    <button class="console-tab" data-tab="about" data-i18n="console.tab.about">About</button>
+                    <button class="about-modal-btn" id="aboutModalBtn" aria-label="About" title="About">
+                        <span class="material-icons">help_outline</span>
+                    </button>
                 </div>
                 <div class="console-controls">
                     <button class="console-minimize" id="consoleToggle">▼</button>
@@ -314,67 +316,7 @@
                         <div id="debugContainer"></div>
                     </div>
                 </div>
-                <div class="console-pane" id="aboutPane">
-                    <div class="about-info">
-                        <div class="about-header">
-                            <div class="about-logo">
-                                <span class="radio-icon"><span class="material-icons">radio</span></span>
-                                <h3 data-i18n="about.title">Brandmeister Monitor</h3>
-                            </div>
-                            <div class="about-version">
-                                <span data-i18n="about.version">Version 2.0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="about-content">
-                            <div class="about-section">
-                                <h4 data-i18n="about.developer.title">👨‍💻 Developer</h4>
-                                <div class="developer-info">
-                                    <div class="callsign-info">
-                                        <span class="callsign-badge">CD3DXZ</span>
-                                        <a href="https://cd3dxz.radio" target="_blank" class="website-link">
-                                            <span class="link-icon">🌐</span>
-                                            <span data-i18n="about.website">cd3dxz.radio</span>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="about-section">
-                                <h4 data-i18n="about.powered.title">🤖 Powered by AI</h4>
-                                <p data-i18n="about.powered.description">Built with the assistance of Claude Sonnet 3.5, an AI assistant by Anthropic</p>
-                            </div>
-                            
-                            <div class="about-section">
-                                <h4 data-i18n="about.source.title">📦 Source Code</h4>
-                                <div class="source-links">
-                                    <a href="https://github.com/juantoledo/brandmeister-monitor" target="_blank" class="github-link">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-                                        </svg>
-                                        <span data-i18n="about.github">View on GitHub</span>
-                                    </a>
-                                </div>
-                            </div>
-                            
-                            <div class="about-section">
-                                <h4 data-i18n="about.features.title">✨ Features</h4>
-                                <ul class="features-list">
-                                    <li data-i18n="about.features.realtime">Real-time DMR activity monitoring</li>
-                                    <li data-i18n="about.features.pwa">Progressive Web App (PWA) support</li>
-                                    <li data-i18n="about.features.multilingual">Multi-language interface (English/Spanish)</li>
-                                    <li data-i18n="about.features.responsive">Responsive design for all devices</li>
-                                    <li data-i18n="about.features.offline">Offline capability with service worker</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="about-section">
-                                <h4 data-i18n="about.support.title">💡 Support</h4>
-                                <p data-i18n="about.support.description">For issues, feature requests, or contributions, please visit the GitHub repository.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
             <!-- Overlay Footer -->
@@ -386,6 +328,74 @@
                     </div>
                 </div>
             </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 data-i18n="about.title">Brandmeister Monitor</h3>
+                <button class="modal-close" id="aboutModalClose" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="about-header-modal">
+                    <div class="about-logo-modal">
+                        <img src="icons/icon.png" alt="Brandmeister Monitor Icon" class="app-icon">
+                    </div>
+                    <div class="about-version-modal">
+                        <span data-i18n="about.version">Version 2.0</span>
+                    </div>
+                </div>
+                
+                <div class="about-content-modal">
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.developer.title">👨‍💻 Developer</h4>
+                        <div class="developer-info-modal">
+                            <div class="callsign-info-modal">
+                                <span class="callsign-badge">CD3DXZ</span>
+                                <a href="https://cd3dxz.radio" target="_blank" class="website-link">
+                                    <span class="link-icon">🌐</span>
+                                    <span data-i18n="about.website">cd3dxz.radio</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.powered.title">🤖 Powered by AI</h4>
+                        <p data-i18n="about.powered.description">Built with the assistance of Claude Sonnet 3.5, an AI assistant by Anthropic</p>
+                    </div>
+                    
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.source.title">📦 Source Code</h4>
+                        <div class="source-links-modal">
+                            <a href="https://github.com/juantoledo/brandmeister-monitor" target="_blank" class="github-link">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                                </svg>
+                                <span data-i18n="about.github">View on GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.features.title">✨ Features</h4>
+                        <ul class="features-list-modal">
+                            <li data-i18n="about.features.realtime">Real-time DMR activity monitoring</li>
+                            <li data-i18n="about.features.pwa">Progressive Web App (PWA) support</li>
+                            <li data-i18n="about.features.multilingual">Multi-language interface (English/Spanish)</li>
+                            <li data-i18n="about.features.responsive">Responsive design for all devices</li>
+                            <li data-i18n="about.features.offline">Offline capability with service worker</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.support.title">💡 Support</h4>
+                        <p data-i18n="about.support.description">For issues, feature requests, or contributions, please visit the GitHub repository.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/app.js"></script>
