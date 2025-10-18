@@ -156,29 +156,32 @@ jobs:
           echo "Updated manifest.json version to $NEW_VERSION"
         fi
 
-    - name: Create git tag
-      run: |
-        NEW_VERSION="${{ steps.new-version.outputs.version }}"
-        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-
     - name: Commit version updates
       run: |
         NEW_VERSION="${{ steps.new-version.outputs.version }}"
         
         # Check if there are changes to commit
-        if git diff --quiet && git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git add js/sw.js package.json manifest.json
+        git add js/sw.js package.json manifest.json || true
+        
+        if ! git diff --cached --quiet; then
           git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-          
-          # Configure git to use the GitHub token for authentication
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          
-          git push origin main
-          git push origin "v$NEW_VERSION"
-          echo "Committed and pushed version $NEW_VERSION"
+          echo "Changes committed"
+        else
+          echo "No changes to commit"
         fi
+        
+    - name: Create and push tag
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+        echo "Tag v$NEW_VERSION created"
+        
+    - name: Push changes and tags
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
+        tags: true
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
