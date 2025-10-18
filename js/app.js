@@ -2086,8 +2086,8 @@ class BrandmeisterMonitor {
                     activeEntry.style.backgroundImage = `url('${flagBackgroundUrl}')`;
                 }
                 
-                // Add to active container at the top (newest first)
-                this.elements.activeContainer.insertBefore(activeEntry, this.elements.activeContainer.firstChild);
+                // Add to active container at the bottom (newest last)
+                this.elements.activeContainer.appendChild(activeEntry);
                 
                 // Add click handler for location link if it exists
                 if (countryCode && radioIdInfo) {
@@ -3087,8 +3087,8 @@ class BrandmeisterMonitor {
             noActivityMsg.remove();
         }
 
-        // Add new entry at the top
-        this.elements.logContainer.insertBefore(logEntry, this.elements.logContainer.firstChild);
+        // Add new entry at the bottom
+        this.elements.logContainer.appendChild(logEntry);
 
         // Remove animation class after animation completes
         setTimeout(() => {
@@ -3195,8 +3195,8 @@ class BrandmeisterMonitor {
             noActivityMsg.remove();
         }
 
-        // Add new entry at the top
-        this.elements.logContainer.insertBefore(logEntry, this.elements.logContainer.firstChild);
+        // Add new entry at the bottom
+        this.elements.logContainer.appendChild(logEntry);
 
         // Remove animation class after animation completes
         setTimeout(() => {
