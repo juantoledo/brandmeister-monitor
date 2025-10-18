@@ -4155,3 +4155,412 @@ button:disabled {
         padding-bottom: 70px;
     }
 }
+
+/* ===== VERY SMALL MOBILE DEVICES (iPhone 13 mini, etc.) ===== */
+/* Target devices with width ≤ 390px (covers iPhone 13 mini at 375px) */
+@media (max-width: 390px) {
+    
+    /* Header adjustments */
+    .app-header {
+        min-height: 48px;
+        padding: 6px 12px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    
+    .subtitle {
+        font-size: 0.6rem;
+        margin: 2px 0 0 0;
+    }
+    
+    .header-right {
+        gap: 6px;
+    }
+    
+    .header-controls {
+        gap: 4px;
+    }
+    
+    .header-status {
+        padding: 2px 4px;
+        font-size: 0.6rem;
+        gap: 3px;
+    }
+    
+    .status-dot {
+        width: 5px;
+        height: 5px;
+    }
+    
+    /* Sidebar adjustments */
+    .sidebar {
+        width: 280px; /* Slightly narrower */
+    }
+    
+    .sidebar-content {
+        padding: 12px;
+    }
+    
+    .menu-section h3 {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+    
+    .menu-item {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+    
+    /* Active transmission cards - more compact */
+    .active-transmission {
+        padding: 6px 8px; /* Even more compact padding */
+        margin-bottom: 4px; /* Tighter spacing between cards */
+        min-height: 44px; /* Further reduced height */
+    }
+    
+    .active-transmission .card-header {
+        margin-bottom: 2px; /* Tighter header spacing */
+        gap: 4px; /* Reduce gap between header elements */
+    }
+    
+    .active-transmission .callsign {
+        font-size: 0.85rem; /* Slightly smaller callsign */
+        font-weight: 700; /* Keep bold for readability */
+        line-height: 1.1; /* Tighter line height */
+    }
+    
+    .active-transmission .talkgroup {
+        font-size: 0.7rem; /* Smaller talkgroup */
+        padding: 1px 5px; /* More compact padding */
+        line-height: 1.1;
+    }
+    
+    .active-transmission .duration {
+        font-size: 0.65rem; /* Smaller duration */
+        font-weight: 600; /* Keep semi-bold for visibility */
+        line-height: 1.1;
+    }
+    
+    .active-transmission .location {
+        font-size: 0.6rem; /* Smaller location text */
+        margin-top: 1px; /* Minimal top margin */
+        line-height: 1.1;
+        max-width: 150px; /* Limit location width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .active-transmission .signal-info {
+        gap: 3px; /* Tighter gap between signal elements */
+        margin-top: 1px; /* Minimal top margin */
+    }
+    
+    .active-transmission .signal-info span {
+        font-size: 0.55rem; /* Smaller signal text */
+        padding: 1px 3px; /* More compact signal badges */
+        line-height: 1;
+    }
+    
+    /* Name/alias display refinements */
+    .active-transmission .card-main .name,
+    .active-transmission .card-main .alias {
+        font-size: 0.65rem; /* Smaller name/alias */
+        line-height: 1.1;
+        max-width: 120px; /* Limit width to prevent overflow */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Card layout optimizations */
+    .active-transmission .card-main {
+        gap: 2px; /* Tighter vertical spacing */
+    }
+    
+    .active-transmission .card-header .active-left {
+        gap: 6px; /* Compact left side elements */
+    }
+    
+    .active-transmission .card-header .active-right {
+        gap: 4px; /* Compact right side elements */
+    }
+    
+    /* Country/flag display adjustments */
+    .active-transmission .country-info {
+        font-size: 0.6rem;
+        line-height: 1.1;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Distance display adjustments */
+    .active-transmission .distance-info {
+        font-size: 0.6rem;
+        line-height: 1.1;
+    }
+    
+    /* Log container adjustments */
+    .log-container {
+        padding: 6px;
+    }
+    
+    /* Compact log entries - smaller cards */
+    .compact-log-line {
+        padding: 6px 8px;
+        margin-bottom: 3px;
+        min-height: 32px; /* Reduced height */
+        font-size: 0.7rem;
+    }
+    
+    .compact-log-line-left {
+        gap: 6px;
+    }
+    
+    .compact-log-line-right {
+        gap: 6px;
+    }
+    
+    .compact-log-line .log-time {
+        font-size: 0.65rem;
+        min-width: 45px;
+    }
+    
+    .compact-log-line .log-callsign {
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .compact-log-line .log-talkgroup {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+    }
+    
+    .compact-log-line .log-alias {
+        font-size: 0.6rem;
+        max-width: 80px; /* Further limit alias width */
+    }
+    
+    .compact-log-line .log-duration {
+        font-size: 0.6rem;
+        min-width: 32px;
+    }
+    
+    /* Console panel - reduce height impact */
+    .console-panel {
+        --console-height: 120px; /* Reduced from default */
+    }
+    
+    .console-panel.minimized {
+        height: 36px; /* Smaller minimized height */
+    }
+    
+    .console-header {
+        padding: 6px 10px;
+        min-height: 36px;
+    }
+    
+    .console-header h3 {
+        font-size: 0.75rem;
+    }
+    
+    .console-minimize {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .console-content {
+        padding: 6px 10px;
+        font-size: 0.65rem;
+    }
+    
+    .console-entry {
+        padding: 3px 6px;
+        margin-bottom: 2px;
+        font-size: 0.6rem;
+    }
+    
+    /* Settings dialog adjustments */
+    .settings-content {
+        padding: 12px;
+        max-height: 70vh; /* Reduce max height */
+    }
+    
+    .setting-group {
+        margin-bottom: 12px;
+    }
+    
+    .setting-group label {
+        font-size: 0.75rem;
+    }
+    
+    .setting-group input,
+    .setting-group select {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+    
+    /* Overlay footer adjustments */
+    .overlay {
+        padding: 3px 6px;
+    }
+    
+    .overlay-content {
+        gap: 6px;
+    }
+    
+    .overlay .local-utc {
+        font-size: 0.6rem;
+        gap: 3px;
+    }
+    
+    .overlay .local-weather {
+        font-size: 0.6rem;
+    }
+    
+    .overlay .local-utc .time-local,
+    .overlay .local-utc .time-utc,
+    .overlay .local-weather .weather-info {
+        padding: 2px 4px;
+        font-size: 0.55rem;
+        border-radius: 3px;
+    }
+    
+    /* Photo system adjustments for very small screens */
+    .compact-log-line.has-photo-left::after,
+    .compact-log-line.loading-photo-left::after {
+        width: 40px; /* Smaller photo area */
+    }
+    
+    .compact-log-line.has-photo-left::before {
+        width: 40px;
+    }
+    
+    .active-transmission.has-photo-left::after,
+    .active-transmission.loading-photo-left::after {
+        width: 50px;
+    }
+    
+    .active-transmission.has-photo-left::before {
+        width: 50px;
+    }
+    
+    /* Flag adjustments */
+    .flag-icon-background {
+        background-size: 20px auto; /* Smaller flags */
+    }
+    
+    /* QRZ link adjustments */
+    .qrz-link {
+        padding: 2px 4px;
+        font-size: 0.6rem;
+    }
+    
+    /* Color picker adjustments */
+    .color-presets {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 0.3rem;
+        gap: 0.2rem;
+    }
+    
+    .color-preset {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .color-preview {
+        gap: 6px;
+        padding: 3px;
+    }
+    
+    .color-preview-swatch {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .color-value {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+    }
+    
+    /* Talkgroup selector adjustments */
+    .talkgroup-selector select {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
+    
+    /* Statistics adjustments */
+    .stats-container {
+        padding: 6px;
+        gap: 6px;
+    }
+    
+    .stat-item {
+        padding: 6px 8px;
+    }
+    
+    .stat-value {
+        font-size: 0.9rem;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+    }
+    
+    /* Session info adjustments */
+    .session-info {
+        font-size: 0.6rem;
+        gap: 4px;
+    }
+    
+    /* Button adjustments */
+    .btn {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+    }
+    
+    .btn-sm {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+    }
+    
+    /* Input field adjustments */
+    input, select, textarea {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+    
+    /* App layout padding for very small screens */
+    .app-layout {
+        padding-bottom: 65px; /* Account for smaller overlay */
+    }
+    
+    /* Location display improvements */
+    .location-display {
+        font-size: 0.6rem;
+        max-width: 120px;
+    }
+    
+    /* Weather display improvements */
+    .weather-display {
+        font-size: 0.6rem;
+    }
+    
+    /* Performance optimizations for small screens */
+    .transmission-history {
+        max-height: 200px; /* Limit history height */
+    }
+    
+    /* Scrollbar adjustments for small screens */
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        border-radius: 2px;
+    }
+}
