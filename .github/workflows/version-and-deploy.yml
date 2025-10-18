@@ -1,0 +1,199 @@
+name: Auto-Version and Deploy PWA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Allow GITHUB_TOKEN to write to the repository
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  version-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for proper versioning
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Determine version bump type
+      id: version-type
+      run: |
+        # Get the commit message
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        echo "Commit message: $COMMIT_MSG"
+        
+        # Determine version bump based on commit message
+        if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]] || [[ "$COMMIT_MSG" == *"feat!"* ]] || [[ "$COMMIT_MSG" == *"fix!"* ]]; then
+          echo "type=major" >> $GITHUB_OUTPUT
+          echo "Version bump: MAJOR (breaking change detected)"
+        elif [[ "$COMMIT_MSG" == *"feat:"* ]] || [[ "$COMMIT_MSG" == *"feat("* ]]; then
+          echo "type=minor" >> $GITHUB_OUTPUT
+          echo "Version bump: MINOR (new feature detected)"
+        else
+          echo "type=patch" >> $GITHUB_OUTPUT
+          echo "Version bump: PATCH (fix/chore/docs detected)"
+        fi
+
+    - name: Get current version
+      id: current-version
+      run: |
+        # Extract current version from service worker
+        if [ -f "js/sw.js" ]; then
+          CURRENT_VERSION=$(grep -o "brandmeister-monitor-v[0-9]\+\.[0-9]\+\.[0-9]\+" js/sw.js | head -1 | sed 's/brandmeister-monitor-v//')
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION="1.0.0"
+          fi
+        else
+          CURRENT_VERSION="1.0.0"
+        fi
+        echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "Current version: $CURRENT_VERSION"
+
+    - name: Calculate new version
+      id: new-version
+      run: |
+        CURRENT="${{ steps.current-version.outputs.current }}"
+        TYPE="${{ steps.version-type.outputs.type }}"
+        
+        # Split version into components
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+        
+        # Increment based on type
+        case $TYPE in
+          major)
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            ;;
+          minor)
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            ;;
+          patch)
+            PATCH=$((PATCH + 1))
+            ;;
+        esac
+        
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "New version: $NEW_VERSION"
+
+    - name: Update service worker version
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        echo "Updating service worker to version: $NEW_VERSION"
+        
+        # Update the CACHE_NAME in service worker
+        sed -i "s/CACHE_NAME = 'brandmeister-monitor-v[0-9]\+\.[0-9]\+\.[0-9]\+'/CACHE_NAME = 'brandmeister-monitor-v$NEW_VERSION'/" js/sw.js
+        
+        # Update console.log messages in service worker
+        sed -i "s/Installing service worker v[0-9]\+\.[0-9]\+\.[0-9]\+/Installing service worker v$NEW_VERSION/" js/sw.js
+        sed -i "s/Activating service worker v[0-9]\+\.[0-9]\+\.[0-9]\+/Activating service worker v$NEW_VERSION/" js/sw.js
+        
+        echo "Service worker updated successfully"
+
+    - name: Update package.json (create if not exists)
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        
+        if [ ! -f "package.json" ]; then
+          cat > package.json << EOF
+        {
+          "name": "brandmeister-monitor",
+          "version": "$NEW_VERSION",
+          "description": "Real-time DMR Talkgroup Activity Monitor for Brandmeister Network",
+          "main": "index.html",
+          "scripts": {
+            "update-version": "node update-version.js"
+          },
+          "repository": {
+            "type": "git",
+            "url": "git+https://github.com/juantoledo/brandmeister-monitor.git"
+          },
+          "author": "Juan Toledo",
+          "license": "MIT"
+        }
+        EOF
+        else
+          # Update existing package.json
+          npm version $NEW_VERSION --no-git-tag-version
+        fi
+
+    - name: Update manifest.json version
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        
+        if [ -f "manifest.json" ]; then
+          # Update version in manifest.json if it exists
+          sed -i "s/\"version\": \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/\"version\": \"$NEW_VERSION\"/" manifest.json
+          echo "Updated manifest.json version to $NEW_VERSION"
+        fi
+
+    - name: Create git tag
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+
+    - name: Commit version updates
+      run: |
+        NEW_VERSION="${{ steps.new-version.outputs.version }}"
+        
+        # Check if there are changes to commit
+        if git diff --quiet && git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git add js/sw.js package.json manifest.json
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git push origin main
+          git push origin "v$NEW_VERSION"
+          echo "Committed and pushed version $NEW_VERSION"
+        fi
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+
+  # Deploy to GitHub Pages
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: version-and-build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Output deployment info
+        run: |
+          echo "🚀 PWA deployed successfully!"
+          echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "📱 Users will automatically get the new version!"
