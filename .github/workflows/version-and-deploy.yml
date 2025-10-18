@@ -19,8 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  version-and-build:
+  version-build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
     - name: Checkout repository
@@ -185,20 +188,13 @@ jobs:
       with:
         path: '.'
 
-  # Deploy to GitHub Pages
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: version-and-build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
 
-      - name: Output deployment info
-        run: |
-          echo "🚀 PWA deployed successfully!"
-          echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
-          echo "📱 Users will automatically get the new version!"
+    - name: Output deployment info
+      run: |
+        echo "🚀 PWA deployed successfully!"
+        echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
+        echo "📱 Version ${{ steps.new-version.outputs.version }} is now live!"
+        echo "Users will automatically get the update!"
