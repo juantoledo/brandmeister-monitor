@@ -3391,6 +3391,118 @@ class BrandmeisterMonitor {
         });
     }
 
+    // Save UI state (sidebar and console) to localStorage
+    saveUIState() {
+        console.log('🔄 saveUIState called');
+        try {
+            const sidebar = document.getElementById('sidebar');
+            const consolePanel = document.getElementById('consolePanel');
+            
+            console.log('🔍 Elements found:', {
+                sidebar: !!sidebar,
+                consolePanel: !!consolePanel,
+                sidebarId: sidebar?.id,
+                consolePanelId: consolePanel?.id
+            });
+            
+            if (sidebar && consolePanel) {
+                const uiState = {
+                    sidebarOpen: sidebar.classList.contains('open'),
+                    sidebarCollapsed: sidebar.classList.contains('collapsed'),
+                    consoleMinimized: consolePanel.classList.contains('minimized'),
+                    consoleAutoCollapsed: consolePanel.classList.contains('auto-collapsed'),
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem('brandmeister-ui-state', JSON.stringify(uiState));
+                console.log('✅ UI state saved successfully:', uiState);
+            } else {
+                console.warn('❌ Missing elements - cannot save UI state');
+            }
+        } catch (error) {
+            console.warn('❌ Failed to save UI state:', error);
+        }
+    }
+
+    // Restore UI state from localStorage
+    restoreUIState() {
+        console.log('🔄 restoreUIState called');
+        try {
+            const savedState = localStorage.getItem('brandmeister-ui-state');
+            console.log('💾 Saved state from localStorage:', savedState);
+            
+            if (!savedState) {
+                console.log('❌ No saved UI state found');
+                return;
+            }
+
+            const uiState = JSON.parse(savedState);
+            console.log('📋 Parsed UI state:', uiState);
+            
+            const sidebar = document.getElementById('sidebar');
+            const consolePanel = document.getElementById('consolePanel');
+            const appLayout = document.querySelector('.app-layout');
+            const consoleToggle = document.getElementById('consoleToggle');
+
+            console.log('🔍 Elements found for restore:', {
+                sidebar: !!sidebar,
+                consolePanel: !!consolePanel,
+                appLayout: !!appLayout,
+                consoleToggle: !!consoleToggle
+            });
+
+            if (!sidebar || !consolePanel) {
+                console.warn('❌ Missing required elements for restore');
+                return;
+            }
+
+            console.log('🔧 Restoring UI state...');
+
+            // Restore sidebar state
+            if (uiState.sidebarOpen) {
+                sidebar.classList.add('open');
+                console.log('  ↔️ Sidebar: opened');
+            } else {
+                sidebar.classList.remove('open');
+                console.log('  ↔️ Sidebar: closed');
+            }
+
+            if (uiState.sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                console.log('  ↔️ Sidebar: collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+                console.log('  ↔️ Sidebar: expanded');
+            }
+
+            // Restore console state
+            if (uiState.consoleMinimized) {
+                consolePanel.classList.add('minimized');
+                if (appLayout) appLayout.classList.add('console-minimized');
+                if (consoleToggle) consoleToggle.textContent = '▲';
+                console.log('  📱 Console: minimized');
+            } else {
+                consolePanel.classList.remove('minimized');
+                if (appLayout) appLayout.classList.remove('console-minimized');
+                if (consoleToggle) consoleToggle.textContent = '▼';
+                console.log('  📱 Console: expanded');
+            }
+
+            if (uiState.consoleAutoCollapsed) {
+                consolePanel.classList.add('auto-collapsed');
+                console.log('  📱 Console: auto-collapsed');
+            } else {
+                consolePanel.classList.remove('auto-collapsed');
+                console.log('  📱 Console: not auto-collapsed');
+            }
+
+            console.log('✅ UI state restored successfully');
+            this.logDebug('UI state restored successfully');
+        } catch (error) {
+            console.warn('❌ Failed to restore UI state:', error);
+        }
+    }
+
     resetSettings() {
         // Reset to default values
         this.config.minDuration = 2; // Reset to 2 seconds default
@@ -4647,6 +4759,11 @@ function toggleActivityLog() {
 document.addEventListener('DOMContentLoaded', () => {
     window.brandmeisterMonitor = new BrandmeisterMonitor();
     
+    // Restore UI state from localStorage
+    setTimeout(() => {
+        window.brandmeisterMonitor.restoreUIState();
+    }, 100); // Small delay to ensure UI elements are ready
+    
     // Initialize new UI components
     initializeNewInterface();
     
@@ -4728,6 +4845,10 @@ function initializeNewInterface() {
             sessionID: window.brandmeisterMonitor.sessionID,
             minimized: !isMinimized
         });
+        
+        // Save UI state after console toggle
+        console.log('🔗 Calling saveUIState from console toggle');
+        window.brandmeisterMonitor.saveUIState();
     });
     
     // Initialize console panel as open by default
@@ -4848,6 +4969,10 @@ function initializeNewInterface() {
             open: sidebar.classList.contains('open'),
             mobile: isMobile
         });
+        
+        // Save UI state after sidebar toggle
+        console.log('🔗 Calling saveUIState from sidebar toggle');
+        window.brandmeisterMonitor.saveUIState();
     });
     
     // Close sidebar when clicking outside on mobile
@@ -4884,6 +5009,9 @@ function updateSessionDuration() {
 // Cleanup on page unload to prevent memory leaks
 window.addEventListener('beforeunload', () => {
     if (window.brandmeisterMonitor) {
+        // Save UI state before cleanup
+        console.log('🔗 Calling saveUIState from beforeunload');
+        window.brandmeisterMonitor.saveUIState();
         window.brandmeisterMonitor.cleanup();
     }
 });
