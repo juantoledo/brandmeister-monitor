@@ -4216,7 +4216,6 @@ button:disabled {
     
     /* Active transmission cards - more compact */
     .active-transmission {
-        padding: 6px 8px; /* Even more compact padding */
         margin-bottom: 4px; /* Tighter spacing between cards */
         min-height: 44px; /* Further reduced height */
     }
@@ -4246,7 +4245,7 @@ button:disabled {
     
     .active-transmission .location {
         font-size: 0.6rem; /* Smaller location text */
-        margin-top: 1px; /* Minimal top margin */
+        margin-top: 4px; /* More space above location */
         line-height: 1.1;
         max-width: 150px; /* Limit location width */
         overflow: hidden;
@@ -4256,7 +4255,7 @@ button:disabled {
     
     .active-transmission .signal-info {
         gap: 3px; /* Tighter gap between signal elements */
-        margin-top: 1px; /* Minimal top margin */
+        margin-top: 4px; /* More space above signal info */
     }
     
     .active-transmission .signal-info span {
@@ -4302,6 +4301,115 @@ button:disabled {
     .active-transmission .distance-info {
         font-size: 0.6rem;
         line-height: 1.1;
+    }
+    
+    /* Card content and layout refinements */
+    .card-content {
+        gap: 8px; /* Reduce gap between left content and chronometer */
+    }
+    
+    .card-left {
+        flex: 1;
+        min-width: 0; /* Allow text to overflow properly */
+    }
+    
+    .card-chronometer {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+    
+    .card-chronometer .call-duration {
+        padding: 2px 6px; /* More compact duration badge */
+        font-size: 0.65rem; /* Smaller duration font */
+        min-width: 40px; /* Narrower minimum width */
+        border-radius: 3px; /* Smaller border radius */
+    }
+    
+    /* Card details - alias and phonetic */
+    .card-details {
+        gap: 2px; /* Tighter gap between details */
+        margin-top: 10px; /* Less top margin */
+    }
+    
+    .card-alias {
+        font-size: 0.65rem; /* Smaller alias text */
+        line-height: 1.2;
+        max-width: 120px; /* Limit width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .card-phonetic {
+        font-size: 0.6rem; /* Smaller phonetic text */
+        line-height: 1.1;
+        max-width: 120px; /* Limit width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Card identity section */
+    .card-identity {
+        gap: 4px; /* Tighter gap between identity elements */
+    }
+    
+    .card-callsign {
+        font-size: 0.85rem; /* Consistent with active-transmission */
+        line-height: 1.1;
+    }
+    
+    .card-radio-id {
+        font-size: 0.65rem; /* Smaller radio ID */
+        padding: 1px 4px; /* More compact padding */
+    }
+    
+    /* Card controls */
+    .card-controls {
+        gap: 4px; /* Tighter gap between control elements */
+    }
+    
+    .card-tg {
+        font-size: 0.7rem; /* Smaller talkgroup */
+        padding: 1px 5px; /* More compact padding */
+    }
+    
+    /* Card source name */
+    .card-source-name {
+        font-size: 1.65rem; /* Smaller source name */
+        line-height: 1.1;
+    }
+    
+    /* Card location */
+    .card-location {
+        font-size: 0.6rem; /* Smaller location text */
+        line-height: 1.1;
+        max-width: 140px; /* Limit location width */
+        white-space: nowrap;
+        margin-top: 10px; /* Add more space above location */
+    }
+    
+    .card-location-link {
+        font-size: 0.6rem; /* Consistent location link size */
+    }
+    
+    /* Card time and weather */
+    .card-time-weather {
+        font-size: 0.6rem; /* Smaller time/weather text */
+        gap: 4px; /* Tighter gap between elements */
+        margin-top: 10px; /* Add more space above time/weather */
+    }
+    
+    /* Card flag display adjustments */
+    .card-flag-display .fi {
+        width: 32px; /* Smaller flag */
+        height: 24px;
+    }
+    
+    .card-location .fi {
+        width: 16px; /* Smaller location flag */
+        height: 12px;
     }
     
     /* Log container adjustments */
@@ -4360,7 +4468,6 @@ button:disabled {
     }
     
     .console-header {
-        padding: 6px 10px;
         min-height: 36px;
     }
     
