@@ -4414,45 +4414,190 @@ button:disabled {
         padding: 6px;
     }
     
-    /* Compact log entries - smaller cards */
+    /* Compact log entries - ultra-compact for tiny screens */
     .compact-log-line {
-        padding: 6px 8px;
-        margin-bottom: 3px;
-        min-height: 32px; /* Reduced height */
-        font-size: 0.7rem;
+        padding: 4px 6px; /* Even more compact padding */
+        margin-bottom: 2px; /* Tighter spacing */
+        min-height: 28px; /* Further reduced height */
+        font-size: 0.65rem; /* Smaller base font */
     }
     
     .compact-log-line-left {
-        gap: 6px;
+        gap: 4px; /* Tighter gap */
     }
     
     .compact-log-line-right {
-        gap: 6px;
+        gap: 4px; /* Tighter gap */
     }
     
-    .compact-log-line .log-time {
-        font-size: 0.65rem;
-        min-width: 45px;
+    /* Time display - ultra compact */
+    .compact-log-line .log-time,
+    .compact-log-line .compact-timestamp {
+        font-size: 0.55rem; /* Much smaller time */
+        min-width: 35px; /* Narrower time column */
+        max-width: 35px; /* Prevent expansion */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.1;
     }
     
-    .compact-log-line .log-callsign {
-        font-size: 0.7rem;
-        font-weight: 600;
+    /* Callsign - compact but readable */
+    .compact-log-line .log-callsign,
+    .compact-log-line .compact-callsign {
+        font-size: 0.6rem; /* Smaller callsign */
+        font-weight: 700; /* Keep bold for visibility */
+        max-width: 60px; /* Limit callsign width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.1;
     }
     
-    .compact-log-line .log-talkgroup {
-        font-size: 0.65rem;
-        padding: 1px 4px;
+    /* Talkgroup - very compact */
+    .compact-log-line .log-talkgroup,
+    .compact-log-line .compact-talkgroup {
+        font-size: 0.55rem; /* Smaller talkgroup */
+        padding: 1px 3px; /* More compact padding */
+        max-width: 45px; /* Limit talkgroup width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1;
+        border-radius: 2px; /* Smaller radius */
     }
     
-    .compact-log-line .log-alias {
-        font-size: 0.6rem;
-        max-width: 80px; /* Further limit alias width */
+    /* Duration - ultra compact */
+    .compact-log-line .log-duration,
+    .compact-log-line .compact-duration {
+        font-size: 0.5rem; /* Much smaller duration */
+        min-width: 25px; /* Narrower duration */
+        max-width: 25px; /* Prevent expansion */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.1;
+        font-weight: 600; /* Keep bold for readability */
     }
     
-    .compact-log-line .log-duration {
-        font-size: 0.6rem;
-        min-width: 32px;
+    /* Alias - very compact */
+    .compact-log-line .log-alias,
+    .compact-log-line .compact-alias {
+        font-size: 0.5rem; /* Smaller alias */
+        max-width: 60px; /* Slightly wider alias */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.1;
+    }
+    
+    /* Empty placeholders - minimal space */
+    .compact-log-line .compact-alias-empty,
+    .compact-log-line .compact-duration-empty {
+        font-size: 0.5rem;
+        opacity: 0.5;
+        min-width: 8px; /* Minimal width for dashes */
+    }
+    
+    /* Full log card entries optimization */
+    .log-entry {
+        margin-bottom: 6px; /* Tighter spacing between cards */
+        border-radius: 6px; /* Smaller border radius */
+    }
+    
+    /* Log card header optimization */
+    .log-card-header {
+        padding: 8px 10px; /* More compact padding */
+        gap: 8px; /* Smaller gap */
+    }
+    
+    .log-card-identity {
+        gap: 1px; /* Tighter gap between identity elements */
+    }
+    
+    .log-card-callsign {
+        font-size: 0.9rem; /* Smaller callsign */
+        line-height: 1.1;
+    }
+    
+    .log-card-radio-id {
+        font-size: 0.65rem; /* Smaller radio ID */
+    }
+    
+    .log-card-phonetic {
+        font-size: 0.6rem; /* Smaller phonetic */
+        margin-top: 0; /* Remove margin */
+    }
+    
+    .log-card-controls {
+        gap: 4px; /* Smaller gap between controls */
+    }
+    
+    .log-card-tg {
+        font-size: 0.65rem; /* Smaller talkgroup */
+        padding: 2px 5px; /* More compact padding */
+    }
+    
+    .log-card-status.live,
+    .log-card-status.completed {
+        font-size: 0.6rem; /* Smaller status */
+        padding: 2px 5px; /* More compact padding */
+    }
+    
+    .log-card-timestamp {
+        font-size: 0.6rem; /* Smaller timestamp */
+        padding: 2px 4px; /* More compact padding */
+    }
+    
+    /* Log card content optimization */
+    .log-card-source-name {
+        font-size: 0.8rem; /* Smaller source name */
+        padding: 0 10px; /* Match header padding */
+        margin-top: -1px; /* Reduce margin */
+        line-height: 1.2;
+    }
+    
+    .log-card-location {
+        font-size: 0.7rem; /* Smaller location */
+        padding: 0 10px; /* Match header padding */
+        margin: 1px 0; /* Reduce margins */
+        gap: 4px; /* Smaller gap */
+    }
+    
+    .log-card-location .fi {
+        width: 14px; /* Smaller flag */
+        height: 11px;
+    }
+    
+    .log-card-details {
+        padding: 6px 10px 8px 10px; /* More compact padding */
+        gap: 4px; /* Smaller gap */
+    }
+    
+    .log-card-alias {
+        font-size: 0.7rem; /* Smaller alias */
+        gap: 3px; /* Smaller gap */
+    }
+    
+    .log-card-details-text {
+        font-size: 0.7rem; /* Smaller details text */
+        line-height: 1.3;
+    }
+    
+    .log-card-event {
+        font-size: 0.65rem; /* Smaller event */
+        padding: 2px 5px; /* More compact padding */
+    }
+    
+    .log-card-fields {
+        gap: 3px; /* Smaller gap between fields */
+        margin: 2px 0; /* Reduce margins */
+    }
+    
+    .log-card-fields .field {
+        font-size: 0.6rem; /* Smaller field text */
+        padding: 1px 4px; /* More compact padding */
+        line-height: 1.2;
     }
     
     /* Console panel - reduce height impact */
@@ -4666,5 +4811,151 @@ button:disabled {
     
     ::-webkit-scrollbar-thumb {
         border-radius: 2px;
+    }
+}
+
+/* ===== PWA UPDATE NOTIFICATION ===== */
+.update-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--white);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    max-width: 400px;
+    animation: slideInNotification 0.3s ease-out;
+}
+
+[data-theme="dark"] .update-notification {
+    background: var(--gray-800);
+    border-color: var(--primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.update-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+}
+
+.update-notification .material-icons {
+    color: var(--primary);
+    font-size: 24px;
+    margin-top: 2px;
+}
+
+.update-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.update-text strong {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.update-text p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.update-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.btn-update {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-update:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-update .material-icons {
+    font-size: 16px;
+    color: var(--white);
+}
+
+.btn-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.btn-dismiss:hover {
+    background: var(--gray-100);
+    color: var(--text);
+}
+
+[data-theme="dark"] .btn-dismiss:hover {
+    background: var(--gray-700);
+}
+
+.btn-dismiss .material-icons {
+    font-size: 18px;
+}
+
+@keyframes slideInNotification {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile adjustments for update notification */
+@media (max-width: 480px) {
+    .update-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .update-content {
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .update-actions {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .btn-update {
+        font-size: 0.7rem;
+        padding: 6px 8px;
     }
 }

@@ -5025,15 +5025,81 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
     }, 30000); // Every 30 seconds
 }
 
-// Service Worker registration for offline capability (optional)
+// Service Worker registration for offline capability and auto-updates
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
             .then((registration) => {
-                console.log('SW registered: ', registration);
+                console.log('✅ Service Worker registered:', registration);
+                
+                // Check for updates every 30 seconds
+                setInterval(() => {
+                    registration.update();
+                }, 30000);
+                
+                // Handle service worker updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 New service worker found, installing...');
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker installed, show update notification
+                            showUpdateNotification();
+                        }
+                    });
+                });
             })
             .catch((registrationError) => {
-                console.log('SW registration failed: ', registrationError);
+                console.log('❌ SW registration failed:', registrationError);
             });
+        
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data.type === 'CACHE_UPDATED') {
+                console.log('📦 Cache updated to:', event.data.version);
+                showUpdateNotification();
+            }
+        });
     });
+}
+
+// Show update notification to user
+function showUpdateNotification() {
+    // Remove any existing update notification
+    const existingNotification = document.querySelector('.update-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create update notification
+    const notification = document.createElement('div');
+    notification.className = 'update-notification';
+    notification.innerHTML = `
+        <div class="update-content">
+            <span class="material-icons">system_update</span>
+            <div class="update-text">
+                <strong>App Updated!</strong>
+                <p>New features available. Refresh to get the latest version.</p>
+            </div>
+            <div class="update-actions">
+                <button class="btn-update" onclick="window.location.reload()">
+                    <span class="material-icons">refresh</span> Refresh Now
+                </button>
+                <button class="btn-dismiss" onclick="this.closest('.update-notification').remove()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 10 seconds if not acted upon
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 10000);
 }
