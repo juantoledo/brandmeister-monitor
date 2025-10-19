@@ -99,6 +99,9 @@ class BrandmeisterMonitor {
             this.loadTalkgroupFromStorage();
             this.loadAliasesFromStorage();
             this.loadRadioIDDatabase();
+            
+            // Initialize the active TGs display
+            this.updateActiveTgsDisplay();
         }
     }
 
@@ -115,6 +118,7 @@ class BrandmeisterMonitor {
             localWeather: document.getElementById('localWeather'),
             logContainer: document.getElementById('logContainer'),
             activeContainer: document.getElementById('activeContainer'),
+            activeTgsList: document.querySelector('.active-tgs'),
             totalCalls: document.getElementById('totalCalls'),
             lastActivity: document.getElementById('lastActivity'),
             sessionDuration: document.getElementById('sessionDuration'),
@@ -742,6 +746,33 @@ class BrandmeisterMonitor {
         
         // Start monitoring TG 91
         this.startMonitoring([91]);
+    }
+
+    updateActiveTgsDisplay() {
+        if (!this.elements.activeTgsList) return;
+
+        // If monitoring all talkgroups or no talkgroups, show nothing
+        if (this.config.monitorAllTalkgroups || this.monitoredTalkgroups.length === 0) {
+            this.elements.activeTgsList.innerHTML = '';
+            return;
+        }
+
+        // Show monitored talkgroups without header
+        const tgItems = this.monitoredTalkgroups.map(tgId => {
+            const tgName = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(tgId) : `TG ${tgId}`;
+            return `
+                <div class="active-tg-item" data-tg-id="${tgId}">
+                    <span class="active-tg-id">${tgId}</span>
+                    <span class="active-tg-name">${tgName}</span>
+                </div>
+            `;
+        }).join('');
+
+        this.elements.activeTgsList.innerHTML = `
+            <div class="active-tgs-list">
+                ${tgItems}
+            </div>
+        `;
     }
 
     syncExistingTalkgroupToVisualSelector() {
@@ -1457,6 +1488,9 @@ class BrandmeisterMonitor {
             talkgroups: this.config.monitorAllTalkgroups ? 'all' : this.monitoredTalkgroups.join(','),
             action: 'active_transmissions_cleared'
         });
+        
+        // Update the active TGs display
+        this.updateActiveTgsDisplay();
         
         return true;
     }

@@ -51,6 +51,10 @@ const Languages = {
             // Main content
             'main.welcome.title': 'Welcome to Brandmeister Monitor',
             'main.welcome.subtitle': 'Configure your monitoring preferences in the sidebar and click Connect to start.',
+            'main.welcome.noactivity': 'No active transmissions',
+            'main.active.tgs.all': 'Monitoring All Talkgroups',
+            'main.active.tgs.none': 'No talkgroups selected',
+            'main.active.tgs.monitoring': 'Monitoring',
             'main.activity.title': 'Live Activity',
             'main.activity.empty': 'No activity to display. Make sure you\'re connected and monitoring the right talk groups.',
             'main.stats.calls': 'Total Calls',
@@ -226,6 +230,10 @@ const Languages = {
             // Main content
             'main.welcome.title': 'Bienvenido a Monitor Brandmeister',
             'main.welcome.subtitle': 'Configura tus preferencias de monitoreo en el menú lateral y haz clic en Conectar para comenzar.',
+            'main.welcome.noactivity': 'No hay transmisiones activas',
+            'main.active.tgs.all': 'Monitoreando Todos los Grupos',
+            'main.active.tgs.none': 'No hay grupos seleccionados',
+            'main.active.tgs.monitoring': 'Monitoreando',
             'main.activity.title': 'Actividad en Vivo',
             'main.activity.empty': 'No hay actividad para mostrar. Asegúrate de estar conectado y monitoreando los grupos de conversación correctos.',
             'main.stats.calls': 'Llamadas Totales',
@@ -401,6 +409,12 @@ const Languages = {
             'sidebar.database.clear': 'Limpar Cache',
             
             // Main content
+            'main.welcome.title': 'Bem-vindo ao Monitor Brandmeister',
+            'main.welcome.subtitle': 'Configure suas preferências de monitoramento na barra lateral e clique em Conectar para começar.',
+            'main.welcome.noactivity': 'Nenhuma transmissão ativa',
+            'main.active.tgs.all': 'Monitorando Todos os Grupos',
+            'main.active.tgs.none': 'Nenhum grupo selecionado',
+            'main.active.tgs.monitoring': 'Monitorando',
             'main.realtime.title': 'Atividade em Tempo Real',
             'main.empty.title': 'Nenhuma Transmissão Ainda',
             'main.empty.subtitle': 'Aguardando atividade de talkgroup...',

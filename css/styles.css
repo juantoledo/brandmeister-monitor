@@ -1633,6 +1633,83 @@ button:disabled {
     z-index: 1; /* Below console panel */
 }
 
+/* Active TGs Display */
+.active-tgs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 3px 3px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.active-tgs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    align-items: stretch;
+}
+
+.active-tg-item {
+    background: var(--primary);
+    color: var(--white);
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+}
+
+.active-tg-id {
+    font-weight: 600;
+}
+
+.active-tg-name {
+    font-weight: 400;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+/* Responsive design for active TGs */
+@media (max-width: 768px) {
+    .active-tgs {
+        padding: 3px 3px;
+    }
+    
+    .active-tg-item {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        border-radius: 0;
+        border: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .active-tgs {
+        padding: 0px 0px;
+        padding-top: 15px;
+    }
+    
+    .active-tgs-list {
+        gap: 6px;
+    }
+    
+    .active-tg-item {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+        border-radius: 0;
+        border: none;
+    }
+}
+
 /* BOTTOM CONTAINER */
 .bottom-container {
     grid-area: bottom;
