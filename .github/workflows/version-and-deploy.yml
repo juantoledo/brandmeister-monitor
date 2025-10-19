@@ -68,10 +68,10 @@ jobs:
         if [ -f "js/sw.js" ]; then
           CURRENT_VERSION=$(grep -o "brandmeister-monitor-v[0-9]\+\.[0-9]\+\.[0-9]\+" js/sw.js | head -1 | sed 's/brandmeister-monitor-v//')
           if [ -z "$CURRENT_VERSION" ]; then
-            CURRENT_VERSION="1.0.0"
+            CURRENT_VERSION="0.5.0"
           fi
         else
-          CURRENT_VERSION="1.0.0"
+          CURRENT_VERSION="0.5.0"
         fi
         echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
         echo "Current version: $CURRENT_VERSION"
@@ -105,10 +105,10 @@ jobs:
         echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "New version: $NEW_VERSION"
 
-    - name: Update service worker version
+    - name: Update all version references
       run: |
         NEW_VERSION="${{ steps.new-version.outputs.version }}"
-        echo "Updating service worker to version: $NEW_VERSION"
+        echo "Updating all version references to: $NEW_VERSION"
         
         # Update the CACHE_NAME in service worker
         sed -i "s/CACHE_NAME = 'brandmeister-monitor-v[0-9]\+\.[0-9]\+\.[0-9]\+'/CACHE_NAME = 'brandmeister-monitor-v$NEW_VERSION'/" js/sw.js
@@ -117,7 +117,12 @@ jobs:
         sed -i "s/Installing service worker v[0-9]\+\.[0-9]\+\.[0-9]\+/Installing service worker v$NEW_VERSION/" js/sw.js
         sed -i "s/Activating service worker v[0-9]\+\.[0-9]\+\.[0-9]\+/Activating service worker v$NEW_VERSION/" js/sw.js
         
-        echo "Service worker updated successfully"
+        # Update i18n translation files
+        sed -i "s/'about\.version': 'Version [0-9]\+\.[0-9]\+\.[0-9]\+'/'about.version': 'Version $NEW_VERSION'/" js/i18n.js
+        sed -i "s/'about\.version': 'Versión [0-9]\+\.[0-9]\+\.[0-9]\+'/'about.version': 'Versión $NEW_VERSION'/" js/i18n.js
+        sed -i "s/'about\.version': 'v[0-9]\+\.[0-9]\+\.[0-9]\+'/'about.version': 'v$NEW_VERSION'/" js/i18n.js
+        
+        echo "All version references updated successfully"
 
     - name: Update package.json (create if not exists)
       run: |
@@ -161,7 +166,7 @@ jobs:
         NEW_VERSION="${{ steps.new-version.outputs.version }}"
         
         # Check if there are changes to commit
-        git add js/sw.js package.json manifest.json || true
+        git add js/sw.js js/i18n.js package.json manifest.json || true
         
         if ! git diff --cached --quiet; then
           git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
