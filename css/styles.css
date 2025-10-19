@@ -495,8 +495,8 @@ body {
         "bottom bottom";
     grid-template-columns: var(--sidebar-width) 1fr;
     grid-template-rows: var(--header-height) 1fr auto;
-    height: 100vh;
-    max-height: 100vh; /* Prevent overflow */
+    height: 100dvh;
+    max-height: 100dvh; /* Prevent overflow, use dynamic viewport height */
     overflow: hidden;
     transition: grid-template-rows 0.3s ease, grid-template-columns 0.3s ease;
 }
