@@ -180,15 +180,7 @@
     color: var(--text-light);
 }
 
-[data-theme="dark"] .current-tg {
-    background: var(--gray-700);
-    color: var(--text);
-}
 
-
-[data-theme="dark"] .current-tg p {
-    color: var(--text);
-}
 
 /* Dark mode button styles */
 [data-theme="dark"] button {
@@ -197,7 +189,6 @@
     color: var(--text);
 }
 
-[data-theme="dark"] #saveTg,
 [data-theme="dark"] #connectBtn,
 [data-theme="dark"] #saveSettings {
     background: var(--primary);
@@ -205,7 +196,6 @@
     color: var(--white);
 }
 
-[data-theme="dark"] #saveTg:hover,
 [data-theme="dark"] #connectBtn:hover,
 [data-theme="dark"] #saveSettings:hover {
     background: var(--primary-light);
@@ -1336,15 +1326,7 @@ body {
     color: var(--text);
 }
 
-.tg-save-container {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-}
 
-.tg-save-container .tg-btn {
-    width: 100%;
-}
 
 /* Input Help Text */
 .tg-input-help {
@@ -1381,13 +1363,13 @@ button:disabled {
 }
 
 /* Primary Button */
-#saveTg, #connectBtn, #saveSettings {
+#connectBtn, #saveSettings {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
 }
 
-#saveTg:hover, #connectBtn:hover, #saveSettings:hover {
+#connectBtn:hover, #saveSettings:hover {
     background: var(--primary-light);
     border-color: var(--primary-light);
 }
@@ -1410,18 +1392,7 @@ button:disabled {
     gap: 8px;
 }
 
-.current-tg {
-    background: var(--gray-100);
-    padding: 12px;
-    border-radius: var(--radius);
-    font-size: 0.875rem;
-    color: var(--text-muted);
-}
 
-.current-tg span {
-    color: var(--primary);
-    font-weight: 500;
-}
 
 /* Settings */
 .setting-group {

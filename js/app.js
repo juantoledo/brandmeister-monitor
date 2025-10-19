@@ -106,13 +106,11 @@ class BrandmeisterMonitor {
         // Get DOM elements
         this.elements = {
             talkgroupInput: document.getElementById('talkgroup'),
-            saveTgBtn: document.getElementById('saveTg'),
             connectBtn: document.getElementById('connectBtn'),
             disconnectBtn: document.getElementById('disconnectBtn'),
             clearLogsBtn: document.getElementById('clearLogs'),
             connectionStatus: document.getElementById('connectionStatus'),
             statusText: document.getElementById('statusText'),
-            currentTg: document.getElementById('currentTg'),
             localUtc: document.querySelector('.local-utc'),
             localWeather: document.getElementById('localWeather'),
             logContainer: document.getElementById('logContainer'),
@@ -158,7 +156,6 @@ class BrandmeisterMonitor {
         };
 
         // Bind event listeners
-        this.elements.saveTgBtn.addEventListener('click', () => this.saveTalkgroup());
         this.elements.connectBtn.addEventListener('click', () => this.connect());
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
@@ -201,16 +198,30 @@ class BrandmeisterMonitor {
         // Initialize Language System
         this.initializeLanguageSystem();
         
-        // Allow Enter key to save talkgroup
+        // Allow Enter key to start monitoring immediately
         this.elements.talkgroupInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.saveTalkgroup();
+                this.startMonitoring();
             }
         });
 
-        // Sync manual input changes to visual selections
+        // Start monitoring immediately when input changes (after a small delay)
+        let inputTimeout;
         this.elements.talkgroupInput.addEventListener('input', (e) => {
             this.syncInputToSelectedTalkGroups();
+            
+            // Clear previous timeout
+            if (inputTimeout) {
+                clearTimeout(inputTimeout);
+            }
+            
+            // Start monitoring after 1 second of no typing
+            inputTimeout = setTimeout(() => {
+                const value = this.elements.talkgroupInput.value.trim();
+                if (value) {
+                    this.startMonitoring();
+                }
+            }, 1000);
         });
 
         // Initialize cleanup timers
@@ -331,9 +342,6 @@ class BrandmeisterMonitor {
         // Update connection status
         this.updateStatusText();
         
-        // Update current talkgroup display
-        this.updateCurrentTgDisplay();
-        
         // Update stats if needed
         this.updateStatsDisplay();
         
@@ -355,9 +363,6 @@ class BrandmeisterMonitor {
         // Update connection status
         this.updateStatusText();
         
-        // Update current talkgroup display
-        this.updateCurrentTgDisplay();
-        
         // Update stats if needed
         this.updateStatsDisplay();
     }
@@ -372,14 +377,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    updateCurrentTgDisplay() {
-        if (!this.elements.currentTg || !window.t) return;
-        
-        if (this.monitoredTalkgroups.length === 0) {
-            this.elements.currentTg.textContent = window.t('sidebar.monitoring.none');
-        }
-        // Otherwise keep the current talkgroup display as is
-    }
+
 
     updateStatsDisplay() {
         // Update stats labels if we have the elements and translation function
@@ -609,20 +607,36 @@ class BrandmeisterMonitor {
             return null;
         }).filter(Boolean);
 
-        // Add each selected talkgroup
+        // Add each selected talkgroup (but prevent individual monitoring calls)
+        const wasMonitoring = this.config.monitorAllTalkgroups || this.monitoredTalkgroups.length > 0;
+        
         selectedTalkgroups.forEach(({ id, name }) => {
-            this.toggleTalkGroupSelection(id, name);
+            // Add to selection without triggering monitoring
+            if (!this.selectedTalkgroups.has(id)) {
+                this.selectedTalkgroups.add(id);
+            }
         });
+
+        // Update displays
+        this.updateSelectedTalkGroupsDisplay();
+        this.syncSelectedTalkGroupsToInput();
+        this.saveSelectedTalkGroupsToStorage();
+        
+        // Start monitoring all selected talkgroups at once
+        if (this.selectedTalkgroups.size > 0) {
+            const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
+            this.startMonitoring(talkgroupIds);
+        }
 
         // Clear search and close results
         this.elements.tgSearch.value = '';
         this.hideTalkGroupSearchResults();
 
         // Show success feedback
-        console.log(`✅ Added ${selectedTalkgroups.length} talk groups to selection`);
+        console.log(`✅ Added ${selectedTalkgroups.length} talk groups and started monitoring`);
     }
 
-    toggleTalkGroupSelection(id, name, element = null) {
+    toggleTalkGroupSelection(id, name, element = null, autoStartMonitoring = true) {
         if (this.selectedTalkgroups.has(id)) {
             this.selectedTalkgroups.delete(id);
             if (element) element.classList.remove('selected');
@@ -634,6 +648,12 @@ class BrandmeisterMonitor {
         this.updateSelectedTalkGroupsDisplay();
         this.syncSelectedTalkGroupsToInput();
         this.saveSelectedTalkGroupsToStorage();
+        
+        // Immediately start monitoring the selected talkgroups (unless disabled)
+        if (autoStartMonitoring && this.selectedTalkgroups.size > 0) {
+            const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
+            this.startMonitoring(talkgroupIds);
+        }
     }
 
     updateSelectedTalkGroupsDisplay() {
@@ -710,10 +730,18 @@ class BrandmeisterMonitor {
 
     clearTalkGroupSelection() {
         this.selectedTalkgroups.clear();
+        
+        // Default back to TG 91 (Worldwide) and show it as selected
+        this.selectedTalkgroups.add('91');
+        this.elements.talkgroupInput.value = '91';
+        
+        // Update all displays and visuals
         this.updateSelectedTalkGroupsDisplay();
         this.updateTalkGroupSelectionVisuals();
-        this.syncSelectedTalkGroupsToInput();
         this.saveSelectedTalkGroupsToStorage();
+        
+        // Start monitoring TG 91
+        this.startMonitoring([91]);
     }
 
     syncExistingTalkgroupToVisualSelector() {
@@ -1296,25 +1324,18 @@ class BrandmeisterMonitor {
                 this.monitoredTalkgroups = [];
                 this.config.monitorAllTalkgroups = true;
                 this.elements.talkgroupInput.value = 'all';
-                this.elements.currentTg.textContent = 'All Talkgroups';
             } else {
                 // Parse comma-separated list of talkgroup IDs
                 const tgList = savedTg.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id) && id > 0);
                 this.monitoredTalkgroups = tgList;
                 this.config.monitorAllTalkgroups = false;
                 this.elements.talkgroupInput.value = savedTg;
-                
-                const displayText = tgList.length === 1 ? 
-                    `TG ${tgList[0]}` : 
-                    `TGs: ${tgList.join(', ')}`;
-                this.elements.currentTg.textContent = displayText;
             }
         } else {
             // No saved talkgroup - default to TG 91 (Worldwide)
             this.monitoredTalkgroups = [91];
             this.config.monitorAllTalkgroups = false;
             this.elements.talkgroupInput.value = '91';
-            this.elements.currentTg.textContent = 'TG 91';
             
             // Also add to visual selection system
             this.selectedTalkgroups.add('91');
@@ -1377,68 +1398,67 @@ class BrandmeisterMonitor {
         return this.callsignAliases[callsign] || '';
     }
 
-    saveTalkgroup() {
-        const tgValue = this.elements.talkgroupInput.value.trim();
-        if (tgValue === '' || tgValue.toLowerCase() === 'all') {
-            // Monitor all talkgroups
+    startMonitoring(talkgroupIds = null) {
+        // If no specific talkgroup IDs provided, use current input or selected talkgroups
+        let targetTalkgroups = talkgroupIds;
+        
+        if (!targetTalkgroups) {
+            const tgValue = this.elements.talkgroupInput.value.trim();
+            if (tgValue === '' || tgValue.toLowerCase() === 'all') {
+                targetTalkgroups = 'all';
+            } else if (tgValue) {
+                // Parse comma-separated list
+                const tgList = tgValue.split(',').map(id => id.trim()).filter(id => id !== '');
+                const validTalkgroups = [];
+                
+                for (const tgStr of tgList) {
+                    if (!isNaN(tgStr) && parseInt(tgStr) > 0) {
+                        validTalkgroups.push(parseInt(tgStr));
+                    } else {
+                        console.warn(`Invalid talkgroup ID: "${tgStr}"`);
+                        return false;
+                    }
+                }
+                
+                if (validTalkgroups.length === 0) {
+                    console.warn('No valid talkgroup IDs provided');
+                    return false;
+                }
+                
+                targetTalkgroups = validTalkgroups;
+            } else {
+                console.warn('No talkgroups specified');
+                return false;
+            }
+        }
+        
+        // Update monitoring configuration
+        if (targetTalkgroups === 'all') {
             this.monitoredTalkgroups = [];
             this.config.monitorAllTalkgroups = true;
             localStorage.setItem('brandmeister_talkgroup', 'all');
             localStorage.setItem('brandmeister_monitor_all', 'true');
-            this.elements.currentTg.textContent = 'All Talkgroups';
-            // System message removed - only log transmissions
-        } else if (tgValue) {
-            // Parse comma-separated list of talkgroup IDs
-            const tgList = tgValue.split(',').map(id => id.trim()).filter(id => id !== '');
-            const validTalkgroups = [];
-            
-            for (const tgStr of tgList) {
-                if (!isNaN(tgStr) && parseInt(tgStr) > 0) {
-                    validTalkgroups.push(parseInt(tgStr));
-                } else {
-                    alert(`Invalid talkgroup ID: "${tgStr}". Please enter valid numeric talkgroup IDs separated by commas (e.g., "214,220,235") or "all" to monitor all talkgroups`);
-                    return; // Exit early if invalid input
-                }
-            }
-            
-            if (validTalkgroups.length === 0) {
-                alert('Please enter at least one valid talkgroup ID or "all" to monitor all talkgroups');
-                return;
-            }
-            
-            // Monitor specific talkgroups
-            this.monitoredTalkgroups = validTalkgroups;
-            this.config.monitorAllTalkgroups = false;
-            localStorage.setItem('brandmeister_talkgroup', validTalkgroups.join(','));
-            localStorage.setItem('brandmeister_monitor_all', 'false');
-            
-            const displayText = validTalkgroups.length === 1 ? 
-                `TG ${validTalkgroups[0]}` : 
-                `TGs: ${validTalkgroups.join(', ')}`;
-            this.elements.currentTg.textContent = displayText;
-            
-            const logText = validTalkgroups.length === 1 ? 
-                `Monitoring talkgroup ${validTalkgroups[0]}` : 
-                `Monitoring talkgroups: ${validTalkgroups.join(', ')}`;
-            // System message removed - only log transmissions
         } else {
-            alert('Please enter valid talkgroup IDs separated by commas (e.g., "214,220,235") or "all" to monitor all talkgroups');
-            return; // Exit early if invalid input
+            this.monitoredTalkgroups = Array.isArray(targetTalkgroups) ? targetTalkgroups : [targetTalkgroups];
+            this.config.monitorAllTalkgroups = false;
+            localStorage.setItem('brandmeister_talkgroup', this.monitoredTalkgroups.join(','));
+            localStorage.setItem('brandmeister_monitor_all', 'false');
         }
         
         // Clear active transmissions when talkgroup changes
         this.clearActiveTransmissions();
-        // System message removed - only log transmissions
         
         // Auto-save settings to ensure consistency
         this.saveSettings();
         
-        // Log the talkgroup change with structured logging
-        this.logInfo('Talkgroup configuration updated', {
+        // Log the talkgroup change
+        this.logInfo('Talkgroup monitoring started', {
             monitorAllTalkgroups: this.config.monitorAllTalkgroups,
             talkgroups: this.config.monitorAllTalkgroups ? 'all' : this.monitoredTalkgroups.join(','),
             action: 'active_transmissions_cleared'
         });
+        
+        return true;
     }
 
     connect() {
