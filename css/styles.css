@@ -1665,6 +1665,17 @@ button:disabled {
     text-align: center;
 }
 
+.active-tg-more {
+    background: var(--surface);
+    color: var(--primary);
+    font-weight: 600;
+    cursor: default;
+    pointer-events: none;
+    opacity: 0.85;
+    border: 1px dashed var(--primary);
+    border-radius: 0;
+}
+
 .active-tg-id {
     font-weight: 600;
 }
@@ -1686,7 +1697,7 @@ button:disabled {
     
     .active-tg-item {
         padding: 4px 10px;
-        font-size: 0.75rem;
+        font-size: 0.6rem;
         border-radius: 0;
         border: none;
     }
@@ -1704,7 +1715,7 @@ button:disabled {
     
     .active-tg-item {
         padding: 3px 8px;
-        font-size: 0.7rem;
+        font-size: 0.6rem;
         border-radius: 0;
         border: none;
     }

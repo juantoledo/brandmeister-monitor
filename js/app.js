@@ -757,8 +757,20 @@ class BrandmeisterMonitor {
             return;
         }
 
-        // Show monitored talkgroups without header
-        const tgItems = this.monitoredTalkgroups.map(tgId => {
+        // Determine how many TGs to show based on screen width
+        let maxVisible = 4;
+        const width = window.innerWidth;
+        if (width <= 480) {
+            maxVisible = 3;
+        } else if (width <= 768) {
+            maxVisible = 3;
+        }
+
+        const total = this.monitoredTalkgroups.length;
+        const visibleTgs = this.monitoredTalkgroups.slice(0, maxVisible);
+        const hiddenCount = total - visibleTgs.length;
+
+        const tgItems = visibleTgs.map(tgId => {
             const tgName = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(tgId) : `TG ${tgId}`;
             return `
                 <div class="active-tg-item" data-tg-id="${tgId}">
@@ -766,11 +778,19 @@ class BrandmeisterMonitor {
                     <span class="active-tg-name">${tgName}</span>
                 </div>
             `;
-        }).join('');
+        });
+
+        if (hiddenCount > 0) {
+            tgItems.push(`
+                <div class="active-tg-item active-tg-more" title="${hiddenCount} more">
+                    +${hiddenCount} more
+                </div>
+            `);
+        }
 
         this.elements.activeTgsList.innerHTML = `
             <div class="active-tgs-list">
-                ${tgItems}
+                ${tgItems.join('')}
             </div>
         `;
     }
