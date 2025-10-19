@@ -1395,6 +1395,9 @@ class BrandmeisterMonitor {
                 console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
             }
         }
+
+        // Always update the active TGs display after loading
+        this.updateActiveTgsDisplay();
     }
 
     loadAliasesFromStorage() {
