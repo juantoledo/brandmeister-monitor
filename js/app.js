@@ -2033,7 +2033,10 @@ class BrandmeisterMonitor {
                         <div class="card-header">
                             <div class="card-identity">
                                 <div class="card-callsign">${callsign}</div>
-                                <div class="card-radio-id">${group.sourceID || '-'}</div>
+                                <div class="card-radio-id">
+                                    <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />
+                                    ${group.sourceID || '-'}
+                                </div>
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
