@@ -1,6 +1,6 @@
 {
   "name": "brandmeister-monitor",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Real-time DMR Talkgroup Activity Monitor for Brandmeister Network",
   "main": "index.html",
   "scripts": {
