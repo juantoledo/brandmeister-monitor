@@ -3267,7 +3267,7 @@ button:disabled {
 }
 
 .card-callsign {
-    font-size: 1.25rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--text);
     letter-spacing: 0.5px;
@@ -3476,7 +3476,7 @@ button:disabled {
 /* Responsive adjustments */
 @media (max-width: 1250px) {
     .card-callsign {
-        font-size: 1rem;
+        font-size: 2rem;
     }
     
     .card-source-name {
@@ -4408,7 +4408,7 @@ button:disabled {
     }
     
     .card-callsign {
-        font-size: 0.85rem; /* Consistent with active-transmission */
+        font-size: 1rem; /* Consistent with active-transmission */
         line-height: 1.1;
     }
     

@@ -2032,7 +2032,9 @@ class BrandmeisterMonitor {
                     <div class="card-main">
                         <div class="card-header">
                             <div class="card-identity">
-                                <div class="card-callsign">${callsign}</div>
+                                <div class="card-callsign">
+                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="Look up ${callsign} on QRZ.com">${callsign}</a>
+                                </div>
                                 <div class="card-radio-id">
                                     <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />
                                     ${group.sourceID || '-'}
@@ -2040,25 +2042,25 @@ class BrandmeisterMonitor {
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
-                                <span class="card-tg">TG ${tg || '?'}</span>
-                                <span class="card-status live"><span class="material-icons small">fiber_manual_record</span> LIVE</span>
-                            </div>
-                        </div>
+                                <span class="card-tg">TG ${tg || '?'}<\/span>
+                                <span class="card-status live"><span class="material-icons small">fiber_manual_record<\/span> LIVE<\/span>
+                            <\/div>
+                        <\/div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${displayName ? `<div class="card-source-name">${displayName}</div>` : ''}
+                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(displayName)}" target="_blank" class="card-source-name" title="Look up ${displayName} on QRZ.com">${displayName}</a></div>` : ''}
                                 ${locationInfo}
                                 ${timeWeatherInfo}
                                 <div class="card-details">
-                                    ${alias ? `<div class="card-alias">${alias}</div>` : ''}
-                                    ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}</div>` : ''}
-                                </div>
-                            </div>
+                                    ${alias ? `<div class="card-alias">${alias}<\/div>` : ''}
+                                    ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}<\/div>` : ''}
+                                <\/div>
+                            <\/div>
                             <div class="card-chronometer">
-                                <span class="call-duration">0s</span>
-                            </div>
-                        </div>
-                    </div>
+                                <span class="call-duration">0s<\/span>
+                            <\/div>
+                        <\/div>
+                    <\/div>
                 `;
                 
                 // Apply flag background if available
