@@ -1933,16 +1933,18 @@ class BrandmeisterMonitor {
                 const callsign = this.extractCallsignFromTitle(titleText);
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
-                if (callsignElement) callsignElement.textContent = callsign;
+                if (callsignElement) {
+                    callsignElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="Look up ${callsign} on QRZ.com">${callsign}</a>`;
+                }
                 if (radioIdElement) radioIdElement.textContent = group.sourceID || '-';
                 if (sourceNameElement && sourceName) {
-                    sourceNameElement.textContent = sourceName;
+                    sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(sourceName)}" target="_blank" class="card-source-name" title="Look up ${sourceName} on QRZ.com">${sourceName}</a>`;
                 } else if (sourceNameElement && !sourceName) {
                     sourceNameElement.remove();
                 } else if (!sourceNameElement && sourceName) {
                     const newSourceNameEl = document.createElement('div');
                     newSourceNameEl.className = 'card-source-name';
-                    newSourceNameEl.textContent = sourceName;
+                    newSourceNameEl.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(sourceName)}" target="_blank" class="card-source-name" title="Look up ${sourceName} on QRZ.com">${sourceName}</a>`;
                     existingActiveEntry.querySelector('.card-header').insertAdjacentElement('afterend', newSourceNameEl);
                 }
                 if (tgElement) tgElement.textContent = `TG ${tg || '?'}`;
@@ -2821,12 +2823,18 @@ class BrandmeisterMonitor {
             
             // Update the existing log entry
             const logEntry = activeCall.initialLogEntry;
-            logEntry.querySelector('.log-callsign').textContent = displayName;
-            logEntry.querySelector('.log-details').textContent = startDetails;
-            
+            // Always render callsign as QRZ.com link
+            if (logEntry && logEntry.querySelector('.log-callsign')) {
+                logEntry.querySelector('.log-callsign').innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(displayName)}" target="_blank" class="qrz-callsign" title="Look up ${displayName} on QRZ.com">${displayName}</a>`;
+            }
+            if (logEntry && logEntry.querySelector('.log-details')) {
+                logEntry.querySelector('.log-details').textContent = startDetails;
+            }
             // Add visual indicator that this entry was updated
-            logEntry.classList.add('updated');
-            setTimeout(() => logEntry.classList.remove('updated'), 1000);
+            if (logEntry) {
+                logEntry.classList.add('updated');
+                setTimeout(() => logEntry.classList.remove('updated'), 1000);
+            }
         }
     }
 
@@ -3088,10 +3096,11 @@ class BrandmeisterMonitor {
         // Update the log entry with new field data using new card structure
         const titleElement = logEntry.querySelector('.log-card-callsign') || logEntry.querySelector('.log-title') || logEntry.querySelector('.log-callsign');
         if (titleElement) {
-            // Parse radio ID and callsign if in \"RadioID Callsign\" format
+            // Parse radio ID and callsign if in "RadioID Callsign" format
             const parts = titleText.trim().split(' ');
             const actualCallsign = parts[parts.length - 1];
-            titleElement.textContent = actualCallsign;
+            // Restore QRZ.com link
+            titleElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>`;
         }
 
         const fieldsContainer = logEntry.querySelector('.log-card-fields') || logEntry.querySelector('.log-fields');

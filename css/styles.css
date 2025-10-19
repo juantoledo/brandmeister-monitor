@@ -4439,7 +4439,7 @@ button:disabled {
         line-height: 1.1;
         max-width: 140px; /* Limit location width */
         white-space: nowrap;
-        margin-top: 12px; /* Add more space above location */
+        margin-top: 15px; /* Add more space above location */
     }
     
     .card-location-link {
