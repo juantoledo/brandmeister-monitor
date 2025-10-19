@@ -1168,11 +1168,7 @@ body {
     opacity: 1;
 }
 
-/* Empty message for no recently selected */
-.tg-empty-message {
-    grid-column: 1 / -1;
-    text-align: center;
-}
+
 
 /* Category Selector */
 .tg-category-selector {

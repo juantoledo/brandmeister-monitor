@@ -41,7 +41,6 @@ class BrandmeisterMonitor {
 
         // Talk Group Selector state
         this.selectedTalkgroups = new Set();
-        this.recentlySelectedTalkgroups = []; // Track last 10 selected TGs
 
         // Location & Weather Service
         this.locationWeatherService = null;
@@ -154,7 +153,6 @@ class BrandmeisterMonitor {
             tgDeselectAll: document.getElementById('tgDeselectAll'),
             tgAddSelected: document.getElementById('tgAddSelected'),
             tgCloseSearch: document.getElementById('tgCloseSearch'),
-            tgPopularGrid: document.getElementById('tgPopularGrid'),
             tgSelectedList: document.getElementById('tgSelectedList'),
             clearSelection: document.getElementById('clearSelection')
         };
@@ -457,10 +455,6 @@ class BrandmeisterMonitor {
             });
         }
 
-        // Load popular talk groups first
-        this.loadRecentlySelectedFromStorage();
-        this.loadRecentlySelectedTalkGroups();
-        
         // Then load saved selections and update visuals
         this.loadSelectedTalkGroupsFromStorage();
         
@@ -484,47 +478,7 @@ class BrandmeisterMonitor {
         });
     }
 
-    loadRecentlySelectedTalkGroups() {
-        if (!this.elements.tgPopularGrid) return;
 
-        this.elements.tgPopularGrid.innerHTML = '';
-        
-        if (this.recentlySelectedTalkgroups.length === 0) {
-            // Show message when no recently selected TGs
-            const emptyMessage = document.createElement('div');
-            emptyMessage.className = 'tg-empty-message';
-            emptyMessage.innerHTML = `
-                <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.875rem;">
-                    <p>No recently selected talk groups</p>
-                    <p style="font-size: 0.75rem; opacity: 0.7;">Your last 10 selections will appear here</p>
-                </div>
-            `;
-            this.elements.tgPopularGrid.appendChild(emptyMessage);
-            return;
-        }
-        
-        this.recentlySelectedTalkgroups.forEach(tg => {
-            const item = document.createElement('div');
-            item.className = 'tg-popular-item';
-            item.dataset.tgId = tg.id;
-            
-            // Check if currently selected
-            if (this.selectedTalkgroups.has(tg.id)) {
-                item.classList.add('selected');
-            }
-            
-            item.innerHTML = `
-                <div class="tg-popular-id">${tg.id}</div>
-                <div class="tg-popular-name">${tg.name}</div>
-            `;
-            
-            item.addEventListener('click', () => {
-                this.toggleTalkGroupSelection(tg.id, tg.name, item);
-            });
-            
-            this.elements.tgPopularGrid.appendChild(item);
-        });
-    }
 
     handleTalkGroupSearch(query) {
         if (!query.trim()) {
@@ -675,7 +629,6 @@ class BrandmeisterMonitor {
         } else {
             this.selectedTalkgroups.add(id);
             if (element) element.classList.add('selected');
-            this.addToRecentlySelected(id, name);
         }
 
         this.updateSelectedTalkGroupsDisplay();
@@ -715,12 +668,6 @@ class BrandmeisterMonitor {
     }
 
     updateTalkGroupSelectionVisuals() {
-        // Update popular grid
-        this.elements.tgPopularGrid?.querySelectorAll('.tg-popular-item').forEach(item => {
-            const id = item.dataset.tgId;
-            item.classList.toggle('selected', this.selectedTalkgroups.has(id));
-        });
-
         // Update category grid
         this.elements.tgCategoryGrid?.querySelectorAll('.tg-category-item').forEach(item => {
             const id = item.dataset.tgId;
@@ -749,11 +696,9 @@ class BrandmeisterMonitor {
                 .map(id => id.trim())
                 .filter(id => id && /^\d+$/.test(id)); // Only valid numeric IDs
             
-            // Add to selected set and recently selected list
+            // Add to selected set
             tgIds.forEach(id => {
                 this.selectedTalkgroups.add(id);
-                const name = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`;
-                this.addToRecentlySelected(id, name);
             });
         }
         
@@ -783,8 +728,6 @@ class BrandmeisterMonitor {
                 
                 tgIds.forEach(id => {
                     this.selectedTalkgroups.add(id);
-                    const name = typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`;
-                    this.addToRecentlySelected(id, name);
                 });
                 
                 // Update visual display
@@ -1375,7 +1318,6 @@ class BrandmeisterMonitor {
             
             // Also add to visual selection system
             this.selectedTalkgroups.add('91');
-            this.addToRecentlySelected('91', 'Worldwide (Global)');
             
             if (this.config.verbose) {
                 console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
@@ -1429,49 +1371,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    // Recently Selected Talk Groups Management
-    addToRecentlySelected(id, name) {
-        const tgData = { 
-            id: id, 
-            name: name || (typeof getTalkgroupName !== 'undefined' ? getTalkgroupName(id) : `TG ${id}`),
-            timestamp: Date.now()
-        };
-        
-        // Remove if already exists
-        this.recentlySelectedTalkgroups = this.recentlySelectedTalkgroups.filter(tg => tg.id !== id);
-        
-        // Add to front
-        this.recentlySelectedTalkgroups.unshift(tgData);
-        
-        // Keep only last 10
-        this.recentlySelectedTalkgroups = this.recentlySelectedTalkgroups.slice(0, 10);
-        
-        // Save to storage
-        this.saveRecentlySelectedToStorage();
-        
-        // Refresh the popular grid display
-        this.loadRecentlySelectedTalkGroups();
-    }
 
-    saveRecentlySelectedToStorage() {
-        try {
-            localStorage.setItem('brandmeister_recently_selected', JSON.stringify(this.recentlySelectedTalkgroups));
-        } catch (error) {
-            this.logError('Error saving recently selected talk groups to storage', { error: error.message });
-        }
-    }
-
-    loadRecentlySelectedFromStorage() {
-        try {
-            const saved = localStorage.getItem('brandmeister_recently_selected');
-            if (saved) {
-                this.recentlySelectedTalkgroups = JSON.parse(saved);
-            }
-        } catch (error) {
-            this.logError('Error loading recently selected talk groups from storage', { error: error.message });
-            this.recentlySelectedTalkgroups = [];
-        }
-    }
 
     getStoredAlias(callsign) {
         return this.callsignAliases[callsign] || '';
