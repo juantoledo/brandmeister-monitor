@@ -128,6 +128,12 @@ const Languages = {
             'console.activity.empty': 'No transmissions yet. Configure a talkgroup and connect to start monitoring.',
             'console.debug.description': 'Debug information and system logs will appear here',
             
+            // Update notification
+            'update.title': 'App Updated!',
+            'update.message': 'New features and improvements available. Refresh to get the latest version.',
+            'update.refresh': 'Refresh Now',
+            'update.dismiss': 'Later',
+            
             // About section
             'about.title': 'Brandmeister Monitor',
             'about.version': 'Version 0.8.12',
@@ -306,6 +312,12 @@ const Languages = {
             'console.activity.empty': 'Aún no hay transmisiones. Configura un grupo de conversación y conéctate para comenzar el monitoreo.',
             'console.debug.description': 'La información de depuración y registros del sistema aparecerán aquí',
             
+            // Update notification
+            'update.title': '¡Aplicación Actualizada!',
+            'update.message': 'Nuevas funciones y mejoras disponibles. Actualiza para obtener la última versión.',
+            'update.refresh': 'Actualizar Ahora',
+            'update.dismiss': 'Más Tarde',
+            
             // About section
             'about.title': 'Monitor Brandmeister',
             'about.version': 'Versión 0.8.12',
@@ -467,6 +479,12 @@ const Languages = {
             'debug.error.count': 'Contagem de Erros',
             'debug.connection.time': 'Tempo de Conexão',
             'debug.clear.confirm': 'Tem certeza de que deseja limpar o debug?',
+            
+            // Update notification
+            'update.title': 'App Atualizado!',
+            'update.message': 'Novos recursos e melhorias disponíveis. Atualize para obter a versão mais recente.',
+            'update.refresh': 'Atualizar Agora',
+            'update.dismiss': 'Mais Tarde',
             
             // About section
             'about.title': 'Monitor Brandmeister',

@@ -5029,7 +5029,14 @@ button:disabled {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     z-index: 10000;
     max-width: 400px;
-    animation: slideInNotification 0.3s ease-out;
+    opacity: 0;
+    transform: translateX(120%);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.update-notification.show {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 [data-theme="dark"] .update-notification {
@@ -5058,17 +5065,17 @@ button:disabled {
 
 .update-text strong {
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .update-text p {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 .update-actions {
@@ -5082,24 +5089,26 @@ button:disabled {
     background: var(--primary);
     color: var(--white);
     border: none;
-    padding: 8px 12px;
+    padding: 10px 16px;
     border-radius: 6px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-update:hover {
     background: var(--primary-dark);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn-update .material-icons {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--white);
 }
 
@@ -5107,7 +5116,7 @@ button:disabled {
     background: none;
     border: none;
     color: var(--text-muted);
-    padding: 4px;
+    padding: 6px;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -5120,13 +5129,15 @@ button:disabled {
     color: var(--text);
 }
 
+.btn-dismiss .material-icons {
+    font-size: 20px;
+}
+
 [data-theme="dark"] .btn-dismiss:hover {
     background: var(--gray-700);
 }
 
-.btn-dismiss .material-icons {
-    font-size: 18px;
-}
+@keyframes slideInNotification {}
 
 @keyframes slideInNotification {
     from {

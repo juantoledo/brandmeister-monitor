@@ -4991,7 +4991,33 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('- getPerformanceInfo() - Get detailed performance report');
     console.log('- forceCleanup() - Force memory cleanup and get status');
     console.log('- showMemoryTrends() - Display memory usage trends');
+    
+    // Check for version updates
+    checkVersionUpdate();
 });
+
+// Version check on page load
+function checkVersionUpdate() {
+    // Current app version (should match service worker version)
+    const CURRENT_VERSION = '0.8.12';
+    const STORED_VERSION_KEY = 'app_version';
+    
+    // Get stored version
+    const storedVersion = localStorage.getItem(STORED_VERSION_KEY);
+    
+    if (storedVersion && storedVersion !== CURRENT_VERSION) {
+        // Version has changed - show update notification immediately
+        console.log(`🔄 Version update detected: ${storedVersion} → ${CURRENT_VERSION}`);
+        
+        // Small delay to ensure page is loaded
+        setTimeout(() => {
+            showUpdateNotification();
+        }, 1000);
+    }
+    
+    // Store current version
+    localStorage.setItem(STORED_VERSION_KEY, CURRENT_VERSION);
+}
 
 // Initialize new UI interface components
 function initializeNewInterface() {
@@ -5327,6 +5353,12 @@ function showUpdateNotification() {
         existingNotification.remove();
     }
     
+    // Get translated texts if available
+    const updateTitle = window.t ? window.t('update.title') : 'App Updated!';
+    const updateMessage = window.t ? window.t('update.message') : 'New features and improvements available. Refresh to get the latest version.';
+    const refreshButton = window.t ? window.t('update.refresh') : 'Refresh Now';
+    const dismissButton = window.t ? window.t('update.dismiss') : 'Later';
+    
     // Create update notification
     const notification = document.createElement('div');
     notification.className = 'update-notification';
@@ -5334,12 +5366,12 @@ function showUpdateNotification() {
         <div class="update-content">
             <span class="material-icons">system_update</span>
             <div class="update-text">
-                <strong>App Updated!</strong>
-                <p>New features available. Refresh to get the latest version.</p>
+                <strong>${updateTitle}</strong>
+                <p>${updateMessage}</p>
             </div>
             <div class="update-actions">
-                <button class="btn-update" onclick="window.location.reload()">
-                    <span class="material-icons">refresh</span> Refresh Now
+                <button class="btn-update" onclick="window.location.reload(true)">
+                    <span class="material-icons">refresh</span> ${refreshButton}
                 </button>
                 <button class="btn-dismiss" onclick="this.closest('.update-notification').remove()">
                     <span class="material-icons">close</span>
@@ -5351,10 +5383,25 @@ function showUpdateNotification() {
     // Add to page
     document.body.appendChild(notification);
     
-    // Auto-remove after 10 seconds if not acted upon
+    // Add show class after a brief delay for animation
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // Play a subtle notification sound if available
+    try {
+        if (window.brandmeisterMonitor && window.brandmeisterMonitor.playNotificationSound) {
+            window.brandmeisterMonitor.playNotificationSound();
+        }
+    } catch (e) {
+        // Ignore sound errors
+    }
+    
+    // Auto-remove after 30 seconds if not acted upon (increased from 10s)
     setTimeout(() => {
         if (notification.parentNode) {
-            notification.remove();
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
         }
-    }, 10000);
+    }, 30000);
 }
