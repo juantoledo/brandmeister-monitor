@@ -196,28 +196,24 @@
     color: inherit;
 }
 
-[data-theme="dark"] #connectBtn,
-[data-theme="dark"] #saveSettings {
+[data-theme="dark"] #connectBtn {
     background: var(--primary);
     border-color: var(--primary);
     color: var(--white);
 }
 
-[data-theme="dark"] #connectBtn:hover,
-[data-theme="dark"] #saveSettings:hover {
+[data-theme="dark"] #connectBtn:hover {
     background: var(--primary-light);
     border-color: var(--primary-light);
 }
 
-[data-theme="dark"] #disconnectBtn:not(:disabled),
-[data-theme="dark"] #resetSettings {
+[data-theme="dark"] #disconnectBtn:not(:disabled) {
     background: var(--gray-600);
     color: var(--text-muted);
     border-color: var(--gray-500);
 }
 
-[data-theme="dark"] #disconnectBtn:not(:disabled):hover,
-[data-theme="dark"] #resetSettings:hover {
+[data-theme="dark"] #disconnectBtn:not(:disabled):hover {
     background: var(--gray-500);
     border-color: var(--gray-400);
 }
@@ -905,17 +901,48 @@ body {
 
 .sidebar-content {
     padding: 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Optimize sidebar scrollbar */
+.sidebar-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+[data-theme="dark"] .sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-600);
 }
 
 .sidebar-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
 }
 
 .sidebar-section:last-child {
     border-bottom: none;
     margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .sidebar-section h3 {
@@ -923,6 +950,14 @@ body {
     font-weight: 600;
     color: var(--text);
     margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-section h3 .material-icons {
+    font-size: 20px;
+    color: var(--primary);
 }
 
 /* Form Elements */
@@ -930,12 +965,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
 }
 
 .tg-input-group label {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-muted);
+    line-height: 1.4;
 }
 
 .tg-input-group input {
@@ -945,6 +982,8 @@ body {
     font-size: 0.875rem;
     transition: border-color 0.2s, box-shadow 0.2s;
     background: var(--surface);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tg-input-group input:focus {
@@ -1395,25 +1434,25 @@ button:disabled {
 }
 
 /* Primary Button */
-#connectBtn, #saveSettings {
+#connectBtn {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
 }
 
-#connectBtn:hover, #saveSettings:hover {
+#connectBtn:hover {
     background: var(--primary-light);
     border-color: var(--primary-light);
 }
 
 /* Secondary Button */
-#disconnectBtn:not(:disabled), #resetSettings {
+#disconnectBtn:not(:disabled) {
     background: var(--gray-100);
     color: var(--text-muted);
     border-color: var(--gray-300);
 }
 
-#disconnectBtn:not(:disabled):hover, #resetSettings:hover {
+#disconnectBtn:not(:disabled):hover {
     background: var(--gray-200);
     border-color: var(--gray-400);
 }
@@ -1428,7 +1467,8 @@ button:disabled {
 
 /* Settings */
 .setting-group {
-    margin-bottom: 24px; /* Increased spacing between setting groups */
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .setting-group label {
@@ -1437,13 +1477,15 @@ button:disabled {
     color: var(--text);
     margin-bottom: 4px;
     display: block;
+    line-height: 1.5;
+    word-wrap: break-word;
 }
 
 .setting-group label.toggle-label {
-    display: flex; /* Override block display for toggle labels */
+    display: flex;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 12px; /* More space below toggle labels */
+    margin-bottom: 12px;
     cursor: pointer;
     min-height: 24px;
     line-height: 1.4;
@@ -1451,9 +1493,11 @@ button:disabled {
 
 .setting-description {
     font-size: 0.75rem;
-    color: var(--text-light);
-    margin-top: 4px;
-    margin-bottom: 8px; /* Space after description */
+    color: var(--text-muted);
+    margin-top: 6px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+    word-wrap: break-word;
 }
 
 /* Color Preset Picker */
@@ -3962,6 +4006,83 @@ button:disabled {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+    
+    /* Sidebar optimizations for mobile */
+    .sidebar {
+        width: 100%;
+        max-width: 320px;
+    }
+    
+    .sidebar-content {
+        padding: 12px;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+    
+    .sidebar-section h3 {
+        font-size: 0.875rem;
+        margin-bottom: 10px;
+    }
+    
+    .tg-input-group {
+        gap: 6px;
+    }
+    
+    .tg-input-group label {
+        font-size: 0.8125rem;
+    }
+    
+    .tg-input-group input {
+        padding: 10px;
+        font-size: 0.8125rem;
+    }
+    
+    .setting-group {
+        margin-bottom: 14px;
+    }
+    
+    .setting-group label {
+        font-size: 0.8125rem;
+        line-height: 1.4;
+    }
+    
+    .setting-description {
+        font-size: 0.6875rem;
+        line-height: 1.4;
+        margin-top: 4px;
+    }
+    
+    .color-presets {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+    
+    .color-preset {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .control-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .control-buttons button {
+        width: 100%;
+    }
+    
+    .setting-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .setting-actions button {
+        width: 100%;
+    }
 }
 
 /* Extra small screens - phones in portrait */
@@ -4582,7 +4703,54 @@ button:disabled {
     }
     
     .sidebar-content {
-        padding: 12px;
+        padding: 16px;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+    
+    .sidebar-section h3 {
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+    }
+    
+    .tg-input-group {
+        gap: 6px;
+    }
+    
+    .tg-input-group label {
+        font-size: 0.8125rem;
+    }
+    
+    .tg-input-group input {
+        padding: 10px;
+        font-size: 0.8125rem;
+    }
+    
+    .setting-group {
+        margin-bottom: 16px;
+    }
+    
+    .setting-group label {
+        font-size: 0.8125rem;
+    }
+    
+    .setting-description {
+        font-size: 0.7rem;
+        line-height: 1.4;
+    }
+    
+    .color-presets {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .color-preset {
+        width: 36px;
+        height: 36px;
     }
     
     .menu-section h3 {

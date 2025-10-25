@@ -712,6 +712,12 @@ class I18nManager {
             console.log(`🌍 Detected browser language: ${this.languages[this.currentLang].name} (${browserLang})`);
         }
         
+        // Safety check: ensure current language is valid, default to English if not
+        if (!this.languages[this.currentLang]) {
+            console.warn(`⚠️ Invalid language '${this.currentLang}', defaulting to English`);
+            this.currentLang = 'en';
+        }
+        
         currentLanguage = this.currentLang;
         console.log(`🌍 Final language set to: ${this.languages[this.currentLang].name}`);
     }
@@ -778,7 +784,12 @@ class I18nManager {
      * Get current language info
      */
     getCurrentLanguage() {
-        return this.languages[this.currentLang];
+        // Safety check: ensure current language is valid
+        if (!this.languages[this.currentLang]) {
+            console.warn(`⚠️ Invalid current language '${this.currentLang}', resetting to English`);
+            this.currentLang = 'en';
+        }
+        return this.currentLang;
     }
     
     /**

@@ -144,8 +144,6 @@ class BrandmeisterMonitor {
             colorPresets: document.getElementById('colorPresets'),
             colorPreview: document.getElementById('colorPreview'),
             colorValue: document.getElementById('colorValue'),
-            saveSettingsBtn: document.getElementById('saveSettings'),
-            resetSettingsBtn: document.getElementById('resetSettings'),
             settingsContainer: document.getElementById('settingsContainer'),
             // Language selector elements
             languageButton: document.getElementById('languageButton'),
@@ -170,10 +168,6 @@ class BrandmeisterMonitor {
         this.elements.connectBtn.addEventListener('click', () => this.connect());
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
-        
-        // Settings event listeners
-        this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
-        this.elements.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
         
         // RadioID event listeners
         if (this.elements.enableRadioIDLookupCheckbox) {
@@ -3454,11 +3448,6 @@ class BrandmeisterMonitor {
         };
         
         localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
-        
-        // Add visual feedback for manual saves
-        if (this.elements.saveSettingsBtn && this.elements.saveSettingsBtn.style.pointerEvents !== 'none') {
-            // System message removed - only log transmissions
-        }
         
         // Structured logging for settings changes
         this.logDebug('Settings saved', {
