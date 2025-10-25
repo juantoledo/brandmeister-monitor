@@ -1961,7 +1961,14 @@ class BrandmeisterMonitor {
                 if (callsignElement) {
                     callsignElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="Look up ${callsign} on QRZ.com">${callsign}</a>`;
                 }
-                if (radioIdElement) radioIdElement.textContent = group.sourceID || '-';
+                if (radioIdElement) {
+                    const radioId = group.sourceID || '-';
+                    if (radioId !== '-') {
+                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" /><a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="View ${radioId} on RadioID.net">${radioId}</a>`;
+                    } else {
+                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />${radioId}`;
+                    }
+                }
                 if (sourceNameElement && sourceName) {
                     sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${sourceName}</a>`;
                 } else if (sourceNameElement && !sourceName) {
@@ -2065,6 +2072,10 @@ class BrandmeisterMonitor {
                 
                 // Use RadioID name if available, otherwise fallback to group sourceName
                 const displayName = radioIdInfo?.name || sourceName;
+                const radioId = group.sourceID || '-';
+                const radioIdDisplay = radioId !== '-' 
+                    ? `<a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="View ${radioId} on RadioID.net">${radioId}</a>`
+                    : radioId;
                 
                 activeEntry.innerHTML = `
                     <div class="card-main">
@@ -2075,7 +2086,7 @@ class BrandmeisterMonitor {
                                 </div>
                                 <div class="card-radio-id">
                                     <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />
-                                    ${group.sourceID || '-'}
+                                    ${radioIdDisplay}
                                 </div>
                             </div>
                             <div class="card-controls">
@@ -3153,8 +3164,8 @@ class BrandmeisterMonitor {
             noActivityMsg.remove();
         }
 
-        // Add new entry at the bottom
-        this.elements.logContainer.appendChild(logEntry);
+        // Add new entry at the top (newest first)
+        this.elements.logContainer.insertBefore(logEntry, this.elements.logContainer.firstChild);
 
         // Remove animation class after animation completes
         setTimeout(() => {
@@ -3262,8 +3273,8 @@ class BrandmeisterMonitor {
             noActivityMsg.remove();
         }
 
-        // Add new entry at the bottom
-        this.elements.logContainer.appendChild(logEntry);
+        // Add new entry at the top (newest first)
+        this.elements.logContainer.insertBefore(logEntry, this.elements.logContainer.firstChild);
 
         // Remove animation class after animation completes
         setTimeout(() => {

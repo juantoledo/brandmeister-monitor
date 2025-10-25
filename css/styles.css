@@ -190,6 +190,12 @@
     color: var(--text);
 }
 
+/* Keep console header buttons transparent/native in dark mode */
+[data-theme="dark"] .console-header button {
+    background: none;
+    color: inherit;
+}
+
 [data-theme="dark"] #connectBtn,
 [data-theme="dark"] #saveSettings {
     background: var(--primary);
@@ -1805,18 +1811,33 @@ button:disabled {
     text-align: center;
     color: var(--text-light);
     font-style: italic;
-    padding: 48px 24px;
-    background: var(--gray-50);
-    border: 2px dashed var(--border);
+    padding: 24px 16px;
+    background: transparent;
+    border: none;
     border-radius: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    min-height: 120px;
 }
 
 .no-activity::before {
-    font-size: 2rem;
-    opacity: 0.5;
+    content: '📡';
+    font-size: 2.5rem;
+    opacity: 0.4;
+    filter: grayscale(30%);
+}
+
+[data-theme="dark"] .no-activity {
+    color: var(--gray-400);
+}
+
+[data-theme="dark"] .no-activity::before {
+    opacity: 0.3;
 }
 
 /* CONSOLE PANEL */
@@ -1922,7 +1943,12 @@ button:disabled {
 .console-content {
     flex: 1;
     overflow: hidden;
-    min-height: 0; /* Allow content to shrink below its natural size */
+    min-height: 0;
+    background: var(--surface);
+}
+
+[data-theme="dark"] .console-content {
+    background: var(--gray-900);
 }
 
 .console-panel.minimized .console-content {
@@ -1933,6 +1959,9 @@ button:disabled {
     display: none;
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
+    container-type: inline-size;
+    container-name: console-pane;
 }
 
 .console-pane.active {
@@ -1942,6 +1971,37 @@ button:disabled {
 /* Transmission Log */
 .activity-log {
     height: 100%;
+    padding: 0;
+    container-type: inline-size;
+    container-name: activity-log;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Optimize scrollbar for activity log */
+.activity-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+.activity-log::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+.activity-log::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.activity-log::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+[data-theme="dark"] .activity-log::-webkit-scrollbar-track {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .activity-log::-webkit-scrollbar-thumb {
+    background: var(--primary);
 }
 
 /* TRANSMISSION LOG ENTRIES - Unified Base Styling */
@@ -1953,32 +2013,65 @@ button:disabled {
     box-shadow: none;
     overflow: hidden;
     position: relative;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.log-entry:hover,
+.log-entry-compact:hover {
+    background: var(--gray-50);
+}
+
+[data-theme="dark"] .log-entry:hover,
+[data-theme="dark"] .log-entry-compact:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.log-entry:last-child,
+.log-entry-compact:last-child {
+    border-bottom: none;
 }
 
 /* Status-specific border colors */
 .log-entry.error {
-    background: rgba(239, 68, 68, 0.05);
+    background: rgba(239, 68, 68, 0.04);
+    border-left: 3px solid rgba(239, 68, 68, 0.5);
 }
 
 .log-entry.warning {
-    background: rgba(245, 158, 11, 0.05);
+    background: rgba(245, 158, 11, 0.04);
+    border-left: 3px solid rgba(245, 158, 11, 0.5);
+}
+
+[data-theme="dark"] .log-entry.error {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="dark"] .log-entry.warning {
+    background: rgba(245, 158, 11, 0.08);
 }
 
 /* Compact-specific styling */
 .log-entry-compact {
-    margin-bottom: 0;
     font-size: 0.875rem;
 }
 
 /* New entry states - unified */
 .log-entry.new,
 .log-entry-compact.new {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(37, 99, 235, 0.08);
+    border-left: 3px solid var(--primary);
+}
+
+[data-theme="dark"] .log-entry.new,
+[data-theme="dark"] .log-entry-compact.new {
+    background: rgba(37, 99, 235, 0.12);
 }
 
 /* Full cards get animation, compact entries just highlight */
 .log-entry.new {
-    animation: slideInLogCard 0.4s ease-out;
+    animation: slideInLogCard 0.3s ease-out;
 }
 
 .log-header-compact {
@@ -1997,10 +2090,20 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 12px;
+    padding: 8px 12px;
     min-height: 36px;
     box-sizing: border-box;
     position: relative;
+    gap: 8px;
+}
+
+/* Optimize for smaller console sizes */
+@media (max-height: 400px) {
+    .compact-log-line {
+        padding: 6px 10px;
+        min-height: 32px;
+        gap: 6px;
+    }
 }
 
 .compact-log-line-left {
@@ -2269,33 +2372,50 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: linear-gradient(135deg, var(--gray-50), var(--white));
     border-bottom: 1px solid var(--border);
-    gap: 16px;
+    gap: 12px;
+    transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .log-card-header {
+    background: linear-gradient(135deg, var(--gray-800), var(--gray-850));
+    border-bottom-color: var(--gray-700);
 }
 
 .log-card-identity {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     flex: 1;
     min-width: 0;
 }
 
 .log-card-callsign {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     line-height: 1.2;
 }
 
 .log-card-radio-id {
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 500;
-    opacity: 0.8;
+    opacity: 0.75;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+[data-theme="dark"] .log-card-callsign {
+    color: var(--gray-100);
+}
+
+[data-theme="dark"] .log-card-radio-id {
+    color: var(--gray-400);
 }
 
 .log-card-phonetic {
@@ -2310,7 +2430,7 @@ button:disabled {
 .log-card-controls {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -2321,12 +2441,17 @@ button:disabled {
     color: var(--white);
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
-    white-space: normal; /* Allow text wrapping for full TG display */
-    word-break: break-word; /* Break long TG names if needed */
+    white-space: normal;
+    word-break: break-word;
     line-height: 1.2;
+    transition: background-color 0.2s ease;
+}
+
+.log-card-tg:hover {
+    background: var(--primary-dark);
 }
 
 .log-card-status.live {
@@ -2334,11 +2459,14 @@ button:disabled {
     color: var(--white);
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     white-space: nowrap;
     animation: pulse 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .log-card-status.completed {
@@ -2346,21 +2474,29 @@ button:disabled {
     color: var(--white);
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .log-card-timestamp {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-light);
-    white-space: normal; /* Allow timestamp wrapping if needed */
+    white-space: normal;
     background: var(--gray-100);
     padding: 3px 6px;
     border-radius: 3px;
     font-weight: 500;
     line-height: 1.2;
+}
+
+[data-theme="dark"] .log-card-timestamp {
+    background: var(--gray-700);
+    color: var(--gray-300);
 }
 
 /* Log Card Source Name - Prominently displayed */
@@ -2398,14 +2534,14 @@ button:disabled {
 
 /* Log Card Details */
 .log-card-details {
-    padding: 8px 16px 12px 16px;
+    padding: 8px 14px 10px 14px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .log-card-alias {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
     font-style: italic;
     display: flex;
@@ -2413,21 +2549,29 @@ button:disabled {
     gap: 4px;
 }
 
+[data-theme="dark"] .log-card-alias {
+    color: var(--gray-400);
+}
+
 .log-card-details-text {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
-    line-height: 1.4;
+    line-height: 1.5;
+}
+
+[data-theme="dark"] .log-card-details-text {
+    color: var(--gray-400);
 }
 
 .log-card-fields {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
     margin: 4px 0;
 }
 
 .log-card-event {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--primary);
     font-weight: 600;
     background: rgba(37, 99, 235, 0.08);
@@ -2436,21 +2580,35 @@ button:disabled {
     display: inline-block;
     align-self: flex-start;
     border: 1px solid rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .log-card-event {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.3);
+    color: var(--primary-light);
 }
 
 /* Technical Fields Styling (for verbose mode) */
 .log-card-fields .field {
     background: rgba(37, 99, 235, 0.1);
     color: var(--primary);
-    padding: 2px 6px;
+    padding: 3px 6px;
     border-radius: 3px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     border: 1px solid rgba(37, 99, 235, 0.2);
-    white-space: normal; /* Allow field wrapping for full display */
-    word-break: break-word; /* Break long field values if needed */
+    white-space: normal;
+    word-break: break-word;
     line-height: 1.3;
-    flex: 0 0 auto; /* Prevent shrinking */
+    flex: 0 0 auto;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .log-card-fields .field {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.25);
+    color: var(--primary-light);
 }
 
 .log-card-fields .field.duration {
@@ -2459,20 +2617,30 @@ button:disabled {
     border-color: rgba(245, 158, 11, 0.2);
 }
 
+[data-theme="dark"] .log-card-fields .field.duration {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
 .log-card-fields .field.session-id {
     background: rgba(16, 185, 129, 0.1);
     color: var(--success);
     border-color: rgba(16, 185, 129, 0.2);
 }
 
+[data-theme="dark"] .log-card-fields .field.session-id {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
 @keyframes slideInLogCard {
     from {
         opacity: 0;
-        transform: translateY(-20px) scale(0.95);
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 }
 
@@ -2482,8 +2650,8 @@ button:disabled {
         transform: scale(1);
     }
     50% { 
-        opacity: 0.8;
-        transform: scale(1.05);
+        opacity: 0.85;
+        transform: scale(1.03);
     }
 }
 
@@ -3311,6 +3479,16 @@ button:disabled {
     font-size: 0.875rem;
     color: var(--text-muted);
     font-weight: 500;
+}
+
+.radio-id-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.radio-id-link:hover {
+    text-decoration: underline;
 }
 
 .card-controls {
@@ -5183,7 +5361,7 @@ button:disabled {
 .about-modal-btn {
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.8);
     padding: 8px;
     cursor: pointer;
     border-radius: 50%;
@@ -5198,19 +5376,29 @@ button:disabled {
 }
 
 .about-modal-btn:hover {
-    background-color: var(--surface);
-    color: var(--text);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--white);
     transform: scale(1.05);
 }
 
 .about-modal-btn:focus {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--white);
     outline-offset: 2px;
 }
 
 .about-modal-btn .material-icons {
     font-size: 20px;
     line-height: 1;
+    color: inherit;
+}
+
+[data-theme="dark"] .about-modal-btn {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .about-modal-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--white);
 }
 
 /* Modal Overlay */
