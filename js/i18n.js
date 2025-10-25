@@ -12,7 +12,6 @@ const Languages = {
         translations: {
             // Header
             'app.title': 'Brandmeister Monitor',
-            'app.subtitle': 'Real-time DMR Talkgroup Activity Monitor',
             'header.status.connected': 'Connected',
             'header.status.disconnected': 'Disconnected',
             'header.status.connecting': 'Connecting...',
@@ -191,7 +190,6 @@ const Languages = {
         translations: {
             // Header
             'app.title': 'Monitor Brandmeister',
-            'app.subtitle': 'Monitor de Actividad DMR en Tiempo Real',
             'header.status.connected': 'Conectado',
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',
@@ -370,7 +368,6 @@ const Languages = {
         translations: {
             // Header
             'app.title': 'Monitor Brandmeister',
-            'app.subtitle': 'Monitor de Atividade DMR em Tempo Real',
             'header.status.connected': 'Conectado',
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',

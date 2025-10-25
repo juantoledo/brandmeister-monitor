@@ -251,11 +251,6 @@
     color: var(--text) !important;
 }
 
-/* Make sure pale text is more readable */
-[data-theme="dark"] .subtitle {
-    color: var(--text-muted);
-}
-
 /* Dark mode number inputs */
 [data-theme="dark"] .setting-group input[type="number"] {
     background: var(--gray-700);
@@ -526,13 +521,6 @@ body {
     font-weight: 600;
     color: var(--primary);
     margin: 0;
-}
-
-.subtitle {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    margin: 0;
-    font-weight: 400;
 }
 
 .local-utc {
@@ -3610,14 +3598,6 @@ button:disabled {
         line-height: 1.2;
     }
     
-    .subtitle {
-        font-size: 0.75rem;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
     .header-status {
         flex-shrink: 0;
         padding: 4px 8px;
@@ -3679,15 +3659,6 @@ button:disabled {
         font-size: 1rem;
     }
     
-    .subtitle {
-        font-size: 0.6875rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
     .header-status {
         padding: 3px 6px;
         font-size: 0.6875rem;
@@ -3747,10 +3718,6 @@ button:disabled {
     
     .header-content h1 {
         font-size: 0.875rem;
-    }
-    
-    .subtitle {
-        font-size: 0.625rem;
     }
     
     .header-status {
@@ -4223,11 +4190,6 @@ button:disabled {
     .header-content h1 {
         font-size: 0.8rem;
         margin: 0;
-    }
-    
-    .subtitle {
-        font-size: 0.6rem;
-        margin: 2px 0 0 0;
     }
     
     .header-right {
