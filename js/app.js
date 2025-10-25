@@ -161,7 +161,8 @@ class BrandmeisterMonitor {
             tgAddSelected: document.getElementById('tgAddSelected'),
             tgCloseSearch: document.getElementById('tgCloseSearch'),
             tgSelectedList: document.getElementById('tgSelectedList'),
-            clearSelection: document.getElementById('clearSelection')
+            clearSelection: document.getElementById('clearSelection'),
+            resetAppDataBtn: document.getElementById('resetAppData')
         };
 
         // Bind event listeners
@@ -169,6 +170,10 @@ class BrandmeisterMonitor {
         this.elements.disconnectBtn.addEventListener('click', () => this.disconnect());
         this.elements.clearLogsBtn.addEventListener('click', () => this.clearLogs());
         
+        // Reset application data button
+        if (this.elements.resetAppDataBtn) {
+            this.elements.resetAppDataBtn.addEventListener('click', () => this.resetApplicationData());
+        }
         // RadioID event listeners
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
@@ -3288,6 +3293,31 @@ class BrandmeisterMonitor {
         this.totalCalls = 0;
         this.lastActivityTime = null;
         this.updateStats();
+    }
+
+    resetApplicationData() {
+        // Confirm with user before deleting everything
+        const confirmed = confirm(
+            window.I18n ? window.I18n.t('confirm.reset.message') : 
+            'This will delete all application data including settings, talkgroups, and cache. Are you sure?'
+        );
+        
+        if (confirmed) {
+            console.log('🗑️ Resetting all application data...');
+            
+            // Disconnect if connected
+            if (this.isConnected) {
+                this.disconnect();
+            }
+            
+            // Clear all localStorage
+            localStorage.clear();
+            
+            console.log('✅ All application data cleared');
+            
+            // Reload the page to start fresh
+            window.location.reload();
+        }
     }
 
     clearActiveTransmissions() {

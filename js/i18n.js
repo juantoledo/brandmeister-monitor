@@ -46,6 +46,7 @@ const Languages = {
             'sidebar.connect': 'Connect',
             'sidebar.disconnect': 'Disconnect',
             'sidebar.clear': 'Clear',
+            'sidebar.reset.data': 'Reset Application Data',
             
             // Main content
             'main.welcome.title': 'Welcome to Brandmeister Monitor',
@@ -175,6 +176,9 @@ const Languages = {
             'message.settings.reset': 'Settings have been reset to defaults',
             'message.install.success': 'App installed successfully!',
             
+            // Confirmations
+            'confirm.reset.message': 'This will delete all application data including settings, talkgroups, and cache. Are you sure?',
+            
             // Activity log
             'activity.log.header.time': 'Time',
             'activity.log.header.call': 'Call',
@@ -239,6 +243,7 @@ const Languages = {
             'sidebar.connect': 'Conectar',
             'sidebar.disconnect': 'Desconectar',
             'sidebar.clear': 'Limpiar',
+            'sidebar.reset.data': 'Restablecer Datos de Aplicación',
             
             // Main content
             'main.welcome.title': 'Bienvenido a Monitor Brandmeister',
@@ -368,6 +373,9 @@ const Languages = {
             'message.settings.reset': 'La configuración se ha restablecido a los valores predeterminados',
             'message.install.success': '¡App instalada exitosamente!',
             
+            // Confirmations
+            'confirm.reset.message': 'Esto eliminará todos los datos de la aplicación, incluidas las configuraciones, grupos de conversación y caché. ¿Estás seguro?',
+            
             // Activity log
             'activity.log.header.time': 'Hora',
             'activity.log.header.call': 'Indicativo',
@@ -427,6 +435,10 @@ const Languages = {
             'sidebar.clear.logs': 'Limpar Log de Transmissão',
             'sidebar.monitor.all': 'Monitorar Toda Atividade',
             'sidebar.monitor.selected': 'Monitorar Apenas TGs Selecionados',
+            'sidebar.reset.data': 'Redefinir Dados do Aplicativo',
+            'sidebar.connect': 'Conectar',
+            'sidebar.disconnect': 'Desconectar',
+            'sidebar.clear': 'Limpar',
             'sidebar.auto.scroll': 'Rolagem Automática',
             'sidebar.filter.callsigns': 'Filtrar por Indicativos',
             'sidebar.filter.placeholder': 'ex: EA1ABC, F1DEF',
@@ -557,6 +569,9 @@ const Languages = {
             'notification.reconnecting': 'Reconectando...',
             'notification.data.saved': 'Configurações salvas',
             'notification.app.installed': 'App instalado com sucesso!',
+            
+            // Confirmations
+            'confirm.reset.message': 'Isso excluirá todos os dados do aplicativo, incluindo configurações, grupos de conversa e cache. Tem certeza?',
             
             // Settings
             'settings.title': 'Configurações',
@@ -789,7 +804,7 @@ class I18nManager {
             console.warn(`⚠️ Invalid current language '${this.currentLang}', resetting to English`);
             this.currentLang = 'en';
         }
-        return this.currentLang;
+        return this.languages[this.currentLang];
     }
     
     /**
