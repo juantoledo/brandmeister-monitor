@@ -152,6 +152,15 @@ const Languages = {
             'about.support.title': '💡 Support',
             'about.support.description': 'For issues, feature requests, or contributions, please visit the GitHub repository.',
             
+            // Onboarding
+            'onboarding.welcome': '👋 Welcome to Brandmeister Monitor!',
+            'onboarding.intro': "Let's get you started by selecting some talkgroups to monitor.",
+            'onboarding.detected': 'Detected location:',
+            'onboarding.suggestion': 'Based on your location, we recommend these popular talkgroups:',
+            'onboarding.apply': 'Start Monitoring',
+            'onboarding.skip': "Skip, I'll configure later",
+            'onboarding.hint': '💡 You can always change these in the sidebar settings.',
+            
             // Statistics
             'stats.total.calls': 'Total Calls:',
             'stats.last.transmission': 'Last Transmission:',
@@ -336,6 +345,15 @@ const Languages = {
             'about.support.title': '💡 Soporte',
             'about.support.description': 'Para problemas, solicitudes de características o contribuciones, visita el repositorio de GitHub.',
             
+            // Onboarding
+            'onboarding.welcome': '👋 ¡Bienvenido a Brandmeister Monitor!',
+            'onboarding.intro': 'Comencemos seleccionando algunos grupos de conversación para monitorear.',
+            'onboarding.detected': 'Ubicación detectada:',
+            'onboarding.suggestion': 'Basado en tu ubicación, recomendamos estos grupos populares:',
+            'onboarding.apply': 'Comenzar Monitoreo',
+            'onboarding.skip': 'Omitir, configuraré más tarde',
+            'onboarding.hint': '💡 Siempre puedes cambiar esto en la configuración de la barra lateral.',
+            
             // Statistics
             'stats.total.calls': 'Llamadas Totales:',
             'stats.last.transmission': 'Última Transmisión:',
@@ -452,6 +470,15 @@ const Languages = {
             'console.tab.stats': 'Estatísticas',
             'console.tab.debug': 'Debug',
             'console.tab.about': 'Sobre',
+            
+            // Onboarding
+            'onboarding.welcome': '👋 Bem-vindo ao Brandmeister Monitor!',
+            'onboarding.intro': 'Vamos começar selecionando alguns grupos de conversa para monitorar.',
+            'onboarding.detected': 'Localização detectada:',
+            'onboarding.suggestion': 'Com base na sua localização, recomendamos estes grupos populares:',
+            'onboarding.apply': 'Começar Monitoramento',
+            'onboarding.skip': 'Pular, vou configurar mais tarde',
+            'onboarding.hint': '💡 Você sempre pode alterar isso nas configurações da barra lateral.',
             
             // Activity log
             'activity.filter.all': 'Todas as Transmissões',
@@ -657,6 +684,16 @@ class I18nManager {
         this.currentLang = 'en';
         this.languages = Languages;
         this.loadSavedLanguage();
+        
+        // Update UI once DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.updateUI();
+            });
+        } else {
+            // DOM already loaded, update immediately
+            setTimeout(() => this.updateUI(), 0);
+        }
     }
     
     /**
@@ -667,14 +704,16 @@ class I18nManager {
         const savedLang = localStorage.getItem('brandmeister-language');
         if (savedLang && this.languages[savedLang]) {
             this.currentLang = savedLang;
+            console.log(`🌍 Loaded saved language: ${this.languages[this.currentLang].name} (${savedLang})`);
         } else {
             // Detect browser language
             const browserLang = this.detectBrowserLanguage();
             this.currentLang = browserLang;
+            console.log(`🌍 Detected browser language: ${this.languages[this.currentLang].name} (${browserLang})`);
         }
         
         currentLanguage = this.currentLang;
-        console.log(`🌍 Language set to: ${this.languages[this.currentLang].name}`);
+        console.log(`🌍 Final language set to: ${this.languages[this.currentLang].name}`);
     }
     
     /**
@@ -684,8 +723,16 @@ class I18nManager {
         const browserLang = navigator.language || navigator.userLanguage || 'en';
         const langCode = browserLang.split('-')[0].toLowerCase();
         
+        console.log(`🔍 Browser language detected: ${browserLang} → ${langCode}`);
+        
         // Return supported language or default to English
-        return this.languages[langCode] ? langCode : 'en';
+        if (this.languages[langCode]) {
+            console.log(`✅ Language ${langCode} is supported`);
+            return langCode;
+        } else {
+            console.log(`⚠️ Language ${langCode} not supported, defaulting to English`);
+            return 'en';
+        }
     }
     
     /**
