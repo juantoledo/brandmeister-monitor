@@ -31,6 +31,7 @@ window.BrandmeisterConfig = {
     // RadioID Database settings
     radioIDDatabaseURL: 'https://radioid.net/static/user.csv',
     radioIDCacheExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    radioIDMemoryCacheLimit: 500, // Maximum entries to keep in memory cache
     enableRadioIDLookup: true, // Enable RadioID database features
     
     // Talkgroup Database settings

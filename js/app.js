@@ -16,6 +16,13 @@ class BrandmeisterMonitor {
         this.radioIDDatabase = {};
         this.radioIDLastUpdate = null;
         this.radioIDUpdateInProgress = false;
+        this.radioIDMemoryCache = new Map(); // Fast in-memory cache for session
+        this.radioIDCacheStats = {
+            memoryHits: 0,
+            localStorageHits: 0,
+            databaseLookups: 0,
+            notFound: 0
+        };
         
         // Talkgroup Manager for unified API and static data
         this.talkgroupManager = new TalkgroupManager();
@@ -1039,6 +1046,14 @@ class BrandmeisterMonitor {
                 jsHeapSizeTotal: performance.memory ? performance.memory.totalJSHeapSize : null,
                 jsHeapSizeLimit: performance.memory ? performance.memory.jsHeapSizeLimit : null
             },
+            radioIDCache: {
+                memorySize: this.radioIDMemoryCache.size,
+                memoryHits: this.radioIDCacheStats.memoryHits,
+                localStorageHits: this.radioIDCacheStats.localStorageHits,
+                databaseLookups: this.radioIDCacheStats.databaseLookups,
+                notFound: this.radioIDCacheStats.notFound,
+                hitRate: this.getRadioIDCacheHitRate()
+            },
             domElements: {
                 activeTransmissions: document.querySelectorAll('.active-transmission').length,
                 logEntries: document.querySelectorAll('.log-entry').length,
@@ -1825,6 +1840,16 @@ class BrandmeisterMonitor {
         if (useSourceID && String(useSourceID).trim() !== '') {
             titleText = `${useSourceID} ${group.callsign || callsign}`;
         }
+        
+        if (this.config.verbose) {
+            const timestamp = new Date().toLocaleString();
+            console.log(`[${timestamp}] 🏷️ Building titleText for UI:`);
+            console.log(`   → group.callsign="${group.callsign}", callsign="${callsign}", useSourceID="${useSourceID}"`);
+            console.log(`   → Final titleText="${titleText}"`);
+            if (!group.callsign && !callsign) {
+                console.warn(`   ⚠️ WARNING: Both group.callsign and callsign are empty!`);
+            }
+        }
 
         // Create individual field data object using accumulated session data
         const fieldData = {
@@ -1891,7 +1916,7 @@ class BrandmeisterMonitor {
                 group.logEntry.className = `log-entry transmission-complete`;
             } else {
                 // Create new log entry for completed transmission
-                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType);
+                const logEntry = this.addLogEntryWithFields('transmission-complete', titleText, fieldData, eventType, group);
                 group.logEntry = logEntry;
             }
             
@@ -1994,8 +2019,19 @@ class BrandmeisterMonitor {
                 const qrzLink = this.createQRZLogbookLink(callsign);
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
-                // Lookup RadioID information
-                const radioIdInfo = this.lookupRadioID(group.sourceID);
+                // Use cached RadioID information from session (already looked up once)
+                const radioIdInfo = group.radioIdInfo || null;
+                
+                if (this.config.verbose) {
+                    if (radioIdInfo) {
+                        console.log(`♻️ Using RadioID info from session cache for ${callsign}:`, radioIdInfo);
+                        console.log(`   → Name: "${radioIdInfo.name}", City: "${radioIdInfo.city}", Country: "${radioIdInfo.country}"`);
+                    } else {
+                        console.log(`⚠️ No RadioID info available in session for ${callsign} (RadioID: ${group.sourceID})`);
+                        console.log(`   → This usually means RadioID lookup returned null (not in database or lookup disabled)`);
+                    }
+                }
+                
                 let locationInfo = '';
                 let flagBackgroundUrl = '';
                 let countryCode = '';
@@ -2115,12 +2151,35 @@ class BrandmeisterMonitor {
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
                 console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - creating session in memory (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
+                console.log(`   → Callsign: "${callsign}", SourceID: "${sourceID}", SourceName: "${sourceName}"`);
+                if (!callsign || callsign.trim() === '') {
+                    console.warn(`⚠️ WARNING: Callsign is empty or undefined in Session-Start!`);
+                }
+            }
+            
+            // Lookup and cache RadioID information once per session
+            const radioIdInfo = this.lookupRadioID(sourceID);
+            
+            // Use RadioID callsign as primary source if available (more reliable than session data)
+            const resolvedCallsign = radioIdInfo?.callsign || callsign;
+            
+            if (this.config.verbose) {
+                if (radioIdInfo) {
+                    console.log(`💾 Storing RadioID info in session for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
+                    console.log(`   → Will display: Callsign="${radioIdInfo.callsign || 'N/A'}", Name="${radioIdInfo.name || 'N/A'}", Location="${[radioIdInfo.city, radioIdInfo.country].filter(Boolean).join(', ') || 'N/A'}"`);
+                    if (radioIdInfo.callsign && radioIdInfo.callsign !== callsign) {
+                        console.log(`   ℹ️ Using RadioID callsign "${radioIdInfo.callsign}" instead of session callsign "${callsign}"`);
+                    }
+                } else {
+                    console.log(`⚠️ RadioID lookup returned NULL for ${resolvedCallsign} (${sourceID}) - will display without name/location`);
+                }
             }
             
             // Create new session entry
             this.transmissionGroups[sessionKey] = {
                 sessionID: call.SessionID,
-                callsign,
+                callsign: resolvedCallsign, // Use RadioID callsign if available
+                sourceName,
                 sourceName,
                 tg,
                 startTime,
@@ -2128,6 +2187,7 @@ class BrandmeisterMonitor {
                 duration: null,
                 alias: this.getStoredAlias(callsign),
                 sourceID,
+                radioIdInfo, // Store RadioID lookup result in session
                 linkName,
                 linkType,
                 sessionType,
@@ -2191,10 +2251,25 @@ class BrandmeisterMonitor {
                         contextID
                     });
                 }
+                // Lookup and cache RadioID information once per session
+                const radioIdInfo = this.lookupRadioID(sourceID);
+                
+                // Use RadioID callsign as primary source if available
+                const resolvedCallsign = radioIdInfo?.callsign || callsign;
+                
+                if (this.config.verbose) {
+                    if (radioIdInfo) {
+                        console.log(`💾 Storing RadioID info in session (from Update) for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
+                        if (radioIdInfo.callsign && radioIdInfo.callsign !== callsign) {
+                            console.log(`   ℹ️ Using RadioID callsign "${radioIdInfo.callsign}" instead of session callsign "${callsign}"`);
+                        }
+                    }
+                }
+                
                 // Create session if it doesn't exist (missed the start event)
                 this.transmissionGroups[sessionKey] = {
                     sessionID: call.SessionID,
-                    callsign,
+                    callsign: resolvedCallsign, // Use RadioID callsign if available
                     sourceName,
                     tg,
                     startTime,
@@ -2202,6 +2277,7 @@ class BrandmeisterMonitor {
                     duration: null,
                     alias: this.getStoredAlias(callsign),
                     sourceID,
+                    radioIdInfo, // Store RadioID lookup result in session
                     linkName,
                     linkType,
                     sessionType,
@@ -2967,7 +3043,7 @@ class BrandmeisterMonitor {
         this.elements.logContainer.insertAdjacentHTML('afterbegin', headerHtml);
     }
 
-    addLogEntryWithFields(type, callsign, fieldData, event) {
+    addLogEntryWithFields(type, callsign, fieldData, event, group = null) {
         // Only log actual transmissions, filter out system messages
         const transmissionTypes = ['session-start', 'session-stop', 'transmission-complete'];
         
@@ -3008,8 +3084,8 @@ class BrandmeisterMonitor {
         const actualCallsign = parts[parts.length - 1];
         const radioID = parts.length > 1 ? parts[0] : null;
         
-        // Lookup RadioID information
-        const radioIdInfo = radioID ? this.lookupRadioID(radioID) : null;
+        // Use cached RadioID information from group if available, otherwise lookup
+        const radioIdInfo = group?.radioIdInfo || (radioID ? this.lookupRadioID(radioID) : null);
         let locationText = '-';
         let flagIcon = '<span class="material-icons small">public</span>';
         
@@ -3946,14 +4022,18 @@ class BrandmeisterMonitor {
             const firstName = firstNameIndex >= 0 ? columns[firstNameIndex] : '';
             const lastName = lastNameIndex >= 0 ? columns[lastNameIndex] : '';
             const fullName = [firstName, lastName].filter(n => n && n.trim()).join(' ').trim();
+            
+            // Get callsign from CSV
+            const callsign = callsignIndex >= 0 ? columns[callsignIndex] : '';
 
-            // Only store record if we have location data or name
-            if (city || state || country || fullName) {
+            // Only store record if we have location data, name, or callsign
+            if (city || state || country || fullName || callsign) {
                 database[radioId] = {
-                    c: city || '',      // Use short keys to save space
+                    cs: callsign || '',  // 'cs' for callsign
+                    c: city || '',       // Use short keys to save space
                     s: state || '',     
-                    n: country || '',   // 'n' for nation/country
-                    m: fullName || ''   // 'm' for name (person)
+                    n: country || '',    // 'n' for nation/country
+                    m: fullName || ''    // 'm' for name (person)
                 };
                 recordCount++;
             } else {
@@ -3973,41 +4053,105 @@ class BrandmeisterMonitor {
 
         const id = radioId.toString();
         
-        // First check localStorage cache for resolved data
+        // First check in-memory cache (fastest)
+        if (this.radioIDMemoryCache.has(id)) {
+            this.radioIDCacheStats.memoryHits++;
+            
+            // Move to end (most recently used) in Map to maintain LRU order
+            const cachedValue = this.radioIDMemoryCache.get(id);
+            this.radioIDMemoryCache.delete(id);
+            this.radioIDMemoryCache.set(id, cachedValue);
+            
+            if (this.config.verbose) {
+                console.log(`📱 ⚡ Using in-memory cache for RadioID ${id} (${this.radioIDMemoryCache.size}/${this.config.radioIDMemoryCacheLimit} cached)`);
+            }
+            return cachedValue;
+        }
+        
+        // Second, check localStorage cache for resolved data
         const cachedData = this.getRadioIDFromCache(id);
         if (cachedData) {
+            this.radioIDCacheStats.localStorageHits++;
+            
+            // Store in memory cache for faster subsequent access
+            this.addToMemoryCache(id, cachedData);
             if (this.config.verbose) {
-                console.log(`📱 Using cached RadioID data for ${id}:`, cachedData);
+                console.log(`📱 ✅ Using localStorage cache for RadioID ${id}, added to memory (${this.radioIDMemoryCache.size}/${this.config.radioIDMemoryCacheLimit})`);
             }
             return cachedData;
         }
         
         // If not in cache, lookup from database
         if (!this.radioIDDatabase) {
+            if (this.config.verbose) {
+                console.log(`📱 ⚠️ RadioID database not loaded, cannot lookup ${id}`);
+            }
             return null;
         }
         
         const record = this.radioIDDatabase[id];
-        if (!record) return null;
+        if (!record) {
+            this.radioIDCacheStats.notFound++;
+            if (this.config.verbose) {
+                console.log(`📱 ℹ️ RadioID ${id} not found in database`);
+            }
+            return null;
+        }
+        
+        this.radioIDCacheStats.databaseLookups++;
         
         // Convert short keys back to full names
         const resolvedData = {
             radioId: id,
+            callsign: record.cs || '',  // 'cs' field contains the callsign
             city: record.c || '',
             state: record.s || '',
             country: record.n || '',
-            name: record.m || '', // 'm' field contains the full name
+            name: record.m || '',        // 'm' field contains the full name
             timestamp: Date.now()
         };
         
-        // Cache the resolved data in localStorage
+        // Cache in memory first (fastest)
+        this.addToMemoryCache(id, resolvedData);
+        
+        // Then cache in localStorage (persistent)
         this.saveRadioIDToCache(id, resolvedData);
         
         if (this.config.verbose) {
-            console.log(`📱 Resolved and cached RadioID data for ${id}:`, resolvedData);
+            console.log(`📱 🔍 Resolved and cached RadioID data for ${id} (${this.radioIDMemoryCache.size}/${this.config.radioIDMemoryCacheLimit} in memory)`);
         }
         
         return resolvedData;
+    }
+
+    /**
+     * Add entry to memory cache with LRU eviction
+     */
+    addToMemoryCache(id, data) {
+        // If cache is at limit, remove oldest entry (first in Map)
+        if (this.radioIDMemoryCache.size >= this.config.radioIDMemoryCacheLimit) {
+            const firstKey = this.radioIDMemoryCache.keys().next().value;
+            this.radioIDMemoryCache.delete(firstKey);
+            if (this.config.verbose) {
+                console.log(`🗑️ Evicted ${firstKey} from memory cache (LRU)`);
+            }
+        }
+        this.radioIDMemoryCache.set(id, data);
+    }
+
+    /**
+     * Calculate RadioID cache hit rate
+     */
+    getRadioIDCacheHitRate() {
+        const total = this.radioIDCacheStats.memoryHits + 
+                     this.radioIDCacheStats.localStorageHits + 
+                     this.radioIDCacheStats.databaseLookups +
+                     this.radioIDCacheStats.notFound;
+        
+        if (total === 0) return 100;
+        
+        const hits = this.radioIDCacheStats.memoryHits + this.radioIDCacheStats.localStorageHits;
+        return ((hits / total) * 100).toFixed(1);
     }
 
     /**
@@ -4022,7 +4166,7 @@ class BrandmeisterMonitor {
                 const parsed = JSON.parse(cachedData);
                 
                 // Cache version check - invalidate old cache format
-                const currentCacheVersion = 2; // Increment when structure changes
+                const currentCacheVersion = 3; // Increment when structure changes (v3: added callsign)
                 if (!parsed.version || parsed.version < currentCacheVersion) {
                     if (this.config.verbose) {
                         console.log(`🔄 Invalidating old cache version for RadioID ${radioId} (v${parsed.version || 1} → v${currentCacheVersion})`);
@@ -4038,6 +4182,7 @@ class BrandmeisterMonitor {
                 if (cacheAge < maxAge) {
                     return {
                         radioId: parsed.radioId,
+                        callsign: parsed.callsign || '',
                         city: parsed.city || '',
                         state: parsed.state || '',
                         country: parsed.country || '',
@@ -4062,8 +4207,9 @@ class BrandmeisterMonitor {
         try {
             const cacheKey = `radioID_${radioId}`;
             const cacheData = {
-                version: 2, // Cache version for future compatibility
+                version: 3, // Cache version for future compatibility (v3: added callsign)
                 radioId: data.radioId,
+                callsign: data.callsign || '',
                 city: data.city || '',
                 state: data.state || '',
                 country: data.country || '',
@@ -4077,52 +4223,72 @@ class BrandmeisterMonitor {
                 console.log(`💾 Cached RadioID data for ${radioId}`);
             }
         } catch (error) {
-            console.warn('Error saving RadioID cache:', error);
-            // If localStorage is full, try to clean old entries
-            this.cleanRadioIDCache();
+            // QuotaExceededError - localStorage is full
+            if (error.name === 'QuotaExceededError' || error.code === 22) {
+                console.warn('⚠️ localStorage quota exceeded for RadioID cache. Data will remain in memory only.');
+                // Don't call cleanRadioIDCache() here - it's expensive and may not help
+                // The in-memory cache will still work fine
+            } else {
+                console.warn('Error saving RadioID cache:', error);
+            }
         }
     }
 
     /**
      * Clean old RadioID cache entries
+     * This is an expensive operation and should only be called manually or on startup
      */
     cleanRadioIDCache() {
         try {
+            const startTime = performance.now();
             const keysToRemove = [];
             const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-            const currentCacheVersion = 2;
+            const currentCacheVersion = 3; // v3: added callsign
             let versionUpgrades = 0;
+            let totalChecked = 0;
             
-            // Find old cache entries
+            // Batch process keys for better performance
+            const allKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('radioID_')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(key));
-                        
-                        // Remove entries with old cache version
-                        if (!data.version || data.version < currentCacheVersion) {
-                            keysToRemove.push(key);
-                            versionUpgrades++;
-                        }
-                        // Remove entries that are too old
-                        else if (data.timestamp && (Date.now() - data.timestamp) > maxAge) {
-                            keysToRemove.push(key);
-                        }
-                    } catch (e) {
-                        // Invalid data, mark for removal
-                        keysToRemove.push(key);
-                    }
+                    allKeys.push(key);
                 }
             }
+            
+            totalChecked = allKeys.length;
+            
+            // Process keys in batches to avoid blocking
+            allKeys.forEach(key => {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    
+                    // Remove entries with old cache version
+                    if (!data.version || data.version < currentCacheVersion) {
+                        keysToRemove.push(key);
+                        versionUpgrades++;
+                    }
+                    // Remove entries that are too old
+                    else if (data.timestamp && (Date.now() - data.timestamp) > maxAge) {
+                        keysToRemove.push(key);
+                    }
+                } catch (e) {
+                    // Invalid data, mark for removal
+                    keysToRemove.push(key);
+                }
+            });
             
             // Remove old entries
             keysToRemove.forEach(key => {
                 localStorage.removeItem(key);
             });
             
+            const duration = (performance.now() - startTime).toFixed(2);
+            
             if (keysToRemove.length > 0) {
-                console.log(`🧹 Cleaned ${keysToRemove.length} old RadioID cache entries (${versionUpgrades} version upgrades, ${keysToRemove.length - versionUpgrades} expired)`);
+                console.log(`🧹 Cleaned ${keysToRemove.length}/${totalChecked} RadioID cache entries in ${duration}ms (${versionUpgrades} version upgrades, ${keysToRemove.length - versionUpgrades} expired)`);
+            } else {
+                console.log(`✅ RadioID cache is clean (${totalChecked} entries checked in ${duration}ms)`);
             }
         } catch (error) {
             console.warn('Error cleaning RadioID cache:', error);
@@ -4219,11 +4385,28 @@ class BrandmeisterMonitor {
     clearRadioIDCache() {
         console.log('🗑️ Clearing RadioID database cache...');
         
+        // Clear in-memory cache
+        this.radioIDMemoryCache.clear();
+        
+        // Clear database reference
         this.radioIDDatabase = null;
         this.radioIDLastUpdate = null;
         
+        // Clear localStorage cache
         localStorage.removeItem('radioIDDatabase');
         localStorage.removeItem('radioIDLastUpdate');
+        
+        // Clean up individual cached entries
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('radioID_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        console.log(`🗑️ Cleared ${keysToRemove.length} individual RadioID cache entries`);
         
         this.updateRadioIDStatus('Cache cleared');
     }
@@ -4768,6 +4951,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Expose performance debugging functions to console
     window.getPerformanceInfo = () => window.brandmeisterMonitor.getPerformanceDebugInfo();
+    window.getCacheStats = () => {
+        const stats = window.brandmeisterMonitor.radioIDCacheStats;
+        const total = stats.memoryHits + stats.localStorageHits + stats.databaseLookups + stats.notFound;
+        const hitRate = window.brandmeisterMonitor.getRadioIDCacheHitRate();
+        
+        console.log('📊 RadioID Cache Statistics:');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`⚡ Memory Cache Hits:      ${stats.memoryHits.toLocaleString()} (${((stats.memoryHits/total)*100).toFixed(1)}%)`);
+        console.log(`💾 LocalStorage Hits:      ${stats.localStorageHits.toLocaleString()} (${((stats.localStorageHits/total)*100).toFixed(1)}%)`);
+        console.log(`🔍 Database Lookups:       ${stats.databaseLookups.toLocaleString()} (${((stats.databaseLookups/total)*100).toFixed(1)}%)`);
+        console.log(`❌ Not Found:              ${stats.notFound.toLocaleString()} (${((stats.notFound/total)*100).toFixed(1)}%)`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`📈 Total Lookups:          ${total.toLocaleString()}`);
+        console.log(`✅ Overall Hit Rate:       ${hitRate}%`);
+        console.log(`🧠 Memory Cache Size:      ${window.brandmeisterMonitor.radioIDMemoryCache.size}/${window.brandmeisterMonitor.config.radioIDMemoryCacheLimit}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        return {
+            stats,
+            hitRate: parseFloat(hitRate),
+            memoryCacheSize: window.brandmeisterMonitor.radioIDMemoryCache.size,
+            memoryCacheLimit: window.brandmeisterMonitor.config.radioIDMemoryCacheLimit
+        };
+    };
+    console.log('💡 Tip: Type getCacheStats() to view RadioID cache performance');
+
     window.forceCleanup = () => window.brandmeisterMonitor.forceCleanup();
     window.showMemoryTrends = () => {
         const report = window.brandmeisterMonitor.getPerformanceReport();
