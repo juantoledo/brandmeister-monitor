@@ -5143,7 +5143,7 @@ function initializeNewInterface() {
     });
     
     function updateThemeIcon(theme) {
-        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        themeIcon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
         themeToggle.title = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
     }
     

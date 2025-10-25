@@ -31,8 +31,9 @@
 
 /* Material Icons in specific contexts */
 .app-header .material-icons {
-    margin-right: 8px;
+    margin-right: 5px;
     vertical-align: text-bottom;
+    font-size: 1.125rem;
 }
 
 .card-status .material-icons {
@@ -501,26 +502,28 @@ body {
     grid-area: header;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: var(--shadow);
     position: relative;
     z-index: 1000;
+    min-height: 48px;
 }
 
 .header-content {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 10px;
 }
 
 .header-content h1 {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--primary);
     margin: 0;
+    line-height: 1.2;
 }
 
 .local-utc {
@@ -569,13 +572,13 @@ body {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 }
 
 .header-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .github-link {
@@ -603,17 +606,17 @@ body {
 .header-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     background: var(--gray-100);
-    padding: 6px 12px;
+    padding: 3px 8px;
     border-radius: var(--radius);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
 }
 
 .header-controls {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
 }
 
 /* Language Selector */
@@ -627,21 +630,21 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(37, 99, 235, 0.1);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 8px;
+    padding: 5px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 40px;
+    min-width: 32px;
+    height: 32px;
     font-weight: 600;
 }
 
 .language-button:hover {
-    background: rgba(37, 99, 235, 0.2);
-    border-color: rgba(37, 99, 235, 0.4);
+    background: transparent;
     transform: scale(1.1);
 }
 
@@ -710,19 +713,47 @@ body {
     background: var(--gray-700);
 }
 
+/* Keep header buttons transparent in dark mode */
+[data-theme="dark"] .language-button,
+[data-theme="dark"] .install-button,
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+}
+
+[data-theme="dark"] .language-button:hover,
+[data-theme="dark"] .install-button:hover,
+[data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .sidebar-toggle:hover {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+}
+
+/* Ensure Material Icons inherit color in header buttons */
+.language-button .material-icons,
+.install-button .material-icons,
+.theme-toggle .material-icons,
+.sidebar-toggle .material-icons {
+    color: inherit;
+}
+
 .install-button {
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(16, 185, 129, 0.1);
     border: 1px solid rgba(16, 185, 129, 0.2);
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--success);
     cursor: pointer;
-    padding: 8px;
+    padding: 5px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 40px;
+    min-width: 32px;
+    height: 32px;
     font-weight: 600;
 }
 
@@ -733,8 +764,8 @@ body {
 }
 
 .status-dot {
-    width: 10px;
-    height: 10px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: var(--gray-400);
     transition: background-color 0.3s ease;
@@ -749,64 +780,71 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(37, 99, 235, 0.1);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 8px;
+    padding: 5px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 40px;
+    min-width: 32px;
+    height: 32px;
     font-weight: 600;
 }
 
 .theme-toggle:hover {
-    background: rgba(37, 99, 235, 0.2);
-    border-color: rgba(37, 99, 235, 0.4);
+    background: transparent;
     transform: scale(1.1);
 }
 
 .theme-icon {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
     transition: transform 0.3s ease;
+    font-size: inherit;
 }
 
-/* Dark mode icon rotation */
+/* Dark mode icon - no rotation needed with Material Icons */
 [data-theme="dark"] .theme-icon {
-    transform: rotate(180deg);
+    transform: none;
 }
 
 .sidebar-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(37, 99, 235, 0.1);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 8px;
+    padding: 5px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 40px;
+    min-width: 32px;
+    height: 32px;
     font-weight: 600;
 }
 
 .sidebar-toggle:hover {
-    background: rgba(37, 99, 235, 0.2);
-    border-color: rgba(37, 99, 235, 0.4);
+    background: transparent;
     transform: scale(1.1);
 }
 
+.install-icon,
 .hamburger-icon {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
     transition: transform 0.3s ease;
+    font-size: inherit;
 }
 
-/* Rotate hamburger icon when sidebar is collapsed */
+/* Rotate settings icon when sidebar is open */
 .app-layout.sidebar-collapsed .hamburger-icon {
     transform: rotate(90deg);
 }
@@ -1625,7 +1663,7 @@ button:disabled {
 .active-tgs {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 3px 3px;
+    padding: 2px;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -1634,7 +1672,7 @@ button:disabled {
 .active-tgs-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
     flex: 1;
     align-items: stretch;
 }
@@ -1644,9 +1682,10 @@ button:disabled {
     color: var(--white);
     font-size: 0.8rem;
     font-weight: 500;
+    padding: 4px 8px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
     flex: 1;
     justify-content: center;
@@ -1660,8 +1699,6 @@ button:disabled {
     cursor: default;
     pointer-events: none;
     opacity: 0.85;
-    border: 1px dashed var(--primary);
-    border-radius: 0;
 }
 
 .active-tg-id {
@@ -1680,32 +1717,41 @@ button:disabled {
 /* Responsive design for active TGs */
 @media (max-width: 768px) {
     .active-tgs {
-        padding: 3px 3px;
+        padding: 2px;
+    }
+    
+    .active-tgs-list {
+        gap: 3px;
     }
     
     .active-tg-item {
-        padding: 4px 10px;
-        font-size: 0.6rem;
-        border-radius: 0;
-        border: none;
+        padding: 3px 6px;
+        font-size: 0.7rem;
+        gap: 3px;
+    }
+    
+    .active-tg-name {
+        max-width: 100px;
     }
 }
 
 @media (max-width: 480px) {
     .active-tgs {
-        padding: 0px 0px;
-        padding-top: 15px;
+        padding: 2px;
     }
     
     .active-tgs-list {
-        gap: 6px;
+        gap: 2px;
     }
     
     .active-tg-item {
-        padding: 3px 8px;
-        font-size: 0.6rem;
-        border-radius: 0;
-        border: none;
+        padding: 3px 5px;
+        font-size: 0.65rem;
+        gap: 2px;
+    }
+    
+    .active-tg-name {
+        max-width: 80px;
     }
 }
 
@@ -3560,27 +3606,26 @@ button:disabled {
     }
     
     .app-header {
-        padding: 0 16px;
-        height: var(--header-height);
+        padding: 0 10px;
+        min-height: 46px;
         flex-wrap: wrap;
     }
     
     .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
         flex: 1;
-        min-width: 0; /* Allow text to shrink */
-        padding-top: 20px;
+        min-width: 0;
     }
     
     .header-right {
-        gap: 12px;
-        flex-wrap: wrap;
+        gap: 8px;
+        flex-wrap: nowrap;
     }
     
     .header-info {
-        gap: 8px;
+        gap: 5px;
     }
     
     .github-link svg {
@@ -3594,14 +3639,39 @@ button:disabled {
     }
     
     .header-content h1 {
-        font-size: 1.125rem;
+        font-size: 0.9375rem;
         line-height: 1.2;
+    }
+    
+    .app-header .material-icons {
+        margin-right: 4px;
+        font-size: 1rem;
     }
     
     .header-status {
         flex-shrink: 0;
-        padding: 4px 8px;
-        font-size: 0.75rem;
+        padding: 3px 7px;
+        font-size: 0.7rem;
+        gap: 4px;
+    }
+    
+    .status-dot {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .header-controls {
+        gap: 2px;
+    }
+    
+    .language-button,
+    .install-button,
+    .theme-toggle,
+    .sidebar-toggle {
+        min-width: 30px;
+        height: 30px;
+        padding: 4px;
+        font-size: 0.9375rem;
     }
     
     /* Bottom container responsive behavior */
@@ -3634,15 +3704,32 @@ button:disabled {
     :root {
         --sidebar-width: 280px;
         --console-height: 360px;
-        --header-height: 70px; /* Smaller header on very small screens */
     }
     
     .app-header {
-        padding: 0 12px;
+        padding: 0 8px;
+        min-height: 42px;
+    }
+    
+    .header-content {
+        gap: 5px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.875rem;
+    }
+    
+    .app-header .material-icons {
+        margin-right: 3px;
+        font-size: 1rem;
+    }
+    
+    .header-right {
+        gap: 6px;
     }
     
     .header-info {
-        gap: 6px;
+        gap: 4px;
     }
     
     .github-link svg {
@@ -3655,18 +3742,34 @@ button:disabled {
         padding: 2px 4px;
     }
     
-    .header-content h1 {
-        font-size: 1rem;
-    }
-    
     .header-status {
-        padding: 3px 6px;
-        font-size: 0.6875rem;
+        padding: 2px 6px;
+        font-size: 0.65rem;
+        gap: 3px;
     }
     
     .status-dot {
-        width: 8px;
-        height: 8px;
+        width: 5px;
+        height: 5px;
+    }
+    
+    .header-controls {
+        gap: 1px;
+    }
+    
+    .language-button,
+    .install-button,
+    .theme-toggle,
+    .sidebar-toggle {
+        min-width: 28px;
+        height: 28px;
+        padding: 3px;
+        font-size: 0.875rem;
+    }
+    
+    .status-dot {
+        width: 6px;
+        height: 6px;
     }
     
     .console-tabs {
@@ -3681,29 +3784,34 @@ button:disabled {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
 }
 
 /* Extra small screens - phones in portrait */
 @media (max-width: 360px) {
-    :root {
-        --header-height: 60px;
-    }
-    
     .app-header {
-        padding: 0;
+        padding: 0 6px;
+        min-height: 40px;
     }
     
     .header-content {
-        gap: 2px;
+        gap: 4px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.8125rem;
+    }
+    
+    .app-header .material-icons {
+        margin-right: 2px;
+        font-size: 0.9375rem;
     }
     
     .header-right {
-        gap: 8px;
+        gap: 5px;
     }
     
     .header-info {
-        gap: 4px;
+        gap: 3px;
     }
     
     .github-link svg {
@@ -3716,19 +3824,83 @@ button:disabled {
         padding: 1px 3px;
     }
     
-    .header-content h1 {
-        font-size: 0.875rem;
-    }
-    
     .header-status {
-        padding: 2px 4px;
-        font-size: 0.625rem;
-        gap: 4px;
+        padding: 2px 5px;
+        font-size: 0.5625rem;
+        gap: 2px;
     }
     
     .status-dot {
-        width: 6px;
-        height: 6px;
+        width: 4px;
+        height: 4px;
+    }
+    
+    .header-controls {
+        gap: 1px;
+    }
+    
+    .language-button,
+    .install-button,
+    .theme-toggle,
+    .sidebar-toggle {
+        min-width: 26px;
+        height: 26px;
+        padding: 2px;
+        font-size: 0.8125rem;
+    }
+}
+
+/* Extra extra small screens - oldest phones */
+@media (max-width: 320px) {
+    .app-header {
+        padding: 0 5px;
+        min-height: 38px;
+    }
+    
+    .header-content {
+        gap: 3px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.75rem;
+    }
+    
+    .app-header .material-icons {
+        margin-right: 2px;
+        font-size: 0.875rem;
+    }
+    
+    .header-right {
+        gap: 4px;
+    }
+    
+    .header-info {
+        gap: 2px;
+    }
+    
+    .header-status {
+        padding: 1px 4px;
+        font-size: 0.5rem;
+        gap: 2px;
+    }
+    
+    .status-dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .header-controls {
+        gap: 1px;
+    }
+    
+    .language-button,
+    .install-button,
+    .theme-toggle,
+    .sidebar-toggle {
+        min-width: 24px;
+        height: 24px;
+        padding: 2px;
+        font-size: 0.75rem;
     }
 }
 
@@ -4183,32 +4355,47 @@ button:disabled {
     
     /* Header adjustments */
     .app-header {
-        min-height: 48px;
-        padding: 6px 12px;
+        min-height: 40px;
+        padding: 6px 8px;
     }
     
     .header-content h1 {
-        font-size: 0.8rem;
+        font-size: 0.8125rem;
         margin: 0;
     }
     
+    .app-header .material-icons {
+        margin-right: 3px;
+        font-size: 0.9375rem;
+    }
+    
     .header-right {
-        gap: 6px;
+        gap: 5px;
     }
     
     .header-controls {
-        gap: 4px;
+        gap: 1px;
     }
     
     .header-status {
-        padding: 2px 4px;
-        font-size: 0.6rem;
-        gap: 3px;
+        padding: 2px 5px;
+        font-size: 0.5625rem;
+        gap: 2px;
     }
     
     .status-dot {
-        width: 5px;
-        height: 5px;
+        width: 4px;
+        height: 4px;
+    }
+    
+    .language-button,
+    .install-button,
+    .theme-toggle,
+    .sidebar-toggle {
+        min-width: 26px;
+        height: 26px;
+        padding: 2px;
+        font-size: 0.8125rem;
     }
     
     /* Sidebar adjustments */
