@@ -1963,13 +1963,13 @@ class BrandmeisterMonitor {
                 }
                 if (radioIdElement) radioIdElement.textContent = group.sourceID || '-';
                 if (sourceNameElement && sourceName) {
-                    sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(sourceName)}" target="_blank" class="card-source-name" title="Look up ${sourceName} on QRZ.com">${sourceName}</a>`;
+                    sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${sourceName}</a>`;
                 } else if (sourceNameElement && !sourceName) {
                     sourceNameElement.remove();
                 } else if (!sourceNameElement && sourceName) {
                     const newSourceNameEl = document.createElement('div');
                     newSourceNameEl.className = 'card-source-name';
-                    newSourceNameEl.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(sourceName)}" target="_blank" class="card-source-name" title="Look up ${sourceName} on QRZ.com">${sourceName}</a>`;
+                    newSourceNameEl.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${sourceName}</a>`;
                     existingActiveEntry.querySelector('.card-header').insertAdjacentElement('afterend', newSourceNameEl);
                 }
                 if (tgElement) tgElement.textContent = `TG ${tg || '?'}`;
@@ -2086,7 +2086,7 @@ class BrandmeisterMonitor {
                         <\/div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(displayName)}" target="_blank" class="card-source-name" title="Look up ${displayName} on QRZ.com">${displayName}</a></div>` : ''}
+                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
                                 ${locationInfo}
                                 ${timeWeatherInfo}
                                 <div class="card-details">
@@ -2901,7 +2901,7 @@ class BrandmeisterMonitor {
             const logEntry = activeCall.initialLogEntry;
             // Always render callsign as QRZ.com link
             if (logEntry && logEntry.querySelector('.log-callsign')) {
-                logEntry.querySelector('.log-callsign').innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(displayName)}" target="_blank" class="qrz-callsign" title="Look up ${displayName} on QRZ.com">${displayName}</a>`;
+                logEntry.querySelector('.log-callsign').innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="qrz-callsign" title="Look up ${callsign} on QRZ.com">${displayName}</a>`;
             }
             if (logEntry && logEntry.querySelector('.log-details')) {
                 logEntry.querySelector('.log-details').textContent = startDetails;
