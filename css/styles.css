@@ -103,7 +103,7 @@
     /* Layout Variables */
     --sidebar-width: 320px;
     --console-height: 350px;
-    --header-height: 80px;
+    --header-height: 50px;
     --radius: 0;
     --radius-lg: 0;
     --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
