@@ -1,7 +1,7 @@
 {
   "name": "Brandmeister Monitor",
   "short_name": "BM Monitor", 
-  "version": "0.8.19",
+  "version": "0.8.20",
   "description": "Real-time DMR Talkgroup Activity Monitor",
   "start_url": "/brandmeister-monitor/",
   "scope": "/brandmeister-monitor/",
