@@ -104,6 +104,8 @@ window.CountryMapping = {
     'russia': 'ru',
     'russian federation': 'ru',
     'turkey': 'tr',
+    'turkiye': 'tr',
+    'türkiye': 'tr',
     'cyprus': 'cy',
     'malta': 'mt',
     'iceland': 'is',
