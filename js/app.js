@@ -1898,7 +1898,7 @@ class BrandmeisterMonitor {
                     console.log(`⏱️ Skipping transmission - Duration ${duration}s is below minimum threshold of ${this.config.minDuration}s: ${titleText}`);
                 }
                 // Remove from active display without logging
-                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
                 if (activeEntry) {
                     this.animateTransmissionRemoval(activeEntry);
                 }
@@ -1920,7 +1920,7 @@ class BrandmeisterMonitor {
             }
             
             // Remove from active display
-            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
             if (activeEntry) {
                 this.animateTransmissionRemoval(activeEntry);
                 if (this.config.verbose) {
@@ -1929,7 +1929,7 @@ class BrandmeisterMonitor {
                 }
             } else if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: Active transmission not found in UI for removal (SessionID: ${sessionKey}), selector: [data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                console.log(`[${timestamp}] DEBUG: Active transmission not found in UI for removal (SessionID: ${sessionKey}), selector: [data-session-key="${sessionKey}"]`);
                 // List all active entries for debugging
                 const allActiveEntries = this.elements.activeContainer.querySelectorAll('.active-transmission');
                 const sessionKeys = Array.from(allActiveEntries).map(entry => entry.getAttribute('data-session-key')).filter(Boolean);
@@ -1943,7 +1943,7 @@ class BrandmeisterMonitor {
             
         } else {
             // Handle active/started transmissions
-            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+            const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
             
             if (existingActiveEntry) {
                 // Update existing active transmission UI
@@ -2018,7 +2018,7 @@ class BrandmeisterMonitor {
                 const activeEntry = document.createElement('div');
                 activeEntry.className = 'active-transmission';
                 activeEntry.id = `active-${sessionKey}`;
-                activeEntry.setAttribute('data-session-key', this.escapeCSSSelector(sessionKey));
+                activeEntry.setAttribute('data-session-key', sessionKey);
                 
                 // Extract callsign for QRZ link
                 const callsign = this.extractCallsignFromTitle(titleText);
@@ -2503,7 +2503,7 @@ class BrandmeisterMonitor {
                 console.log(`[${timestamp}] Skipping transmission with invalid duration: ${duration}s`);
             }
             // Clean up invalid transmission
-            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+            const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
             if (activeEntry) {
                 this.animateTransmissionRemoval(activeEntry);
             }
@@ -2699,7 +2699,7 @@ class BrandmeisterMonitor {
 
     updateSessionUI(sessionKey, session) {
         // Find the UI element for this session
-        const element = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+        const element = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
         if (!element) return;
         
         // Keep session data updated but don't show stale/orphaned states in UI
@@ -2714,7 +2714,7 @@ class BrandmeisterMonitor {
     }
 
     removeSessionFromActiveUI(sessionKey) {
-        const element = this.elements.activeContainer.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+        const element = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
         if (element) {
             element.remove();
         }
@@ -4618,7 +4618,7 @@ class BrandmeisterMonitor {
         
         for (const [sessionKey, timerId] of this.weatherLoadTimers.entries()) {
             // Check if the transmission card still exists
-            const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+            const transmissionCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
             if (!transmissionCard) {
                 // Clear the timer and remove from map
                 clearTimeout(timerId);
@@ -4708,7 +4708,7 @@ class BrandmeisterMonitor {
         const timerId = setTimeout(async () => {
             try {
                 // Check if the transmission card still exists (user might have closed it)
-                const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                const transmissionCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
                 if (!transmissionCard) {
                     this.weatherLoadTimers.delete(timerKey);
                     return;
@@ -4719,7 +4719,7 @@ class BrandmeisterMonitor {
                 const locationInfo = await this.locationWeatherService.getLocationInfo(city, state, country);
                 
                 // Double-check the card still exists after the async call
-                const currentTransmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                const currentTransmissionCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
                 if (!currentTransmissionCard) {
                     this.weatherLoadTimers.delete(timerKey);
                     return;
@@ -4772,7 +4772,7 @@ class BrandmeisterMonitor {
                 console.warn('Failed to load time/weather info:', error);
                 
                 // Show error state
-                const transmissionCard = document.querySelector(`[data-session-key="${this.escapeCSSSelector(sessionKey)}"]`);
+                const transmissionCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
                 if (transmissionCard) {
                     const timeWeatherElement = transmissionCard.querySelector('.card-time-weather');
                     if (timeWeatherElement) {
