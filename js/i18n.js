@@ -187,6 +187,11 @@ const Languages = {
             'activity.log.header.duration': 'Duration',
             'activity.log.transmission.from': 'Logging transmission from',
             
+            // Distance
+            'distance.away': 'away',
+            'distance.km': 'km',
+            'distance.mi': 'mi',
+            
             // RadioID Database
             'radioid.records.loaded': 'records loaded',
             'radioid.records.memory.only': 'records loaded (memory only)',
@@ -383,6 +388,11 @@ const Languages = {
             'activity.log.header.alias': 'Alias',
             'activity.log.header.duration': 'Duración',
             'activity.log.transmission.from': 'Registrando transmisión de',
+            
+            // Distance
+            'distance.away': 'de distancia',
+            'distance.km': 'km',
+            'distance.mi': 'mi',
             
             // RadioID Database
             'radioid.records.loaded': 'registros cargados',
@@ -607,6 +617,11 @@ const Languages = {
             'time.hours.ago': 'horas atrás',
             'time.day.ago': 'dia atrás',
             'time.days.ago': 'dias atrás',
+            
+            // Distance
+            'distance.away': 'de distância',
+            'distance.km': 'km',
+            'distance.mi': 'mi',
             
             // Units
             'unit.seconds': 's',

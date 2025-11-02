@@ -49,6 +49,9 @@ class BrandmeisterMonitor {
         // Talk Group Selector state
         this.selectedTalkgroups = new Set();
 
+        // Base location for distance calculations
+        this.baseLocation = null; // { lat, lon, city, country }
+
         // Location & Weather Service
         this.locationWeatherService = null;
         this.weatherLoadTimers = new Map(); // Track delayed weather loading
@@ -922,6 +925,32 @@ class BrandmeisterMonitor {
             const remainingSeconds = seconds % 60;
             return `${hours}h ${minutes}m ${remainingSeconds}s`;
         }
+    }
+
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     * @param {number} lat1 - Latitude of first point
+     * @param {number} lon1 - Longitude of first point
+     * @param {number} lat2 - Latitude of second point
+     * @param {number} lon2 - Longitude of second point
+     * @returns {object} - { km, miles } distance object
+     */
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const km = R * c;
+        const miles = km * 0.621371;
+        
+        return {
+            km: Math.round(km),
+            miles: Math.round(miles)
+        };
     }
 
     // Memory monitoring and reporting
@@ -2053,8 +2082,8 @@ class BrandmeisterMonitor {
                         countryCode = this.getCountryCode(country);
                         // Create flag background URL from flag-icons CDN
                         flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
-                        // Make location text clickable for Google search
-                        locationInfo = `<div class="card-location card-location-link" title="Click to search location on Google">${locationParts.join(', ')}</div>`;
+                        // Make location text clickable for Google search with distance placeholder
+                        locationInfo = `<div class="card-location card-location-link" title="Click to search location on Google">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
                         
                         // Add time and weather info placeholder only if not monitoring all talkgroups
                         if (!this.config.monitorAllTalkgroups) {
@@ -4759,6 +4788,23 @@ class BrandmeisterMonitor {
                         };
                     }
 
+                    // Calculate and display distance if base location is available
+                    if (this.baseLocation && locationInfo.coordinates) {
+                        const distance = this.calculateDistance(
+                            this.baseLocation.lat,
+                            this.baseLocation.lon,
+                            locationInfo.coordinates.lat,
+                            locationInfo.coordinates.lon
+                        );
+                        
+                        // Update distance in location display
+                        const distanceElement = currentTransmissionCard.querySelector('.location-distance');
+                        if (distanceElement) {
+                            distanceElement.textContent = ` (${distance.km} ${window.t('distance.km')} / ${distance.miles} ${window.t('distance.mi')} ${window.t('distance.away')})`;
+                            distanceElement.title = `Distance from your location`;
+                        }
+                    }
+
                     console.log(`✅ Updated time/weather for ${city}: ${locationInfo.localTime}, ${locationInfo.weather?.temperature}°C`);
                 } else {
                     // Show fallback if data unavailable
@@ -4875,6 +4921,13 @@ class BrandmeisterMonitor {
                     async (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
+                        
+                        // Store base location for distance calculations
+                        this.baseLocation = { lat, lon };
+                        if (this.config.verbose) {
+                            console.log(`📍 Base location set: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+                        }
+                        
                         await this.updateLocalWeather(lat, lon);
                     },
                     (error) => {

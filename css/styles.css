@@ -412,6 +412,11 @@
     color: var(--text-muted);
 }
 
+[data-theme="dark"] .location-distance {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
 [data-theme="dark"] .card-location-link:hover {
     opacity: 0.7;
 }
@@ -3608,6 +3613,15 @@ button:disabled {
     font-weight: 500;
     margin: 2px 0 4px 0;
     opacity: 0.9;
+}
+
+/* Distance display within location */
+.location-distance {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: 0.85;
+    margin-left: 4px;
 }
 
 /* Clickable location link styling - maintains original appearance */
