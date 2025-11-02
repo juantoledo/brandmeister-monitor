@@ -1,5 +1,5 @@
 // Service Worker for Brandmeister Monitor PWA
-const CACHE_NAME = 'brandmeister-monitor-v0.8.21'; // Increment this when you make changes
+const CACHE_NAME = 'brandmeister-monitor-v0.9.0'; // Increment this when you make changes
 const urlsToCache = [
     '/',
     '/index.html',
@@ -18,7 +18,7 @@ const urlsToCache = [
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
-    console.log('PWA: Installing service worker v0.8.21');
+    console.log('PWA: Installing service worker v0.9.0');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
@@ -32,7 +32,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean old caches and notify clients
 self.addEventListener('activate', (event) => {
-    console.log('PWA: Activating service worker v0.8.21');
+    console.log('PWA: Activating service worker v0.9.0');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all([
