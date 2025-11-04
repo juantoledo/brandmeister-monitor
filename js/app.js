@@ -2120,24 +2120,23 @@ class BrandmeisterMonitor {
                         <div class="card-header">
                             <div class="card-identity">
                                 <div class="card-callsign">
-                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="🌐 Click to look up ${callsign} on QRZ.com">${callsign}</a>
+                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="🌐 Click to look up ${callsign} on QRZ.com">${callsign}</a>
                                 </div>
                                 <div class="card-radio-id">
-                                    <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />
+                                    <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:14px;height:14px;vertical-align:middle;" />
                                     ${radioIdDisplay}
                                 </div>
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
                                 <span class="card-tg" title="Talkgroup ${tg || '?'}">TG ${tg || '?'}<\/span>
-                                <span class="card-status live" title="Transmission in progress"><span class="material-icons small">fiber_manual_record<\/span> LIVE<\/span>
+                                <span class="card-status live" title="Transmission in progress"><span class="material-icons small">fiber_manual_record<\/span>LIVE<\/span>
                             <\/div>
                         <\/div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="🌐 Click to look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
-                                ${locationInfo}
-                                ${timeWeatherInfo}
+                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="🌐 Click to look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
+                                ${locationInfo ? `<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">${locationInfo}${timeWeatherInfo}</div>` : ''}
                                 <div class="card-details">
                                     ${alias ? `<div class="card-alias">${alias}<\/div>` : ''}
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}<\/div>` : ''}
@@ -4807,11 +4806,13 @@ class BrandmeisterMonitor {
                             locationInfo.coordinates.lon
                         );
                         
-                        // Update distance in location display
+                        // Update distance in location display with animation
                         const distanceElement = currentTransmissionCard.querySelector('.location-distance');
                         if (distanceElement) {
                             distanceElement.textContent = ` (${distance.km} ${window.t('distance.km')} / ${distance.miles} ${window.t('distance.mi')} ${window.t('distance.away')})`;
                             distanceElement.title = `Distance from your location`;
+                            // Trigger animation by adding loaded class
+                            setTimeout(() => distanceElement.classList.add('loaded'), 50);
                         }
                     }
 

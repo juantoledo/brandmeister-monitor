@@ -137,9 +137,9 @@
 
 [data-theme="dark"] .active-transmission::after {
     background: linear-gradient(135deg, 
-        rgba(30, 41, 59, 0.95) 0%, 
-        rgba(30, 41, 59, 0.92) 50%, 
-        rgba(30, 41, 59, 0.88) 100%);
+        rgba(30, 41, 59, 0.85) 0%, 
+        rgba(30, 41, 59, 0.80) 50%, 
+        rgba(30, 41, 59, 0.75) 100%);
 }
 
 [data-theme="dark"] .card-tg {
@@ -3462,7 +3462,7 @@ button:disabled {
 /* Active Transmissions - Redesigned Cards */
 .active-transmission {
     background: var(--surface);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     transition: all 0.3s ease;
@@ -3471,8 +3471,8 @@ button:disabled {
     background-repeat: no-repeat;
     background-size: auto 100%;
     animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 8px;
-    border-left: 5px solid var(--success);
+    border-radius: 6px;
+    border-left: 4px solid var(--success);
 }
 
 /* Exit animation class */
@@ -3489,9 +3489,9 @@ button:disabled {
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.95) 0%, 
-        rgba(255, 255, 255, 0.92) 50%, 
-        rgba(255, 255, 255, 0.88) 100%);
+        rgba(255, 255, 255, 0.85) 0%, 
+        rgba(255, 255, 255, 0.80) 50%, 
+        rgba(255, 255, 255, 0.75) 100%);
     pointer-events: none;
     z-index: 1;
 }
@@ -3507,7 +3507,7 @@ button:disabled {
     position: absolute;
     top: 0;
     left: 0;
-    width: 5px;
+    width: 4px;
     height: 100%;
     background: var(--success);
     animation: pulse 2s ease-in-out infinite;
@@ -3555,34 +3555,34 @@ button:disabled {
 
 /* Card Main Content */
 .card-main {
-    padding: 20px 24px 20px 24px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 /* Card Header - Callsign, Radio ID, and Controls */
 .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
+    align-items: center;
+    gap: 12px;
 }
 
 .card-identity {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: baseline;
+    gap: 12px;
     flex: 1;
     min-width: 0;
 }
 
 .card-callsign {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: var(--text);
-    letter-spacing: 1px;
-    line-height: 1.1;
+    letter-spacing: 0.5px;
+    line-height: 1;
     text-transform: uppercase;
 }
 
@@ -3610,12 +3610,13 @@ button:disabled {
 }
 
 .card-radio-id {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
+    white-space: nowrap;
 }
 
 .radio-id-link {
@@ -3636,44 +3637,50 @@ button:disabled {
 .card-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     flex-shrink: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-wrap: nowrap;
 }
 
 .card-tg {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     user-select: none;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .card-tg:hover {
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
 }
 
 .card-status.live {
     background: linear-gradient(135deg, var(--error) 0%, #b91c1c 100%);
     color: var(--white);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     display: flex;
     align-items: center;
-    gap: 4px;
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    gap: 3px;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);
     animation: statusPulse 2s ease-in-out infinite;
+    white-space: nowrap;
+}
+
+.card-status.live .material-icons.small {
+    font-size: 0.9rem;
 }
 
 @keyframes statusPulse {
@@ -3699,11 +3706,11 @@ button:disabled {
 
 /* Source Name - Prominently displayed */
 .card-source-name {
-    font-size: 1.75rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--primary);
-    line-height: 1.3;
-    margin: 4px 0;
+    line-height: 1.2;
+    margin: 0;
     word-wrap: break-word;
 }
 
@@ -3730,14 +3737,14 @@ button:disabled {
 
 /* Location Info from RadioID database */
 .card-location {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: var(--text);
     font-weight: 500;
-    margin: 4px 0;
-    line-height: 1.5;
+    margin: 0;
+    line-height: 1.3;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
 }
 
@@ -3745,12 +3752,20 @@ button:disabled {
 .location-distance {
     font-size: 0.85em;
     color: var(--text-muted);
-    font-weight: 500;
-    opacity: 0.9;
+    font-weight: 600;
+    opacity: 0;
     margin-left: 2px;
     background: var(--gray-100);
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transform: translateX(-10px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Distance loaded state */
+.location-distance.loaded {
+    opacity: 0.9;
+    transform: translateX(0);
 }
 
 /* Clickable location link styling - maintains original appearance */
@@ -3759,9 +3774,9 @@ button:disabled {
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 3px;
     position: relative;
 }
 
@@ -3781,37 +3796,64 @@ button:disabled {
 
 /* Time and Weather Info */
 .card-time-weather {
-    display: flex;
-    gap: 10px;
-    margin: 8px 0;
-    font-size: 0.875rem;
+    display: inline-flex;
+    gap: 6px;
+    margin: 0;
+    margin-left: 8px;
+    font-size: 0.75rem;
     flex-wrap: wrap;
 }
 
 .time-info, .weather-info {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
+    gap: 3px;
+    padding: 3px 6px;
     background: var(--gray-100);
-    border-radius: 6px;
+    border-radius: 4px;
     font-weight: 600;
     white-space: nowrap;
     font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     transition: all 0.2s ease;
     border: 1px solid var(--gray-200);
+    opacity: 0;
+    transform: translateY(-5px);
+    animation: fadeInDown 0.5s ease forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.time-info {
+    animation-delay: 0.1s;
+}
+
+.weather-info {
+    animation-delay: 0.2s;
+}
+
+.time-info .material-icons.small,
+.weather-info .material-icons.small {
+    font-size: 0.9rem;
 }
 
 .time-info {
     color: var(--primary);
-    min-width: 90px;
 }
 
 .time-info:hover {
     background: var(--gray-200);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .weather-info {
@@ -3821,7 +3863,7 @@ button:disabled {
 .weather-info:hover {
     background: var(--gray-200);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Card content layout with left content and chronometer */
@@ -3829,13 +3871,16 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 20px;
+    gap: 12px;
     position: relative;
 }
 
 .card-left {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .card-chronometer {
@@ -3849,15 +3894,15 @@ button:disabled {
 .card-chronometer .call-duration {
     background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
     color: var(--white);
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
     font-weight: 700;
     font-family: 'Courier New', 'SF Mono', Monaco, monospace;
-    min-width: 60px;
+    min-width: 50px;
     text-align: center;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
 }
 
 /* Large flag display in middle-right area - HIDDEN for background experiment */
@@ -3890,104 +3935,51 @@ button:disabled {
 .card-details {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 3px;
+    margin-top: 2px;
 }
 
 .card-alias {
     color: var(--text-muted);
     font-style: italic;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 0.8rem;
+    line-height: 1.3;
     font-weight: 500;
 }
 
 .card-phonetic {
     color: var(--text-light);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 400;
     font-style: italic;
-    opacity: 0.75;
-    line-height: 1.3;
+    opacity: 0.7;
+    line-height: 1.2;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 1250px) {
     .card-callsign {
-        font-size: 2.2rem;
+        font-size: 1.6rem;
     }
     
     .card-source-name {
-        font-size: 1.5rem;
-    }
-    
-    .card-location {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
     
     .card-main {
-        padding: 18px 20px;
+        padding: 10px 14px;
     }
 }
 
 @media (max-width: 768px) {
     .card-callsign {
-        font-size: 1.8rem;
+        font-size: 1.4rem;
     }
     
     .card-source-name {
-        font-size: 1.3rem;
-    }
-    
-    .card-location {
-        font-size: 0.9rem;
-    }
-    
-    .card-main {
-        padding: 16px 18px;
-        gap: 12px;
-    }
-    
-    .card-header {
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    .card-controls {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .card-time-weather {
-        gap: 8px;
-    }
-    
-    .time-info, .weather-info {
-        padding: 5px 8px;
-        font-size: 0.8rem;
-    }
-    
-    .card-chronometer .call-duration {
-        padding: 6px 12px;
-        font-size: 0.9rem;
-        min-width: 50px;
-    }
-}
-
-@media (max-width: 480px) {
-    .active-transmission {
-        margin-bottom: 6px;
-        border-radius: 6px;
-    }
-    
-    .card-callsign {
-        font-size: 1.5rem;
-    }
-    
-    .card-source-name {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     .card-location {
@@ -3995,12 +3987,32 @@ button:disabled {
     }
     
     .card-main {
-        padding: 14px 16px;
-        gap: 10px;
+        padding: 10px 12px;
+        gap: 6px;
+    }
+    
+    .card-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .card-identity {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .card-controls {
+        gap: 5px;
     }
     
     .card-tg, .card-status.live {
-        padding: 5px 10px;
+        padding: 3px 6px;
+        font-size: 0.65rem;
+    }
+    
+    .time-info, .weather-info {
+        padding: 2px 5px;
         font-size: 0.7rem;
     }
     
@@ -4008,6 +4020,54 @@ button:disabled {
         padding: 5px 10px;
         font-size: 0.85rem;
         min-width: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .active-transmission {
+        margin-bottom: 6px;
+        border-radius: 6px;
+        border-left: 4px solid var(--success);
+    }
+    
+    .card-callsign {
+        font-size: 1.3rem;
+    }
+    
+    .card-source-name {
+        font-size: 0.95rem;
+    }
+    
+    .card-location {
+        font-size: 0.8rem;
+    }
+    
+    .card-main {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+    
+    .card-header {
+        gap: 6px;
+    }
+    
+    .card-tg, .card-status.live {
+        padding: 3px 6px;
+        font-size: 0.6rem;
+    }
+    
+    .card-chronometer .call-duration {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        min-width: 40px;
+    }
+    
+    .card-alias {
+        font-size: 0.75rem;
+    }
+    
+    .card-phonetic {
+        font-size: 0.7rem;
     }
 }
 
@@ -4687,26 +4747,30 @@ button:disabled {
 .qrz-link {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     white-space: nowrap;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
     position: relative;
     cursor: pointer;
 }
 
+.qrz-link .material-icons.small {
+    font-size: 1rem;
+}
+
 .qrz-link:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
     background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
 }
 
