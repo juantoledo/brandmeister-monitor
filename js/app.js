@@ -947,9 +947,14 @@ class BrandmeisterMonitor {
         const km = R * c;
         const miles = km * 0.621371;
         
+        // Format with thousands separator (dot) and round to whole number
+        const formatDistance = (num) => {
+            return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        };
+        
         return {
-            km: Math.round(km),
-            miles: Math.round(miles)
+            km: formatDistance(km),
+            miles: formatDistance(miles)
         };
     }
 
@@ -1720,16 +1725,21 @@ class BrandmeisterMonitor {
             const sessionKey = sessionID ? String(sessionID).replace(/[^\w-]/g, '_') : `unknown_${Date.now()}`;
             let notify = false;
 
-            if (event === 'Session-Stop' && callsign !== '') {
-                // Process all Session-Stop events regardless of alias availability
+            if (event === 'Session-Stop') {
+                // Process all Session-Stop events - SessionID is the reliable identifier, not callsign
                 
                 const duration = stopTime - startTime;
+
+                // Warn if callsign is missing (helps diagnose stuck transmission issues)
+                if (!callsign || callsign.trim() === '') {
+                    console.warn(`⚠️ Session-Stop received with empty callsign (SessionID: ${sessionID}, TG: ${tg}) - will still process based on SessionID`);
+                }
 
                 // Log duration info for debugging
                 if (this.config.verbose) {
                     this.logDebug('Session-Stop received - IMMEDIATELY removing from active display', {
                         sessionID,
-                        callsign,
+                        callsign: callsign || '(empty)',
                         tg,
                         duration: duration.toFixed(1) + 's'
                     });
