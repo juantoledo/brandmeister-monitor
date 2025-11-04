@@ -137,9 +137,40 @@
 
 [data-theme="dark"] .active-transmission::after {
     background: linear-gradient(135deg, 
-        rgba(30, 41, 59, 0.92) 0%, 
-        rgba(30, 41, 59, 0.88) 50%, 
-        rgba(30, 41, 59, 0.85) 100%);
+        rgba(30, 41, 59, 0.95) 0%, 
+        rgba(30, 41, 59, 0.92) 50%, 
+        rgba(30, 41, 59, 0.88) 100%);
+}
+
+[data-theme="dark"] .card-tg {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+[data-theme="dark"] .card-status.live {
+    background: linear-gradient(135deg, var(--error) 0%, #b91c1c 100%);
+}
+
+[data-theme="dark"] .time-info,
+[data-theme="dark"] .weather-info {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .time-info:hover,
+[data-theme="dark"] .weather-info:hover {
+    background: var(--gray-600);
+}
+
+[data-theme="dark"] .location-distance {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .card-location-link:hover {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .radio-id-link:hover {
+    background: var(--gray-700);
 }
 
 [data-theme="dark"] .color-preview {
@@ -3431,19 +3462,22 @@ button:disabled {
 /* Active Transmissions - Redesigned Cards */
 .active-transmission {
     background: var(--surface);
-    margin-bottom: 2px;
+    margin-bottom: 8px;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
-    background-position: right;
+    background-position: right center;
     background-repeat: no-repeat;
-    animation: slideInFromRight 0.5s ease-out;
+    background-size: auto 100%;
+    animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    border-left: 5px solid var(--success);
 }
 
 /* Exit animation class */
 .active-transmission.exiting {
-    animation: slideOutToRight 0.5s ease-in forwards;
+    animation: slideOutToRight 0.4s cubic-bezier(0.4, 0, 0.6, 1) forwards;
 }
 
 /* Flag background overlay for better text readability */
@@ -3455,9 +3489,9 @@ button:disabled {
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.92) 0%, 
-        rgba(255, 255, 255, 0.88) 50%, 
-        rgba(255, 255, 255, 0.85) 100%);
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.92) 50%, 
+        rgba(255, 255, 255, 0.88) 100%);
     pointer-events: none;
     z-index: 1;
 }
@@ -3473,22 +3507,28 @@ button:disabled {
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 5px;
     height: 100%;
     background: var(--success);
-    animation: pulse 2s infinite;
+    animation: pulse 2s ease-in-out infinite;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%, 100% { 
+        opacity: 1;
+        transform: scaleY(1);
+    }
+    50% { 
+        opacity: 0.6;
+        transform: scaleY(0.95);
+    }
 }
 
 /* Entry animation from right */
 @keyframes slideInFromRight {
     from {
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateX(30px);
     }
     to {
         opacity: 1;
@@ -3504,21 +3544,21 @@ button:disabled {
     }
     to {
         opacity: 0;
-        transform: translateX(100%);
+        transform: translateX(30px);
     }
 }
 
 .active-transmission.active::before {
     background: var(--error);
-    animation: pulse 1s infinite;
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Card Main Content */
 .card-main {
-    padding: 16px 16px 16px 20px; /* Left padding accounts for accent bar */
+    padding: 20px 24px 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 /* Card Header - Callsign, Radio ID, and Controls */
@@ -3526,145 +3566,252 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
 }
 
 .card-identity {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     flex: 1;
+    min-width: 0;
 }
 
 .card-callsign {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     color: var(--text);
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.card-callsign a {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.card-callsign a:hover {
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.card-callsign a:hover::after {
+    content: '🌐';
+    position: absolute;
+    right: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+    opacity: 0.7;
 }
 
 .card-radio-id {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: var(--text-muted);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .radio-id-link {
     text-decoration: none;
     color: inherit;
     cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
 
 .radio-id-link:hover {
-    text-decoration: underline;
+    color: var(--primary);
+    background: var(--gray-100);
+    text-decoration: none;
 }
 
 .card-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .card-tg {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.card-tg:hover {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .card-status.live {
-    background: var(--error);
+    background: linear-gradient(135deg, var(--error) 0%, #b91c1c 100%);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { 
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    }
+    50% { 
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
+    }
 }
 
 .card-status.completed {
-    background: var(--success);
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* Source Name - Prominently displayed */
 .card-source-name {
-    font-size: 3.1rem;
-    font-weight: 600;
+    font-size: 1.75rem;
+    font-weight: 700;
     color: var(--primary);
-    line-height: 1.2;
-    margin: -8px 0 -12px 0;
-    font-style: italic;
+    line-height: 1.3;
+    margin: 4px 0;
+    word-wrap: break-word;
+}
+
+.card-source-name a {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.card-source-name a:hover {
+    color: var(--primary-dark);
+    transform: translateX(2px);
+}
+
+.card-source-name a:hover::after {
+    content: '🌐';
+    position: absolute;
+    margin-left: 8px;
+    font-size: 0.6em;
+    opacity: 0.7;
 }
 
 /* Location Info from RadioID database */
 .card-location {
-    font-size: 2.2rem;
-    color: var(--text-secondary);
+    font-size: 1.1rem;
+    color: var(--text);
     font-weight: 500;
-    margin: 2px 0 4px 0;
-    opacity: 0.9;
+    margin: 4px 0;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 /* Distance display within location */
 .location-distance {
-    font-size: 0.75em;
+    font-size: 0.85em;
     color: var(--text-muted);
-    font-weight: 400;
-    opacity: 0.85;
-    margin-left: 4px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-left: 2px;
+    background: var(--gray-100);
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
 /* Clickable location link styling - maintains original appearance */
 .card-location-link {
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: relative;
 }
 
 .card-location-link:hover {
-    opacity: 0.7;
+    color: var(--primary);
+    background: var(--gray-100);
+    transform: translateX(2px);
+}
+
+.card-location-link:hover::before {
+    content: '🔍';
+    position: absolute;
+    left: -20px;
+    font-size: 0.9em;
+    opacity: 0.8;
 }
 
 /* Time and Weather Info */
 .card-time-weather {
     display: flex;
-    gap: 12px;
-    margin: 4px 0;
+    gap: 10px;
+    margin: 8px 0;
     font-size: 0.875rem;
-    color: var(--text-muted);
+    flex-wrap: wrap;
 }
 
 .time-info, .weather-info {
     display: flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px 6px;
+    gap: 4px;
+    padding: 6px 10px;
     background: var(--gray-100);
-    border-radius: 4px;
-    font-weight: 500;
+    border-radius: 6px;
+    font-weight: 600;
     white-space: nowrap;
     font-family: 'Inter', sans-serif;
-    font-size: 0.8rem; /* Slightly smaller to fit day + time */
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    border: 1px solid var(--gray-200);
 }
 
 .time-info {
     color: var(--primary);
-    min-width: 70px; /* Ensure enough space for "Mon 14:35" */
+    min-width: 90px;
 }
 
 .time-info:hover {
     background: var(--gray-200);
-    transform: scale(1.02);
-    transition: all 0.2s ease;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .weather-info {
@@ -3673,8 +3820,8 @@ button:disabled {
 
 .weather-info:hover {
     background: var(--gray-200);
-    transform: scale(1.02);
-    transition: all 0.2s ease;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Card content layout with left content and chronometer */
@@ -3682,12 +3829,13 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 16px;
+    gap: 20px;
     position: relative;
 }
 
 .card-left {
     flex: 1;
+    min-width: 0;
 }
 
 .card-chronometer {
@@ -3699,16 +3847,17 @@ button:disabled {
 }
 
 .card-chronometer .call-duration {
-    background: var(--success);
+    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    font-family: 'Courier New', monospace;
-    min-width: 45px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Courier New', 'SF Mono', Monaco, monospace;
+    min-width: 60px;
     text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
 }
 
 /* Large flag display in middle-right area - HIDDEN for background experiment */
@@ -3741,35 +3890,124 @@ button:disabled {
 .card-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-top: 4px;
+    gap: 6px;
+    margin-top: 8px;
 }
 
 .card-alias {
     color: var(--text-muted);
     font-style: italic;
-    font-size: 0.875rem;
-    line-height: 1.3;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    font-weight: 500;
 }
 
 .card-phonetic {
     color: var(--text-light);
-    font-size: 0.90rem;
+    font-size: 0.85rem;
     font-weight: 400;
     font-style: italic;
-    opacity: 0.8;
-    line-height: 1.2;
+    opacity: 0.75;
+    line-height: 1.3;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    letter-spacing: 0.5px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 1250px) {
     .card-callsign {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
     
     .card-source-name {
-        font-size: 3rem;
+        font-size: 1.5rem;
+    }
+    
+    .card-location {
+        font-size: 1rem;
+    }
+    
+    .card-main {
+        padding: 18px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-callsign {
+        font-size: 1.8rem;
+    }
+    
+    .card-source-name {
+        font-size: 1.3rem;
+    }
+    
+    .card-location {
+        font-size: 0.9rem;
+    }
+    
+    .card-main {
+        padding: 16px 18px;
+        gap: 12px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .card-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .card-time-weather {
+        gap: 8px;
+    }
+    
+    .time-info, .weather-info {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .card-chronometer .call-duration {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        min-width: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .active-transmission {
+        margin-bottom: 6px;
+        border-radius: 6px;
+    }
+    
+    .card-callsign {
+        font-size: 1.5rem;
+    }
+    
+    .card-source-name {
+        font-size: 1.1rem;
+    }
+    
+    .card-location {
+        font-size: 0.85rem;
+    }
+    
+    .card-main {
+        padding: 14px 16px;
+        gap: 10px;
+    }
+    
+    .card-tg, .card-status.live {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+    
+    .card-chronometer .call-duration {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        min-width: 45px;
     }
 }
 
@@ -4447,40 +4685,33 @@ button:disabled {
 }
 
 .qrz-link {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    gap: 4px;
     white-space: nowrap;
-    
-    /* Bottom container on very small screens - ensure visibility */
-    .bottom-container {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .console-panel {
-        /* Keep console functional and visible on small screens */
-        height: var(--console-height);
-        flex-shrink: 0;
-    }
-    
-    .console-panel.minimized {
-        height: 44px;
-        flex-shrink: 0;
-    }
-    
-    .overlay {
-        flex-shrink: 0;
-        position: relative;
-    }
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.5px;
+    position: relative;
+    cursor: pointer;
+}
+
+.qrz-link:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+}
+
+.qrz-link:active {
+    transform: translateY(0) scale(0.98);
 }
 
 

@@ -2093,7 +2093,7 @@ class BrandmeisterMonitor {
                         // Create flag background URL from flag-icons CDN
                         flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
                         // Make location text clickable for Google search with distance placeholder
-                        locationInfo = `<div class="card-location card-location-link" title="Click to search location on Google">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
+                        locationInfo = `<div class="card-location card-location-link" title="🔍 Click to search this location on Google Maps">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
                         
                         // Add time and weather info placeholder only if not monitoring all talkgroups
                         if (!this.config.monitorAllTalkgroups) {
@@ -2112,7 +2112,7 @@ class BrandmeisterMonitor {
                 const displayName = radioIdInfo?.name || sourceName;
                 const radioId = group.sourceID || '-';
                 const radioIdDisplay = radioId !== '-' 
-                    ? `<a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="View ${radioId} on RadioID.net">${radioId}</a>`
+                    ? `<a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="🔍 View RadioID ${radioId} details on RadioID.net">${radioId}</a>`
                     : radioId;
                 
                 activeEntry.innerHTML = `
@@ -2120,7 +2120,7 @@ class BrandmeisterMonitor {
                         <div class="card-header">
                             <div class="card-identity">
                                 <div class="card-callsign">
-                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="Look up ${callsign} on QRZ.com">${callsign}</a>
+                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="🌐 Click to look up ${callsign} on QRZ.com">${callsign}</a>
                                 </div>
                                 <div class="card-radio-id">
                                     <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />
@@ -2129,13 +2129,13 @@ class BrandmeisterMonitor {
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
-                                <span class="card-tg">TG ${tg || '?'}<\/span>
-                                <span class="card-status live"><span class="material-icons small">fiber_manual_record<\/span> LIVE<\/span>
+                                <span class="card-tg" title="Talkgroup ${tg || '?'}">TG ${tg || '?'}<\/span>
+                                <span class="card-status live" title="Transmission in progress"><span class="material-icons small">fiber_manual_record<\/span> LIVE<\/span>
                             <\/div>
                         <\/div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
+                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="🌐 Click to look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
                                 ${locationInfo}
                                 ${timeWeatherInfo}
                                 <div class="card-details">
@@ -3067,7 +3067,7 @@ class BrandmeisterMonitor {
     createQRZLogbookLink(callsign) {
         if (!callsign) return '';
         const cleanCallsign = callsign.toUpperCase().trim();
-        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="Look up ${cleanCallsign} on QRZ.com"><span class="material-icons small">assignment</span> QRZ</a>`;
+        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="🌐 Open ${cleanCallsign} profile on QRZ.com"><span class="material-icons small">assignment</span> QRZ</a>`;
     }
 
     addLogHeader() {
