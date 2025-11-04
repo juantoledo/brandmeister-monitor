@@ -137,7 +137,7 @@ const Languages = {
             
             // About section
             'about.title': 'Brandmeister Monitor',
-            'about.version': 'Version 0.9.0',
+            'about.version': 'Version 0.9.1',
             'about.developer.title': '👨‍💻 Developer',
             'about.website': 'cd3dxz.radio',
             'about.powered.title': '🤖 Powered by AI',
@@ -339,7 +339,7 @@ const Languages = {
             
             // About section
             'about.title': 'Monitor Brandmeister',
-            'about.version': 'Versión 0.9.0',
+            'about.version': 'Versión 0.9.1',
             'about.developer.title': '👨‍💻 Desarrollador',
             'about.website': 'cd3dxz.radio',
             'about.powered.title': '🤖 Impulsado por IA',
@@ -537,7 +537,7 @@ const Languages = {
             
             // About section
             'about.title': 'Monitor Brandmeister',
-            'about.version': 'v0.9.0',
+            'about.version': 'v0.9.1',
             'about.developer.title': '👨‍💻 Desenvolvedor',
             'about.developer.info': 'Desenvolvido por CD3DXZ com a assistência do Claude Sonnet 3.5',
             'about.developer.website': 'cd3dxz.radio',
