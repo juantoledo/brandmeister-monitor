@@ -673,11 +673,11 @@ body {
     font-size: 1rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 32px;
-    height: 32px;
+    min-width: 44px;
+    height: 44px;
     font-weight: 600;
 }
 
@@ -688,7 +688,7 @@ body {
 
 /* Ensure flag emoji is always visible */
 #currentLanguageFlag {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     line-height: 1;
     display: inline-block;
 }
@@ -783,6 +783,7 @@ body {
 .theme-toggle .material-icons,
 .sidebar-toggle .material-icons {
     color: inherit;
+    font-size: 1.5rem;
 }
 
 .install-button {
@@ -827,14 +828,14 @@ body {
     justify-content: center;
     background: transparent;
     border: none;
-    font-size: 1rem;
+    font-size: 1.5rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 32px;
-    height: 32px;
+    min-width: 44px;
+    height: 44px;
     font-weight: 600;
 }
 
@@ -863,14 +864,14 @@ body {
     justify-content: center;
     background: transparent;
     border: none;
-    font-size: 1rem;
+    font-size: 1.5rem;
     color: var(--primary);
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     border-radius: 0;
     transition: all 0.2s;
-    min-width: 32px;
-    height: 32px;
+    min-width: 44px;
+    height: 44px;
     font-weight: 600;
 }
 
@@ -4161,7 +4162,6 @@ button:disabled {
     .app-header {
         padding: 0 10px;
         min-height: 46px;
-        flex-wrap: wrap;
     }
     
     .header-content {
@@ -4214,22 +4214,27 @@ button:disabled {
     }
     
     .header-controls {
-        gap: 2px;
+        gap: 4px;
     }
     
     .language-button,
     .install-button,
     .theme-toggle,
     .sidebar-toggle {
-        min-width: 30px;
-        height: 30px;
-        padding: 4px;
-        font-size: 0.9375rem;
+        min-width: 48px;
+        height: 48px;
+        padding: 10px;
+        font-size: 1.5rem;
     }
     
-    /* Keep language flag visible */
+    /* Keep language flag visible and larger on mobile */
     #currentLanguageFlag {
-        font-size: 1.125rem;
+        font-size: 1.75rem;
+    }
+    
+    .theme-toggle .material-icons,
+    .sidebar-toggle .material-icons {
+        font-size: 1.75rem;
     }
     
     /* Bottom container responsive behavior */
