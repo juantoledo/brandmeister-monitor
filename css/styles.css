@@ -556,6 +556,13 @@ body {
     gap: 10px;
 }
 
+.app-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .header-content h1 {
     font-size: 1.125rem;
     font-weight: 600;
@@ -4196,6 +4203,11 @@ button:disabled {
         line-height: 1.2;
     }
     
+    .app-logo {
+        width: 32px;
+        height: 32px;
+    }
+    
     .app-header .material-icons {
         margin-right: 4px;
         font-size: 1rem;
@@ -4280,6 +4292,11 @@ button:disabled {
     
     .header-content h1 {
         font-size: 0.875rem;
+    }
+    
+    .app-logo {
+        width: 28px;
+        height: 28px;
     }
     
     .app-header .material-icons {

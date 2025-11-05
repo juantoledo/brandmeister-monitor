@@ -191,6 +191,24 @@ const Languages = {
             'distance.away': 'away',
             'distance.km': 'km',
             'distance.mi': 'mi',
+            'distance.from.location': 'Distance from your location',
+            
+            // Tooltips
+            'tooltip.lookup.qrz': 'Look up {callsign} on QRZ.com',
+            'tooltip.click.lookup.qrz': '🌐 Click to look up {callsign} on QRZ.com',
+            'tooltip.open.qrz': '🌐 Open {callsign} profile on QRZ.com',
+            'tooltip.view.radioid': 'View {radioId} on RadioID.net',
+            'tooltip.view.radioid.details': '🔍 View RadioID {radioId} details on RadioID.net',
+            'tooltip.search.location': '🔍 Click to search this location on Google Maps',
+            'tooltip.talkgroup': 'Talkgroup {number}',
+            'tooltip.transmission.live': 'Transmission in progress',
+            
+            // Status Messages
+            'status.loading': 'Loading...',
+            'status.weather.unavailable': 'Local weather unavailable',
+            
+            // Labels
+            'label.radioid': 'RadioID',
             
             // RadioID Database
             'radioid.records.loaded': 'records loaded',
@@ -393,6 +411,24 @@ const Languages = {
             'distance.away': 'de distancia',
             'distance.km': 'km',
             'distance.mi': 'mi',
+            'distance.from.location': 'Distancia desde tu ubicación',
+            
+            // Tooltips
+            'tooltip.lookup.qrz': 'Buscar {callsign} en QRZ.com',
+            'tooltip.click.lookup.qrz': '🌐 Clic para buscar {callsign} en QRZ.com',
+            'tooltip.open.qrz': '🌐 Abrir perfil de {callsign} en QRZ.com',
+            'tooltip.view.radioid': 'Ver {radioId} en RadioID.net',
+            'tooltip.view.radioid.details': '🔍 Ver detalles de RadioID {radioId} en RadioID.net',
+            'tooltip.search.location': '🔍 Clic para buscar esta ubicación en Google Maps',
+            'tooltip.talkgroup': 'Grupo de conversación {number}',
+            'tooltip.transmission.live': 'Transmisión en progreso',
+            
+            // Status Messages
+            'status.loading': 'Cargando...',
+            'status.weather.unavailable': 'Clima local no disponible',
+            
+            // Labels
+            'label.radioid': 'RadioID',
             
             // RadioID Database
             'radioid.records.loaded': 'registros cargados',
@@ -622,6 +658,24 @@ const Languages = {
             'distance.away': 'de distância',
             'distance.km': 'km',
             'distance.mi': 'mi',
+            'distance.from.location': 'Distância da sua localização',
+            
+            // Tooltips
+            'tooltip.lookup.qrz': 'Pesquisar {callsign} no QRZ.com',
+            'tooltip.click.lookup.qrz': '🌐 Clique para pesquisar {callsign} no QRZ.com',
+            'tooltip.open.qrz': '🌐 Abrir perfil de {callsign} no QRZ.com',
+            'tooltip.view.radioid': 'Ver {radioId} no RadioID.net',
+            'tooltip.view.radioid.details': '🔍 Ver detalhes do RadioID {radioId} no RadioID.net',
+            'tooltip.search.location': '🔍 Clique para pesquisar esta localização no Google Maps',
+            'tooltip.talkgroup': 'Grupo de conversa {number}',
+            'tooltip.transmission.live': 'Transmissão em andamento',
+            
+            // Status Messages
+            'status.loading': 'Carregando...',
+            'status.weather.unavailable': 'Clima local indisponível',
+            
+            // Labels
+            'label.radioid': 'RadioID',
             
             // Units
             'unit.seconds': 's',

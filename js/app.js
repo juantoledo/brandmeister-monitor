@@ -1997,24 +1997,24 @@ class BrandmeisterMonitor {
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
                 if (callsignElement) {
-                    callsignElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="Look up ${callsign} on QRZ.com">${callsign}</a>`;
+                    callsignElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-callsign" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', callsign)}">${callsign}</a>`;
                 }
                 if (radioIdElement) {
                     const radioId = group.sourceID || '-';
                     if (radioId !== '-') {
-                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" /><a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="View ${radioId} on RadioID.net">${radioId}</a>`;
+                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="${window.t('label.radioid')}" title="${window.t('label.radioid')}" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" /><a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="${window.t('tooltip.view.radioid').replace('{radioId}', radioId)}">${radioId}</a>`;
                     } else {
-                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />${radioId}`;
+                        radioIdElement.innerHTML = `<img src="icons/radioid.png" alt="${window.t('label.radioid')}" title="${window.t('label.radioid')}" style="width:16px;height:16px;vertical-align:middle;margin-right:2px;" />${radioId}`;
                     }
                 }
                 if (sourceNameElement && sourceName) {
-                    sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${sourceName}</a>`;
+                    sourceNameElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', callsign)}">${sourceName}</a>`;
                 } else if (sourceNameElement && !sourceName) {
                     sourceNameElement.remove();
                 } else if (!sourceNameElement && sourceName) {
                     const newSourceNameEl = document.createElement('div');
                     newSourceNameEl.className = 'card-source-name';
-                    newSourceNameEl.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="Look up ${callsign} on QRZ.com">${sourceName}</a>`;
+                    newSourceNameEl.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="card-source-name" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', callsign)}">${sourceName}</a>`;
                     existingActiveEntry.querySelector('.card-header').insertAdjacentElement('afterend', newSourceNameEl);
                 }
                 if (tgElement) tgElement.textContent = `TG ${tg || '?'}`;
@@ -2093,12 +2093,12 @@ class BrandmeisterMonitor {
                         // Create flag background URL from flag-icons CDN
                         flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
                         // Make location text clickable for Google search with distance placeholder
-                        locationInfo = `<div class="card-location card-location-link" title="🔍 Click to search this location on Google Maps">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
+                        locationInfo = `<div class="card-location card-location-link" title="${window.t('tooltip.search.location')}">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
                         
                         // Add time and weather info placeholder only if not monitoring all talkgroups
                         if (!this.config.monitorAllTalkgroups) {
                             timeWeatherInfo = `<div class="card-time-weather" data-city="${city}" data-state="${state}" data-country="${country}">
-                                <span class="time-info"><span class="material-icons small">schedule</span> Loading...</span>
+                                <span class="time-info"><span class="material-icons small">schedule</span> ${window.t('status.loading')}</span>
                                 <span class="weather-info"><span class="material-icons small">public</span> --°</span>
                             </div>`;
                             
@@ -2112,7 +2112,7 @@ class BrandmeisterMonitor {
                 const displayName = radioIdInfo?.name || sourceName;
                 const radioId = group.sourceID || '-';
                 const radioIdDisplay = radioId !== '-' 
-                    ? `<a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="🔍 View RadioID ${radioId} details on RadioID.net">${radioId}</a>`
+                    ? `<a href="https://radioid.net/database/view?id=${encodeURIComponent(radioId)}" target="_blank" class="radio-id-link" title="${window.t('tooltip.view.radioid.details').replace('{radioId}', radioId)}">${radioId}</a>`
                     : radioId;
                 
                 activeEntry.innerHTML = `
@@ -2120,22 +2120,22 @@ class BrandmeisterMonitor {
                         <div class="card-header">
                             <div class="card-identity">
                                 <div class="card-callsign">
-                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="🌐 Click to look up ${callsign} on QRZ.com">${callsign}</a>
+                                    <a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="${window.t('tooltip.click.lookup.qrz').replace('{callsign}', callsign)}">${callsign}</a>
                                 </div>
                                 <div class="card-radio-id">
-                                    <img src="icons/radioid.png" alt="RadioID" title="RadioID" style="width:14px;height:14px;vertical-align:middle;" />
+                                    <img src="icons/radioid.png" alt="${window.t('label.radioid')}" title="${window.t('label.radioid')}" style="width:14px;height:14px;vertical-align:middle;" />
                                     ${radioIdDisplay}
                                 </div>
                             </div>
                             <div class="card-controls">
                                 ${qrzLink}
-                                <span class="card-tg" title="Talkgroup ${tg || '?'}">TG ${tg || '?'}<\/span>
-                                <span class="card-status live" title="Transmission in progress"><span class="material-icons small">fiber_manual_record<\/span>LIVE<\/span>
+                                <span class="card-tg" title="${window.t('tooltip.talkgroup').replace('{number}', tg || '?')}">TG ${tg || '?'}<\/span>
+                                <span class="card-status live" title="${window.t('tooltip.transmission.live')}"><span class="material-icons small">fiber_manual_record<\/span>LIVE<\/span>
                             <\/div>
                         <\/div>
                         <div class="card-content">
                             <div class="card-left">
-                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="🌐 Click to look up ${callsign} on QRZ.com">${displayName}</a></div>` : ''}
+                                ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="${window.t('tooltip.click.lookup.qrz').replace('{callsign}', callsign)}">${displayName}</a></div>` : ''}
                                 ${locationInfo ? `<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">${locationInfo}${timeWeatherInfo}</div>` : ''}
                                 <div class="card-details">
                                     ${alias ? `<div class="card-alias">${alias}<\/div>` : ''}
@@ -2949,7 +2949,7 @@ class BrandmeisterMonitor {
             const logEntry = activeCall.initialLogEntry;
             // Always render callsign as QRZ.com link
             if (logEntry && logEntry.querySelector('.log-callsign')) {
-                logEntry.querySelector('.log-callsign').innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="qrz-callsign" title="Look up ${callsign} on QRZ.com">${displayName}</a>`;
+                logEntry.querySelector('.log-callsign').innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" class="qrz-callsign" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', callsign)}">${displayName}</a>`;
             }
             if (logEntry && logEntry.querySelector('.log-details')) {
                 logEntry.querySelector('.log-details').textContent = startDetails;
@@ -3066,7 +3066,7 @@ class BrandmeisterMonitor {
     createQRZLogbookLink(callsign) {
         if (!callsign) return '';
         const cleanCallsign = callsign.toUpperCase().trim();
-        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="🌐 Open ${cleanCallsign} profile on QRZ.com"><span class="material-icons small">assignment</span> QRZ</a>`;
+        return `<a href="https://www.qrz.com/db/${encodeURIComponent(cleanCallsign)}" target="_blank" class="qrz-link" title="${window.t('tooltip.open.qrz').replace('{callsign}', cleanCallsign)}"><span class="material-icons small">assignment</span> QRZ</a>`;
     }
 
     addLogHeader() {
@@ -3185,7 +3185,7 @@ class BrandmeisterMonitor {
             <div class="compact-log-line" data-country="${countryCode}" title="${radioIdInfo?.country || '-'}">
                 <div class="compact-log-line-left">
                     <span class="compact-timestamp">${timestamp}</span>
-                    <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>
+                    <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', actualCallsign)}">${actualCallsign}</a>
                     <span class="compact-talkgroup">${talkGroup}</span>
                 </div>
                 <div class="compact-log-line-right">
@@ -3224,7 +3224,7 @@ class BrandmeisterMonitor {
             const parts = titleText.trim().split(' ');
             const actualCallsign = parts[parts.length - 1];
             // Restore QRZ.com link
-            titleElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="qrz-callsign" title="Look up ${actualCallsign} on QRZ.com">${actualCallsign}</a>`;
+            titleElement.innerHTML = `<a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="qrz-callsign" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', actualCallsign)}">${actualCallsign}</a>`;
         }
 
         const fieldsContainer = logEntry.querySelector('.log-card-fields') || logEntry.querySelector('.log-fields');
@@ -4810,7 +4810,7 @@ class BrandmeisterMonitor {
                         const distanceElement = currentTransmissionCard.querySelector('.location-distance');
                         if (distanceElement) {
                             distanceElement.textContent = ` (${distance.km} ${window.t('distance.km')} / ${distance.miles} ${window.t('distance.mi')} ${window.t('distance.away')})`;
-                            distanceElement.title = `Distance from your location`;
+                            distanceElement.title = window.t('distance.from.location');
                             // Trigger animation by adding loaded class
                             setTimeout(() => distanceElement.classList.add('loaded'), 50);
                         }
@@ -4999,8 +4999,8 @@ class BrandmeisterMonitor {
         
         const weatherElement = this.elements.localWeather.querySelector('.weather-info');
         if (weatherElement) {
-            weatherElement.innerHTML = `<span class="material-icons small">location_off</span> Local weather unavailable`;
-            weatherElement.title = 'Unable to get local weather';
+            weatherElement.innerHTML = `<span class="material-icons small">location_off</span> ${window.t('status.weather.unavailable')}`;
+            weatherElement.title = window.t('status.weather.unavailable');
             weatherElement.style.cursor = 'default';
             weatherElement.onclick = null;
         }
