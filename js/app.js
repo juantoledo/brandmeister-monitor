@@ -56,6 +56,14 @@ class BrandmeisterMonitor {
         this.locationWeatherService = null;
         this.weatherLoadTimers = new Map(); // Track delayed weather loading
 
+        // Guided Tour
+        this.guidedTour = null;
+        if (window.GuidedTour) {
+            this.guidedTour = new window.GuidedTour();
+        }
+        this.tourPaused = false;
+        this.pausedEvents = [];
+
         this.initializeUI();
         
         // Initialize talkgroup database first, then continue with other initializations
@@ -888,6 +896,11 @@ class BrandmeisterMonitor {
     }
 
     updateActiveCallChronometers() {
+        // Don't update during tour
+        if (this.tourPaused) {
+            return;
+        }
+        
         // Update duration display for all active transmissions
         const activeTransmissions = Object.keys(this.transmissionGroups).filter(sessionKey => {
             const group = this.transmissionGroups[sessionKey];
@@ -1563,6 +1576,11 @@ class BrandmeisterMonitor {
         // Update the active TGs display
         this.updateActiveTgsDisplay();
         
+        // Mark that monitoring has started for the guided tour
+        if (this.guidedTour) {
+            this.guidedTour.markMonitoringStarted();
+        }
+        
         return true;
     }
 
@@ -1648,9 +1666,35 @@ class BrandmeisterMonitor {
         this.elements.disconnectBtn.disabled = true;
     }
 
+    pauseForTour() {
+        this.tourPaused = true;
+        this.pausedEvents = [];
+        console.log('🎓 App paused for guided tour');
+    }
+
+    resumeFromTour() {
+        this.tourPaused = false;
+        console.log('▶️ App resumed after guided tour');
+        
+        // Process any events that came in during the tour
+        if (this.pausedEvents.length > 0) {
+            console.log(`Processing ${this.pausedEvents.length} events that arrived during tour`);
+            this.pausedEvents.forEach(data => {
+                this.onMqttMessage(data);
+            });
+            this.pausedEvents = [];
+        }
+    }
+
     onMqttMessage(data) {
         // Don't process messages if not connected
         if (!this.isConnected) {
+            return;
+        }
+        
+        // Queue messages during tour
+        if (this.tourPaused) {
+            this.pausedEvents.push(data);
             return;
         }
         
@@ -2156,6 +2200,14 @@ class BrandmeisterMonitor {
                 
                 // Add to active container at the bottom (newest last)
                 this.elements.activeContainer.appendChild(activeEntry);
+                
+                // Trigger guided tour on first transmission if applicable
+                if (this.guidedTour && this.guidedTour.shouldShowTour()) {
+                    // Wait a moment for the card to render and animations to settle
+                    setTimeout(() => {
+                        this.guidedTour.startTour(activeEntry);
+                    }, 500);
+                }
                 
                 // Add click handler for location link if it exists
                 if (countryCode && radioIdInfo) {
@@ -5178,6 +5230,36 @@ function initializeNewInterface() {
                 });
             }
         });
+        
+        // Restart Tour button
+        const restartTourBtn = document.getElementById('restartTourBtn');
+        if (restartTourBtn && window.brandmeisterMonitor.guidedTour) {
+            restartTourBtn.addEventListener('click', () => {
+                // Close the about modal
+                aboutModal.classList.remove('show');
+                document.body.style.overflow = '';
+                
+                // Reset and trigger tour on next transmission
+                window.brandmeisterMonitor.guidedTour.resetTour();
+                window.brandmeisterMonitor.guidedTour.markMonitoringStarted();
+                
+                // If there's already an active transmission, start tour immediately
+                const firstTransmission = document.querySelector('.active-transmission');
+                if (firstTransmission) {
+                    setTimeout(() => {
+                        window.brandmeisterMonitor.guidedTour.startTour(firstTransmission);
+                    }, 300);
+                } else {
+                    // Show a message that tour will start with next transmission
+                    alert(window.t('tour.wait.message') || 'The guided tour will start with the next transmission received.');
+                }
+                
+                window.brandmeisterMonitor.logWithAttributes('Guided tour restarted', {
+                    sessionID: window.brandmeisterMonitor.sessionID,
+                    action: 'tour_restart'
+                });
+            });
+        }
         
         // Close modal via ESC key
         document.addEventListener('keydown', (e) => {

@@ -48,6 +48,7 @@
     <script src="js/talkgroups.js"></script>
     <script src="js/talkgroup-manager.js"></script>
     <script src="js/location-weather.js"></script>
+    <script src="js/guided-tour.js"></script>
     <script src="js/pwa-install.js"></script>
 </head>
 <body>
@@ -384,6 +385,15 @@
                     <div class="about-section-modal">
                         <h4 data-i18n="about.support.title">💡 Support</h4>
                         <p data-i18n="about.support.description">For issues, feature requests, or contributions, please visit the GitHub repository.</p>
+                    </div>
+                    
+                    <div class="about-section-modal">
+                        <h4 data-i18n="about.tour.title">🎯 Guided Tour</h4>
+                        <p data-i18n="about.tour.description">Take a guided tour to learn about the clickable elements in transmission cards.</p>
+                        <button id="restartTourBtn" class="tour-restart-btn">
+                            <span class="material-icons">explore</span>
+                            <span data-i18n="about.tour.restart">Restart Tour</span>
+                        </button>
                     </div>
                 </div>
             </div>

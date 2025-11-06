@@ -152,6 +152,9 @@ const Languages = {
             'about.features.offline': 'Offline capability with service worker',
             'about.support.title': '💡 Support',
             'about.support.description': 'For issues, feature requests, or contributions, please visit the GitHub repository.',
+            'about.tour.title': '🎯 Guided Tour',
+            'about.tour.description': 'Take a guided tour to learn about the clickable elements in transmission cards.',
+            'about.tour.restart': 'Restart Tour',
             
             // Onboarding
             'onboarding.welcome': '👋 Welcome to Brandmeister Monitor!',
@@ -209,6 +212,29 @@ const Languages = {
             
             // Labels
             'label.radioid': 'RadioID',
+            
+            // Distance
+            'distance.from.location': 'Distance from your location',
+            
+            // Guided Tour
+            'tour.close': 'Close tour',
+            'tour.previous': 'Previous',
+            'tour.next': 'Next',
+            'tour.finish': 'Finish',
+            'tour.of': 'of',
+            'tour.callsign.title': 'Callsign Link',
+            'tour.callsign.description': 'Click on the callsign to look up the operator on QRZ.com and view their profile, license information, and contact details.',
+            'tour.radioid.title': 'Radio ID',
+            'tour.radioid.description': 'Click on the Radio ID to view details on RadioID.net, including the DMR ID registration and operator information.',
+            'tour.talkgroup.title': 'Talkgroup Badge',
+            'tour.talkgroup.description': 'This badge shows the talkgroup number. You can click to view more details about this specific talkgroup.',
+            'tour.location.title': 'Location Search',
+            'tour.location.description': 'Click on the location to search it on Google Maps and see where the transmission is coming from.',
+            'tour.distance.title': 'Distance Indicator',
+            'tour.distance.description': 'Shows how far the transmission is from your configured base location. Helps you understand the range of the signal.',
+            'tour.source.title': 'Operator Name',
+            'tour.source.description': 'The name of the operator or station. Click to look up more information about this operator on QRZ.com.',
+            'tour.wait.message': 'The guided tour will start with the next transmission received.',
             
             // RadioID Database
             'radioid.records.loaded': 'records loaded',
@@ -372,6 +398,9 @@ const Languages = {
             'about.features.offline': 'Capacidad sin conexión con service worker',
             'about.support.title': '💡 Soporte',
             'about.support.description': 'Para problemas, solicitudes de características o contribuciones, visita el repositorio de GitHub.',
+            'about.tour.title': '🎯 Tour Guiado',
+            'about.tour.description': 'Realiza un tour guiado para conocer los elementos clicables en las tarjetas de transmisión.',
+            'about.tour.restart': 'Reiniciar Tour',
             
             // Onboarding
             'onboarding.welcome': '👋 ¡Bienvenido a Brandmeister Monitor!',
@@ -429,6 +458,32 @@ const Languages = {
             
             // Labels
             'label.radioid': 'RadioID',
+            
+            // Distance
+            'distance.away': 'de distancia',
+            'distance.km': 'km',
+            'distance.mi': 'mi',
+            'distance.from.location': 'Distancia desde tu ubicación',
+            
+            // Guided Tour
+            'tour.close': 'Cerrar tour',
+            'tour.previous': 'Anterior',
+            'tour.next': 'Siguiente',
+            'tour.finish': 'Finalizar',
+            'tour.of': 'de',
+            'tour.callsign.title': 'Enlace de Indicativo',
+            'tour.callsign.description': 'Haz clic en el indicativo para buscar al operador en QRZ.com y ver su perfil, información de licencia y detalles de contacto.',
+            'tour.radioid.title': 'ID de Radio',
+            'tour.radioid.description': 'Haz clic en el ID de Radio para ver detalles en RadioID.net, incluyendo el registro del DMR ID e información del operador.',
+            'tour.talkgroup.title': 'Insignia de Grupo de Conversación',
+            'tour.talkgroup.description': 'Esta insignia muestra el número del grupo de conversación. Puedes hacer clic para ver más detalles sobre este grupo específico.',
+            'tour.location.title': 'Búsqueda de Ubicación',
+            'tour.location.description': 'Haz clic en la ubicación para buscarla en Google Maps y ver de dónde proviene la transmisión.',
+            'tour.distance.title': 'Indicador de Distancia',
+            'tour.distance.description': 'Muestra la distancia de la transmisión desde tu ubicación base configurada. Te ayuda a entender el alcance de la señal.',
+            'tour.source.title': 'Nombre del Operador',
+            'tour.source.description': 'El nombre del operador o estación. Haz clic para buscar más información sobre este operador en QRZ.com.',
+            'tour.wait.message': 'El tour guiado comenzará con la próxima transmisión recibida.',
             
             // RadioID Database
             'radioid.records.loaded': 'registros cargados',
@@ -587,6 +642,9 @@ const Languages = {
             'about.feature.offline': 'Funcionalidade offline',
             'about.support.title': '🆘 Suporte',
             'about.support.info': 'Para problemas ou sugestões, visite nosso repositório GitHub',
+            'about.tour.title': '🎯 Tour Guiado',
+            'about.tour.description': 'Faça um tour guiado para conhecer os elementos clicáveis nos cartões de transmissão.',
+            'about.tour.restart': 'Reiniciar Tour',
             
             // PWA installation
             'pwa.install.title': 'Instalar App',
@@ -676,6 +734,26 @@ const Languages = {
             
             // Labels
             'label.radioid': 'RadioID',
+            
+            // Guided Tour
+            'tour.close': 'Fechar tour',
+            'tour.previous': 'Anterior',
+            'tour.next': 'Próximo',
+            'tour.finish': 'Finalizar',
+            'tour.of': 'de',
+            'tour.callsign.title': 'Link do Indicativo',
+            'tour.callsign.description': 'Clique no indicativo para pesquisar o operador no QRZ.com e ver seu perfil, informações de licença e detalhes de contato.',
+            'tour.radioid.title': 'ID de Rádio',
+            'tour.radioid.description': 'Clique no ID de Rádio para ver detalhes no RadioID.net, incluindo o registro do DMR ID e informações do operador.',
+            'tour.talkgroup.title': 'Distintivo de Grupo de Conversa',
+            'tour.talkgroup.description': 'Este distintivo mostra o número do grupo de conversa. Você pode clicar para ver mais detalhes sobre este grupo específico.',
+            'tour.location.title': 'Pesquisa de Localização',
+            'tour.location.description': 'Clique na localização para pesquisá-la no Google Maps e ver de onde a transmissão está vindo.',
+            'tour.distance.title': 'Indicador de Distância',
+            'tour.distance.description': 'Mostra a distância da transmissão desde sua localização base configurada. Ajuda você a entender o alcance do sinal.',
+            'tour.source.title': 'Nome do Operador',
+            'tour.source.description': 'O nome do operador ou estação. Clique para pesquisar mais informações sobre este operador no QRZ.com.',
+            'tour.wait.message': 'O tour guiado começará com a próxima transmissão recebida.',
             
             // Units
             'unit.seconds': 's',

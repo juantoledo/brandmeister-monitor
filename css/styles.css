@@ -6392,6 +6392,32 @@ button:disabled {
     font-size: 1rem;
 }
 
+.tour-restart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 12px;
+}
+
+.tour-restart-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.tour-restart-btn .material-icons {
+    font-size: 20px;
+}
+
 /* Responsive Modal Design */
 @media (max-width: 768px) {
     .modal-overlay {
@@ -7025,5 +7051,328 @@ button:disabled {
 
     .onboarding-tg-item .tg-name {
         font-size: 0.85rem;
+    }
+}
+
+/* ===================================
+   Guided Tour Styles
+   =================================== */
+
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 9998;
+    animation: tourFadeIn 0.3s ease;
+}
+
+@keyframes tourFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.tour-tooltip {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg), 0 0 0 4px rgba(37, 99, 235, 0.1);
+    padding: 0;
+    z-index: 10001;
+    max-width: 400px;
+    min-width: 320px;
+    opacity: 0;
+    transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease;
+    animation: tourTooltipAppear 0.4s ease forwards;
+}
+
+@keyframes tourTooltipAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.tour-tooltip::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.tour-tooltip-bottom::before {
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 8px 8px 8px;
+    border-color: transparent transparent var(--border) transparent;
+}
+
+.tour-tooltip-top::before {
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0 8px;
+    border-color: var(--border) transparent transparent transparent;
+}
+
+.tour-tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    border-radius: 12px 12px 0 0;
+}
+
+.tour-tooltip-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    flex: 1;
+}
+
+.tour-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.tour-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.tour-close-btn .material-icons {
+    font-size: 20px;
+}
+
+.tour-tooltip-content {
+    padding: 20px;
+}
+
+.tour-tooltip-description {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.tour-tooltip-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.tour-progress {
+    display: none;
+}
+
+.tour-navigation {
+    display: flex;
+    gap: 8px;
+}
+
+.tour-prev-btn,
+.tour-next-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.tour-prev-btn:hover:not(:disabled),
+.tour-next-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.tour-prev-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tour-next-btn {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.tour-next-btn:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.tour-prev-btn .material-icons,
+.tour-next-btn .material-icons {
+    font-size: 18px;
+}
+
+.tour-highlight {
+    position: relative;
+    z-index: 9999 !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.5), 
+                0 0 0 8px rgba(37, 99, 235, 0.2),
+                0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 6px;
+    animation: tourPulse 2s ease-in-out infinite;
+    background: var(--surface) !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Make the entire transmission card visible during tour */
+.tour-highlight.active-transmission {
+    z-index: 10000 !important;
+}
+
+/* Ensure all children of the highlighted card are visible */
+.tour-highlight.active-transmission * {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+@keyframes tourPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.5), 
+                    0 0 0 8px rgba(37, 99, 235, 0.2),
+                    0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.6), 
+                    0 0 0 12px rgba(37, 99, 235, 0.3),
+                    0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Responsive Tour Styles */
+@media (max-width: 768px) {
+    .tour-tooltip {
+        max-width: 90vw;
+        min-width: 280px;
+        left: 5vw !important;
+        right: 5vw !important;
+    }
+
+    .tour-tooltip-header {
+        padding: 14px 16px;
+    }
+
+    .tour-tooltip-title {
+        font-size: 1rem;
+    }
+
+    .tour-tooltip-content {
+        padding: 16px;
+    }
+
+    .tour-tooltip-description {
+        font-size: 0.875rem;
+    }
+
+    .tour-tooltip-footer {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .tour-progress {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tour-navigation {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .tour-prev-btn,
+    .tour-next-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .tour-tooltip {
+        min-width: 260px;
+    }
+
+    .tour-tooltip-header {
+        padding: 12px 14px;
+    }
+
+    .tour-tooltip-title {
+        font-size: 0.9375rem;
+    }
+
+    .tour-close-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .tour-close-btn .material-icons {
+        font-size: 18px;
+    }
+
+    .tour-tooltip-content {
+        padding: 14px;
+    }
+
+    .tour-tooltip-description {
+        font-size: 0.8125rem;
+    }
+
+    .tour-tooltip-footer {
+        padding: 10px 14px;
+    }
+
+    .tour-prev-btn,
+    .tour-next-btn {
+        padding: 8px 12px;
+        font-size: 0.8125rem;
+    }
+
+    .tour-btn-text {
+        display: none;
+    }
+
+    .tour-prev-btn .material-icons,
+    .tour-next-btn .material-icons {
+        margin: 0;
     }
 }
