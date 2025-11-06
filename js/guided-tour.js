@@ -39,48 +39,78 @@ class GuidedTour {
         this.tourActive = true;
         this.pendingTourStart = false;
 
+        // Add tour-active class to body to disable interactions
+        document.body.classList.add('tour-active');
+
         // Pause the app during tour
         if (window.brandmeisterMonitor) {
             window.brandmeisterMonitor.pauseForTour();
         }
 
-        // Define tour steps with selectors relative to the card
+        // Define tour steps - some relative to card, some to document
         this.tourSteps = [
             {
                 selector: '.card-callsign a',
                 titleKey: 'tour.callsign.title',
                 descriptionKey: 'tour.callsign.description',
-                position: 'bottom'
+                position: 'bottom',
+                relative: true  // Relative to transmission card
             },
             {
                 selector: '.radio-id-link',
                 titleKey: 'tour.radioid.title',
                 descriptionKey: 'tour.radioid.description',
-                position: 'bottom'
+                position: 'bottom',
+                relative: true
             },
             {
                 selector: '.card-tg',
                 titleKey: 'tour.talkgroup.title',
                 descriptionKey: 'tour.talkgroup.description',
-                position: 'bottom'
+                position: 'bottom',
+                relative: true
             },
             {
                 selector: '.card-location-link',
                 titleKey: 'tour.location.title',
                 descriptionKey: 'tour.location.description',
-                position: 'top'
+                position: 'top',
+                relative: true
             },
             {
                 selector: '.location-distance',
                 titleKey: 'tour.distance.title',
                 descriptionKey: 'tour.distance.description',
-                position: 'top'
+                position: 'top',
+                relative: true
             },
             {
                 selector: '.card-source-name a',
                 titleKey: 'tour.source.title',
                 descriptionKey: 'tour.source.description',
-                position: 'top'
+                position: 'top',
+                relative: true
+            },
+            {
+                selector: '#themeToggle',
+                titleKey: 'header.theme.tooltip',
+                descriptionKey: 'header.theme.tooltip',
+                position: 'bottom',
+                relative: false  // Relative to document
+            },
+            {
+                selector: '#sidebarToggle',
+                titleKey: 'header.menu.tooltip',
+                descriptionKey: 'header.menu.tooltip',
+                position: 'bottom',
+                relative: false
+            },
+            {
+                selector: '#tgSelectedList',
+                titleKey: 'sidebar.selected.tooltip',
+                descriptionKey: 'sidebar.selected.tooltip',
+                position: 'left',
+                relative: false
             }
         ];
 
@@ -134,9 +164,6 @@ class GuidedTour {
         this.tooltip.querySelector('.tour-close-btn').addEventListener('click', () => this.endTour(true));
         this.tooltip.querySelector('.tour-prev-btn').addEventListener('click', () => this.previousStep());
         this.tooltip.querySelector('.tour-next-btn').addEventListener('click', () => this.nextStep());
-
-        // Close on overlay click
-        this.overlay.addEventListener('click', () => this.endTour(true));
     }
 
     /**
@@ -148,8 +175,10 @@ class GuidedTour {
         this.currentStep = stepIndex;
         const step = this.tourSteps[stepIndex];
 
-        // Find the target element within the transmission card
-        const targetElement = this.transmissionCard.querySelector(step.selector);
+        // Find the target element - either relative to card or document
+        const targetElement = step.relative 
+            ? this.transmissionCard.querySelector(step.selector)
+            : document.querySelector(step.selector);
         
         if (!targetElement) {
             // If element not found, skip to next step
@@ -229,6 +258,10 @@ class GuidedTour {
             finalPosition = 'top';
         } else if (position === 'top' && spaceAbove < tooltipRect.height + spacing && spaceBelow > spaceAbove) {
             finalPosition = 'bottom';
+        } else if (position === 'left' && spaceLeft < tooltipRect.width + spacing) {
+            finalPosition = 'right';
+        } else if (position === 'right' && spaceRight < tooltipRect.width + spacing) {
+            finalPosition = 'left';
         }
 
         // Calculate coordinates
@@ -240,12 +273,21 @@ class GuidedTour {
             top = rect.top - tooltipRect.height - spacing;
             left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
             this.tooltip.classList.add('tour-tooltip-top');
+        } else if (finalPosition === 'left') {
+            top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+            left = rect.left - tooltipRect.width - spacing;
+            this.tooltip.classList.add('tour-tooltip-left');
+        } else if (finalPosition === 'right') {
+            top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+            left = rect.right + spacing;
+            this.tooltip.classList.add('tour-tooltip-right');
         }
 
         // Keep tooltip within viewport bounds
         const maxLeft = window.innerWidth - tooltipRect.width - 10;
+        const maxTop = window.innerHeight - tooltipRect.height - 10;
         left = Math.max(10, Math.min(left, maxLeft));
-        top = Math.max(10, top);
+        top = Math.max(10, Math.min(top, maxTop));
 
         this.tooltip.style.top = `${top}px`;
         this.tooltip.style.left = `${left}px`;
@@ -277,6 +319,9 @@ class GuidedTour {
      */
     endTour(completed = false) {
         if (!this.tourActive) return;
+
+        // Remove tour-active class from body to re-enable interactions
+        document.body.classList.remove('tour-active');
 
         // Remove highlights
         document.querySelectorAll('.tour-highlight').forEach(el => {

@@ -7069,6 +7069,15 @@ button:disabled {
     animation: tourFadeIn 0.3s ease;
 }
 
+/* Disable all interactions during tour except for tour elements */
+body.tour-active {
+    pointer-events: none;
+}
+
+body.tour-active .tour-tooltip {
+    pointer-events: auto;
+}
+
 @keyframes tourFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

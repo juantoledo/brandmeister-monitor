@@ -16,13 +16,14 @@ const Languages = {
             'header.status.disconnected': 'Disconnected',
             'header.status.connecting': 'Connecting...',
             'header.install.tooltip': 'Install App',
-            'header.theme.tooltip': 'Toggle Theme',
-            'header.menu.tooltip': 'Toggle Menu',
+            'header.theme.tooltip': 'Switch between light and dark mode',
+            'header.menu.tooltip': 'Open settings and configuration menu',
             
             // Sidebar
             'sidebar.title': 'Quick Setup',
             'sidebar.tabs.browse': 'Browse TGs',
             'sidebar.tabs.manual': 'Manual Input',
+            'sidebar.selected.tooltip': 'Click on any talkgroup to remove it from monitoring',
             'sidebar.search.placeholder': 'Search talk groups...',
             'sidebar.category.label': 'Browse by Category:',
             'sidebar.category.choose': 'Choose a category...',
@@ -126,6 +127,7 @@ const Languages = {
             'console.tab.stats': 'Statistics',
             'console.tab.debug': 'Debug',
             'console.tab.about': 'About',
+            'console.toggle.tooltip': 'Minimize or expand the activity log panel',
             'console.activity.empty': 'No transmissions yet. Configure a talkgroup and connect to start monitoring.',
             'console.debug.description': 'Debug information and system logs will appear here',
             
@@ -262,13 +264,14 @@ const Languages = {
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',
             'header.install.tooltip': 'Instalar App',
-            'header.theme.tooltip': 'Cambiar Tema',
-            'header.menu.tooltip': 'Alternar Menú',
+            'header.theme.tooltip': 'Cambiar entre modo claro y oscuro',
+            'header.menu.tooltip': 'Abrir menú de configuración y ajustes',
             
             // Sidebar
             'sidebar.title': 'Configuración Rápida',
             'sidebar.tabs.browse': 'Explorar TGs',
             'sidebar.tabs.manual': 'Entrada Manual',
+            'sidebar.selected.tooltip': 'Haz clic en cualquier grupo para eliminarlo del monitoreo',
             'sidebar.search.placeholder': 'Buscar grupos de conversación...',
             'sidebar.category.label': 'Explorar por Categoría:',
             'sidebar.category.choose': 'Elige una categoría...',
@@ -372,6 +375,7 @@ const Languages = {
             'console.tab.stats': 'Estadísticas',
             'console.tab.debug': 'Depuración',
             'console.tab.about': 'Acerca de',
+            'console.toggle.tooltip': 'Minimizar o expandir el panel de registro de actividad',
             'console.activity.empty': 'Aún no hay transmisiones. Configura un grupo de conversación y conéctate para comenzar el monitoreo.',
             'console.debug.description': 'La información de depuración y registros del sistema aparecerán aquí',
             
@@ -511,13 +515,14 @@ const Languages = {
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',
             'header.install.tooltip': 'Instalar App',
-            'header.theme.tooltip': 'Alternar Tema',
-            'header.menu.tooltip': 'Alternar Menu',
+            'header.theme.tooltip': 'Alternar entre modo claro e escuro',
+            'header.menu.tooltip': 'Abrir menu de configurações e ajustes',
             
             // Sidebar
             'sidebar.title': 'Configuração Rápida',
             'sidebar.tabs.browse': 'Explorar TGs',
             'sidebar.tabs.manual': 'Entrada Manual',
+            'sidebar.selected.tooltip': 'Clique em qualquer grupo para removê-lo do monitoramento',
             'sidebar.search.placeholder': 'Pesquisar grupos de conversa...',
             'sidebar.category.label': 'Navegar por Categoria:',
             'sidebar.category.choose': 'Escolha uma categoria...',
@@ -583,6 +588,7 @@ const Languages = {
             'console.tab.stats': 'Estatísticas',
             'console.tab.debug': 'Debug',
             'console.tab.about': 'Sobre',
+            'console.toggle.tooltip': 'Minimizar ou expandir o painel de log de atividade',
             
             // Onboarding
             'onboarding.welcome': '👋 Bem-vindo ao Brandmeister Monitor!',
