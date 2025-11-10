@@ -865,6 +865,7 @@ body {
     transform: none;
 }
 
+.about-button,
 .sidebar-toggle {
     display: flex;
     align-items: center;
@@ -882,12 +883,14 @@ body {
     font-weight: 600;
 }
 
+.about-button:hover,
 .sidebar-toggle:hover {
     background: transparent;
     transform: scale(1.1);
 }
 
 .install-icon,
+.about-icon,
 .hamburger-icon {
     display: inline-flex;
     align-items: center;
@@ -1159,16 +1162,14 @@ body {
     border-color: var(--primary);
 }
 
-.tg-add-selected {
+.tg-add-all {
     background: var(--primary) !important;
     color: white !important;
     border-color: var(--primary) !important;
 }
 
-.tg-add-selected:disabled {
-    background: var(--border) !important;
-    color: var(--text-muted) !important;
-    cursor: not-allowed;
+.tg-add-all:hover {
+    opacity: 0.9;
 }
 
 .tg-close-search {
@@ -1211,10 +1212,23 @@ body {
     border-color: var(--primary);
 }
 
-.tg-search-result-checkbox {
-    width: 16px;
-    height: 16px;
+.tg-search-result.already-selected {
+    opacity: 0.7;
     cursor: pointer;
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.tg-search-result.already-selected:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.4);
+    opacity: 0.9;
+}
+
+.tg-search-result-check {
+    color: var(--success, #22c55e);
+    font-size: 20px;
+    margin-left: 8px;
 }
 
 .tg-search-result-content {
@@ -4122,6 +4136,135 @@ button:disabled {
     padding: 2px 6px;
     border-radius: 0;
     border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* About Modal */
+.about-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.about-modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+}
+
+.about-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.about-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.about-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.about-modal-close:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.about-modal-body {
+    padding: 24px;
+    text-align: center;
+}
+
+.about-logo {
+    margin-bottom: 16px;
+}
+
+.about-modal-body h3 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+.about-version {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin: 0 0 16px;
+}
+
+.about-description {
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0 0 24px;
+}
+
+.about-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.about-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--primary);
+    text-decoration: none;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.about-link:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.about-link .material-icons {
+    font-size: 20px;
+}
+
+.about-credits {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
 }
 
 /* RESPONSIVE DESIGN */
@@ -7074,7 +7217,8 @@ body.tour-active {
     pointer-events: none;
 }
 
-body.tour-active .tour-tooltip {
+body.tour-active .tour-tooltip,
+body.tour-active .tour-highlight {
     pointer-events: auto;
 }
 

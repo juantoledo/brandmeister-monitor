@@ -48,6 +48,7 @@ class BrandmeisterMonitor {
 
         // Talk Group Selector state
         this.selectedTalkgroups = new Set();
+        this.isSyncingTalkgroups = false; // Prevent sync loops
 
         // Base location for distance calculations
         this.baseLocation = null; // { lat, lon, city, country }
@@ -167,9 +168,7 @@ class BrandmeisterMonitor {
             tgSearchResults: document.getElementById('tgSearchResults'),
             tgSearchList: document.getElementById('tgSearchList'),
             tgSearchControls: document.getElementById('tgSearchControls'),
-            tgSelectAll: document.getElementById('tgSelectAll'),
-            tgDeselectAll: document.getElementById('tgDeselectAll'),
-            tgAddSelected: document.getElementById('tgAddSelected'),
+            tgAddAll: document.getElementById('tgAddAll'),
             tgCloseSearch: document.getElementById('tgCloseSearch'),
             tgSelectedList: document.getElementById('tgSelectedList'),
             clearSelection: document.getElementById('clearSelection'),
@@ -444,33 +443,42 @@ class BrandmeisterMonitor {
 
             // Hide search results when clicking outside
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.tg-search-container')) {
+                // Check if click is inside the search container or search results
+                const clickedInside = e.target.closest('.tg-search-container') || 
+                                     e.target.closest('#tgSearchResults') ||
+                                     e.target.closest('.tg-search-result');
+                
+                if (!clickedInside) {
                     this.hideTalkGroupSearchResults();
                 }
             });
         }
 
-        // Multi-select controls
-        if (this.elements.tgSelectAll) {
-            this.elements.tgSelectAll.addEventListener('click', () => this.selectAllSearchResults());
-        }
-        if (this.elements.tgDeselectAll) {
-            this.elements.tgDeselectAll.addEventListener('click', () => this.deselectAllSearchResults());
-        }
-        if (this.elements.tgAddSelected) {
-            this.elements.tgAddSelected.addEventListener('click', () => this.addSelectedTalkgroups());
+        // Search controls
+        if (this.elements.tgAddAll) {
+            this.elements.tgAddAll.addEventListener('click', () => this.addAllSearchResults());
         }
         if (this.elements.tgCloseSearch) {
             this.elements.tgCloseSearch.addEventListener('click', () => this.hideTalkGroupSearchResults());
         }
 
-        // Initialize search state
-        this.searchSelectedTalkgroups = new Set();
-
         // Clear selection button
         if (this.elements.clearSelection) {
             this.elements.clearSelection.addEventListener('click', () => {
                 this.clearTalkGroupSelection();
+            });
+        }
+
+        // Event delegation for removing individual talkgroups
+        if (this.elements.tgSelectedList) {
+            this.elements.tgSelectedList.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.tg-selected-tag-remove');
+                if (removeBtn) {
+                    e.stopPropagation();
+                    const id = removeBtn.dataset.tgId;
+                    this.toggleTalkGroupSelection(id, '', null);
+                    this.updateTalkGroupSelectionVisuals();
+                }
             });
         }
 
@@ -522,145 +530,152 @@ class BrandmeisterMonitor {
         if (results.length === 0) {
             this.elements.tgSearchList.innerHTML = '<div class="tg-search-result">No talk groups found</div>';
         } else {
-            this.elements.tgSearchList.innerHTML = results.map(result => `
-                <div class="tg-search-result" data-tg-id="${result.id}">
-                    <input type="checkbox" class="tg-search-result-checkbox" data-tg-id="${result.id}">
-                    <div class="tg-search-result-content">
-                        <div class="tg-search-result-id">${result.id}</div>
-                        <div class="tg-search-result-name">${result.name}</div>
+            this.elements.tgSearchList.innerHTML = results.map(result => {
+                const isSelected = this.selectedTalkgroups.has(result.id);
+                return `
+                    <div class="tg-search-result ${isSelected ? 'already-selected' : ''}" data-tg-id="${result.id}" data-tg-name="${this.escapeHtml(result.name)}">
+                        <div class="tg-search-result-content">
+                            <div class="tg-search-result-id">${result.id}</div>
+                            <div class="tg-search-result-name">${result.name}</div>
+                        </div>
+                        ${isSelected ? '<span class="tg-search-result-check material-icons">check_circle</span>' : ''}
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
-            // Add click handlers for rows and checkboxes
+            // Add click handlers to toggle add/remove talkgroups
             this.elements.tgSearchList.querySelectorAll('.tg-search-result[data-tg-id]').forEach(item => {
-                const checkbox = item.querySelector('.tg-search-result-checkbox');
                 const tgId = item.dataset.tgId;
+                const tgName = item.dataset.tgName;
 
-                // Handle row click (toggle checkbox)
                 item.addEventListener('click', (e) => {
-                    if (e.target.type !== 'checkbox') {
-                        checkbox.checked = !checkbox.checked;
-                        this.updateSearchSelection(tgId, checkbox.checked);
+                    // Stop propagation to prevent document click handler from closing results
+                    e.stopPropagation();
+                    
+                    if (this.selectedTalkgroups.has(tgId)) {
+                        // Remove the talkgroup
+                        this.selectedTalkgroups.delete(tgId);
+                        
+                        // If removing the last one, default to TG 91
+                        if (this.selectedTalkgroups.size === 0) {
+                            this.selectedTalkgroups.add('91');
+                            console.log('🌐 Last talkgroup removed, defaulting to TG 91 (Worldwide)');
+                        }
+                        
+                        // Update displays
+                        this.updateSelectedTalkGroupsDisplay();
+                        this.syncSelectedTalkGroupsToInput();
+                        this.saveSelectedTalkGroupsToStorage();
+                        
+                        // Restart monitoring with remaining talkgroups
+                        const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
+                        this.startMonitoring(talkgroupIds);
+                        
+                        // Remove selected state in search results
+                        item.classList.remove('already-selected');
+                        item.innerHTML = `
+                            <div class="tg-search-result-content">
+                                <div class="tg-search-result-id">${tgId}</div>
+                                <div class="tg-search-result-name">${tgName}</div>
+                            </div>
+                        `;
+                        
+                        console.log(`➖ Removed TG ${tgId} (${tgName})`);
+                    } else {
+                        // Add the talkgroup
+                        this.selectedTalkgroups.add(tgId);
+                        
+                        // Update displays
+                        this.updateSelectedTalkGroupsDisplay();
+                        this.syncSelectedTalkGroupsToInput();
+                        this.saveSelectedTalkGroupsToStorage();
+                        
+                        // Start monitoring
+                        const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
+                        this.startMonitoring(talkgroupIds);
+                        
+                        // Mark as selected in search results
+                        item.classList.add('already-selected');
+                        item.innerHTML = `
+                            <div class="tg-search-result-content">
+                                <div class="tg-search-result-id">${tgId}</div>
+                                <div class="tg-search-result-name">${tgName}</div>
+                            </div>
+                            <span class="tg-search-result-check material-icons">check_circle</span>
+                        `;
+                        
+                        console.log(`✅ Added TG ${tgId} (${tgName})`);
                     }
                 });
-
-                // Handle checkbox change
-                checkbox.addEventListener('change', (e) => {
-                    this.updateSearchSelection(tgId, e.target.checked);
-                });
-
-                // Restore previous selection state
-                if (this.searchSelectedTalkgroups.has(tgId)) {
-                    checkbox.checked = true;
-                    item.classList.add('selected');
-                }
             });
         }
 
-        this.updateSearchControls();
         this.elements.tgSearchResults.classList.add('show');
     }
 
     hideTalkGroupSearchResults() {
         if (this.elements.tgSearchResults) {
             this.elements.tgSearchResults.classList.remove('show');
-            this.searchSelectedTalkgroups.clear();
             if (this.elements.tgSearchControls) {
                 this.elements.tgSearchControls.style.display = 'none';
             }
         }
     }
 
-    updateSearchSelection(tgId, selected) {
-        const item = this.elements.tgSearchList.querySelector(`.tg-search-result[data-tg-id="${tgId}"]`);
-        if (!item) return;
+    addAllSearchResults() {
+        if (!this.elements.tgSearchList) return;
 
-        if (selected) {
-            this.searchSelectedTalkgroups.add(tgId);
-            item.classList.add('selected');
-        } else {
-            this.searchSelectedTalkgroups.delete(tgId);
-            item.classList.remove('selected');
+        // Get all search results that aren't already selected
+        const results = this.elements.tgSearchList.querySelectorAll('.tg-search-result[data-tg-id]:not(.already-selected)');
+        if (results.length === 0) {
+            console.log('ℹ️ All results are already in your selection');
+            return;
         }
 
-        this.updateSearchControls();
-    }
-
-    updateSearchControls() {
-        if (!this.elements.tgAddSelected) return;
-
-        const count = this.searchSelectedTalkgroups.size;
-        this.elements.tgAddSelected.textContent = `Add Selected (${count})`;
-        this.elements.tgAddSelected.disabled = count === 0;
-    }
-
-    selectAllSearchResults() {
-        if (!this.elements.tgSearchList) return;
-
-        const checkboxes = this.elements.tgSearchList.querySelectorAll('.tg-search-result-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = true;
-            this.updateSearchSelection(checkbox.dataset.tgId, true);
-        });
-    }
-
-    deselectAllSearchResults() {
-        if (!this.elements.tgSearchList) return;
-
-        const checkboxes = this.elements.tgSearchList.querySelectorAll('.tg-search-result-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = false;
-            this.updateSearchSelection(checkbox.dataset.tgId, false);
-        });
-    }
-
-    addSelectedTalkgroups() {
-        if (this.searchSelectedTalkgroups.size === 0) return;
-
-        // Get talkgroup data for selected IDs
-        const selectedTalkgroups = Array.from(this.searchSelectedTalkgroups).map(id => {
-            const result = this.elements.tgSearchList.querySelector(`.tg-search-result[data-tg-id="${id}"]`);
-            if (result) {
-                const name = result.querySelector('.tg-search-result-name').textContent;
-                return { id, name };
-            }
-            return null;
-        }).filter(Boolean);
-
-        // Add each selected talkgroup (but prevent individual monitoring calls)
-        const wasMonitoring = this.config.monitorAllTalkgroups || this.monitoredTalkgroups.length > 0;
-        
-        selectedTalkgroups.forEach(({ id, name }) => {
-            // Add to selection without triggering monitoring
-            if (!this.selectedTalkgroups.has(id)) {
-                this.selectedTalkgroups.add(id);
+        let addedCount = 0;
+        results.forEach(item => {
+            const tgId = item.dataset.tgId;
+            if (!this.selectedTalkgroups.has(tgId)) {
+                this.selectedTalkgroups.add(tgId);
+                item.classList.add('already-selected');
+                
+                // Add check icon
+                const tgName = item.dataset.tgName;
+                item.innerHTML = `
+                    <div class="tg-search-result-content">
+                        <div class="tg-search-result-id">${tgId}</div>
+                        <div class="tg-search-result-name">${tgName}</div>
+                    </div>
+                    <span class="tg-search-result-check material-icons">check_circle</span>
+                `;
+                addedCount++;
             }
         });
 
-        // Update displays
-        this.updateSelectedTalkGroupsDisplay();
-        this.syncSelectedTalkGroupsToInput();
-        this.saveSelectedTalkGroupsToStorage();
-        
-        // Start monitoring all selected talkgroups at once
-        if (this.selectedTalkgroups.size > 0) {
+        if (addedCount > 0) {
+            // Update displays
+            this.updateSelectedTalkGroupsDisplay();
+            this.syncSelectedTalkGroupsToInput();
+            this.saveSelectedTalkGroupsToStorage();
+            
+            // Start monitoring all selected talkgroups
             const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
             this.startMonitoring(talkgroupIds);
+            
+            console.log(`✅ Added ${addedCount} talk groups and started monitoring`);
         }
-
-        // Clear search and close results
-        this.elements.tgSearch.value = '';
-        this.hideTalkGroupSearchResults();
-
-        // Show success feedback
-        console.log(`✅ Added ${selectedTalkgroups.length} talk groups and started monitoring`);
     }
 
     toggleTalkGroupSelection(id, name, element = null, autoStartMonitoring = true) {
         if (this.selectedTalkgroups.has(id)) {
             this.selectedTalkgroups.delete(id);
             if (element) element.classList.remove('selected');
+            
+            // If removing the last talkgroup, default to TG 91 (Worldwide)
+            if (this.selectedTalkgroups.size === 0) {
+                this.selectedTalkgroups.add('91');
+                console.log('🌐 Last talkgroup removed, defaulting to TG 91 (Worldwide)');
+            }
         } else {
             this.selectedTalkgroups.add(id);
             if (element) element.classList.add('selected');
@@ -696,16 +711,6 @@ class BrandmeisterMonitor {
         }).join('');
 
         this.elements.tgSelectedList.innerHTML = tags;
-
-        // Add remove handlers
-        this.elements.tgSelectedList.querySelectorAll('.tg-selected-tag-remove').forEach(removeBtn => {
-            removeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = removeBtn.dataset.tgId;
-                this.toggleTalkGroupSelection(id, '', null);
-                this.updateTalkGroupSelectionVisuals();
-            });
-        });
     }
 
     updateTalkGroupSelectionVisuals() {
@@ -717,15 +722,25 @@ class BrandmeisterMonitor {
     }
 
     syncSelectedTalkGroupsToInput() {
+        if (this.isSyncingTalkgroups) return; // Prevent sync loops
+        
+        this.isSyncingTalkgroups = true;
         if (this.selectedTalkgroups.size === 0) {
             this.elements.talkgroupInput.value = '';
         } else {
             const sortedIds = Array.from(this.selectedTalkgroups).sort((a, b) => parseInt(a) - parseInt(b));
             this.elements.talkgroupInput.value = sortedIds.join(',');
         }
+        this.isSyncingTalkgroups = false;
     }
 
     syncInputToSelectedTalkGroups() {
+        // Prevent sync loop when updating from code
+        if (this.isSyncingTalkgroups) {
+            return;
+        }
+        this.isSyncingTalkgroups = true;
+
         const inputValue = this.elements.talkgroupInput.value.trim();
         
         // Clear current selections
@@ -747,6 +762,8 @@ class BrandmeisterMonitor {
         this.updateSelectedTalkGroupsDisplay();
         this.updateTalkGroupSelectionVisuals();
         this.saveSelectedTalkGroupsToStorage();
+
+        this.isSyncingTalkgroups = false;
     }
 
     clearTalkGroupSelection() {
@@ -813,23 +830,40 @@ class BrandmeisterMonitor {
     }
 
     syncExistingTalkgroupToVisualSelector() {
-        // If no visual selections exist but talkgroup input has value, sync it
+        // Only sync if visual selections are empty AND input has a value different from storage
         if (this.selectedTalkgroups.size === 0 && this.elements.talkgroupInput.value) {
             const inputValue = this.elements.talkgroupInput.value.trim();
             if (inputValue && inputValue.toLowerCase() !== 'all') {
-                // Parse the existing input and add to visual selector
+                // Check if this is really old data that needs migration
+                const oldSystemData = localStorage.getItem('brandmeister_talkgroup');
+                if (!oldSystemData) {
+                    // No old data exists, this is just from default initialization
+                    return;
+                }
+                
+                // Parse the existing input and add to visual selector (migration from old system)
                 const tgIds = inputValue.split(',')
                     .map(id => id.trim())
                     .filter(id => id && /^\d+$/.test(id));
                 
-                tgIds.forEach(id => {
-                    this.selectedTalkgroups.add(id);
-                });
-                
-                // Update visual display
-                this.updateSelectedTalkGroupsDisplay();
-                this.updateTalkGroupSelectionVisuals();
-                this.saveSelectedTalkGroupsToStorage();
+                if (tgIds.length > 0) {
+                    tgIds.forEach(id => {
+                        this.selectedTalkgroups.add(id);
+                    });
+                    
+                    // Update visual display and save to new system
+                    this.updateSelectedTalkGroupsDisplay();
+                    this.updateTalkGroupSelectionVisuals();
+                    this.saveSelectedTalkGroupsToStorage();
+                    
+                    // Clear old storage after successful migration
+                    localStorage.removeItem('brandmeister_talkgroup');
+                    localStorage.removeItem('brandmeister_monitor_all');
+                    
+                    if (this.config.verbose) {
+                        console.log('✅ Migrated talkgroups from old system to new system:', tgIds);
+                    }
+                }
             }
         }
     }
@@ -1428,6 +1462,31 @@ class BrandmeisterMonitor {
     }
 
     loadTalkgroupFromStorage() {
+        // Check if new system has data - if so, skip loading from old system
+        const newSystemData = localStorage.getItem('brandmeister_selected_talkgroups');
+        if (newSystemData) {
+            try {
+                const selectedArray = JSON.parse(newSystemData);
+                if (selectedArray && selectedArray.length > 0) {
+                    // New system has data, use it and clear old storage to prevent conflicts
+                    localStorage.removeItem('brandmeister_talkgroup');
+                    localStorage.removeItem('brandmeister_monitor_all');
+                    
+                    // Set monitoredTalkgroups from new system
+                    this.monitoredTalkgroups = selectedArray.map(id => parseInt(id));
+                    this.config.monitorAllTalkgroups = false;
+                    
+                    if (this.config.verbose) {
+                        console.log('✅ Loaded talkgroups from new system:', this.monitoredTalkgroups);
+                    }
+                    return; // Skip old system processing
+                }
+            } catch (error) {
+                console.error('Error parsing new system data:', error);
+            }
+        }
+        
+        // Fallback to old system if new system has no data
         const savedTg = localStorage.getItem('brandmeister_talkgroup');
         const monitorAll = localStorage.getItem('brandmeister_monitor_all') === 'true';
         
@@ -5432,7 +5491,16 @@ function initializeNewInterface() {
         window.brandmeisterMonitor.saveUIState();
     });
     
-    // Close sidebar when clicking outside on mobile
+    // Header About button - trigger existing modal
+    const headerAboutButton = document.getElementById('aboutButton');
+    const existingAboutModalBtn = document.getElementById('aboutModalBtn');
+    
+    if (headerAboutButton && existingAboutModalBtn) {
+        headerAboutButton.addEventListener('click', () => {
+            // Trigger click on existing about modal button
+            existingAboutModalBtn.click();
+        });
+    }    // Close sidebar when clicking outside on mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768 && 
             !sidebar.contains(e.target) && 

@@ -7,7 +7,7 @@
 window.BrandmeisterConfig = {
     // Basic settings
     minDuration: 2, // filter out short transmissions (seconds)
-    verbose: true, // Enable verbose console logging for debugging (does not affect activity log)
+    verbose: false, // Enable verbose console logging for debugging (does not affect activity log)
     monitorAllTalkgroups: false, // if true, monitor all TGs; if false, use monitoredTalkgroup
     primaryColor: '#2563eb', // Primary color for the interface
     

@@ -16,8 +16,18 @@ const Languages = {
             'header.status.disconnected': 'Disconnected',
             'header.status.connecting': 'Connecting...',
             'header.install.tooltip': 'Install App',
+            'header.about.tooltip': 'About this application',
             'header.theme.tooltip': 'Switch between light and dark mode',
             'header.menu.tooltip': 'Open settings and configuration menu',
+            
+            // About Modal
+            'about.title': 'About Brandmeister Monitor',
+            'about.app.name': 'Brandmeister Monitor',
+            'about.version': 'Version 2.0',
+            'about.description': 'A real-time monitoring application for Brandmeister DMR network transmissions. Track calls, view operator information, and explore talkgroup activity worldwide.',
+            'about.github': 'GitHub Repository',
+            'about.brandmeister': 'Brandmeister Network',
+            'about.credits': 'Developed with ❤️ by Juan Toledo',
             
             // Sidebar
             'sidebar.title': 'Quick Setup',
@@ -25,6 +35,7 @@ const Languages = {
             'sidebar.tabs.manual': 'Manual Input',
             'sidebar.selected.tooltip': 'Click on any talkgroup to remove it from monitoring',
             'sidebar.search.placeholder': 'Search talk groups...',
+            'sidebar.search.addAll': 'Add All',
             'sidebar.category.label': 'Browse by Category:',
             'sidebar.category.choose': 'Choose a category...',
             'sidebar.category.popular': 'Popular Global',
@@ -264,8 +275,18 @@ const Languages = {
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',
             'header.install.tooltip': 'Instalar App',
+            'header.about.tooltip': 'Acerca de esta aplicación',
             'header.theme.tooltip': 'Cambiar entre modo claro y oscuro',
             'header.menu.tooltip': 'Abrir menú de configuración y ajustes',
+            
+            // About Modal
+            'about.title': 'Acerca de Monitor Brandmeister',
+            'about.app.name': 'Monitor Brandmeister',
+            'about.version': 'Versión 2.0',
+            'about.description': 'Una aplicación de monitoreo en tiempo real para las transmisiones de la red DMR Brandmeister. Rastrea llamadas, visualiza información de operadores y explora la actividad de grupos de conversación en todo el mundo.',
+            'about.github': 'Repositorio GitHub',
+            'about.brandmeister': 'Red Brandmeister',
+            'about.credits': 'Desarrollado con ❤️ por Juan Toledo',
             
             // Sidebar
             'sidebar.title': 'Configuración Rápida',
@@ -273,6 +294,7 @@ const Languages = {
             'sidebar.tabs.manual': 'Entrada Manual',
             'sidebar.selected.tooltip': 'Haz clic en cualquier grupo para eliminarlo del monitoreo',
             'sidebar.search.placeholder': 'Buscar grupos de conversación...',
+            'sidebar.search.addAll': 'Añadir Todos',
             'sidebar.category.label': 'Explorar por Categoría:',
             'sidebar.category.choose': 'Elige una categoría...',
             'sidebar.category.popular': 'Populares Globales',
@@ -515,8 +537,18 @@ const Languages = {
             'header.status.disconnected': 'Desconectado',
             'header.status.connecting': 'Conectando...',
             'header.install.tooltip': 'Instalar App',
+            'header.about.tooltip': 'Sobre esta aplicação',
             'header.theme.tooltip': 'Alternar entre modo claro e escuro',
             'header.menu.tooltip': 'Abrir menu de configurações e ajustes',
+            
+            // About Modal
+            'about.title': 'Sobre o Monitor Brandmeister',
+            'about.app.name': 'Monitor Brandmeister',
+            'about.version': 'Versão 2.0',
+            'about.description': 'Uma aplicação de monitoramento em tempo real para transmissões da rede DMR Brandmeister. Acompanhe chamadas, visualize informações de operadores e explore a atividade de grupos de conversa em todo o mundo.',
+            'about.github': 'Repositório GitHub',
+            'about.brandmeister': 'Rede Brandmeister',
+            'about.credits': 'Desenvolvido com ❤️ por Juan Toledo',
             
             // Sidebar
             'sidebar.title': 'Configuração Rápida',
@@ -524,6 +556,7 @@ const Languages = {
             'sidebar.tabs.manual': 'Entrada Manual',
             'sidebar.selected.tooltip': 'Clique em qualquer grupo para removê-lo do monitoramento',
             'sidebar.search.placeholder': 'Pesquisar grupos de conversa...',
+            'sidebar.search.addAll': 'Adicionar Todos',
             'sidebar.category.label': 'Navegar por Categoria:',
             'sidebar.category.choose': 'Escolha uma categoria...',
             'sidebar.category.popular': 'Global Popular',
