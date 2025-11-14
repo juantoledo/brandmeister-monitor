@@ -674,7 +674,9 @@ class BrandmeisterMonitor {
             // If removing the last talkgroup, default to TG 91 (Worldwide)
             if (this.selectedTalkgroups.size === 0) {
                 this.selectedTalkgroups.add('91');
-                console.log('🌐 Last talkgroup removed, defaulting to TG 91 (Worldwide)');
+                if (this.config.verbose) {
+                    console.log('🌐 Last talkgroup removed, defaulting to TG 91 (Worldwide)');
+                }
             }
         } else {
             this.selectedTalkgroups.add(id);
@@ -685,7 +687,7 @@ class BrandmeisterMonitor {
         this.syncSelectedTalkGroupsToInput();
         this.saveSelectedTalkGroupsToStorage();
         
-        // Immediately start monitoring the selected talkgroups (unless disabled)
+        // Start monitoring the selected talkgroups (unless disabled)
         if (autoStartMonitoring && this.selectedTalkgroups.size > 0) {
             const talkgroupIds = Array.from(this.selectedTalkgroups).map(id => parseInt(id));
             this.startMonitoring(talkgroupIds);
@@ -830,42 +832,29 @@ class BrandmeisterMonitor {
     }
 
     syncExistingTalkgroupToVisualSelector() {
-        // Only sync if visual selections are empty AND input has a value different from storage
+        // Sync input value to visual selector if needed
         if (this.selectedTalkgroups.size === 0 && this.elements.talkgroupInput.value) {
             const inputValue = this.elements.talkgroupInput.value.trim();
             if (inputValue && inputValue.toLowerCase() !== 'all') {
-                // Check if this is really old data that needs migration
-                const oldSystemData = localStorage.getItem('brandmeister_talkgroup');
-                if (!oldSystemData) {
-                    // No old data exists, this is just from default initialization
-                    return;
-                }
-                
-                // Parse the existing input and add to visual selector (migration from old system)
                 const tgIds = inputValue.split(',')
                     .map(id => id.trim())
                     .filter(id => id && /^\d+$/.test(id));
                 
                 if (tgIds.length > 0) {
-                    tgIds.forEach(id => {
-                        this.selectedTalkgroups.add(id);
-                    });
-                    
-                    // Update visual display and save to new system
+                    tgIds.forEach(id => this.selectedTalkgroups.add(id));
                     this.updateSelectedTalkGroupsDisplay();
                     this.updateTalkGroupSelectionVisuals();
                     this.saveSelectedTalkGroupsToStorage();
                     
-                    // Clear old storage after successful migration
-                    localStorage.removeItem('brandmeister_talkgroup');
-                    localStorage.removeItem('brandmeister_monitor_all');
-                    
                     if (this.config.verbose) {
-                        console.log('✅ Migrated talkgroups from old system to new system:', tgIds);
+                        console.log('✅ Synced talkgroups to visual selector:', tgIds);
                     }
                 }
             }
         }
+        
+        // Clean up old storage system
+        localStorage.removeItem('brandmeister_talkgroup');
     }
 
     // Helper methods for HTML generation to reduce string operations
@@ -1462,62 +1451,54 @@ class BrandmeisterMonitor {
     }
 
     loadTalkgroupFromStorage() {
-        // Check if new system has data - if so, skip loading from old system
-        const newSystemData = localStorage.getItem('brandmeister_selected_talkgroups');
-        if (newSystemData) {
+        // Load from unified storage system
+        const savedData = localStorage.getItem('brandmeister_selected_talkgroups');
+        const monitorAll = localStorage.getItem('brandmeister_monitor_all') === 'true';
+        
+        // Clean up old storage keys
+        localStorage.removeItem('brandmeister_talkgroup');
+        
+        if (monitorAll) {
+            this.monitoredTalkgroups = [];
+            this.config.monitorAllTalkgroups = true;
+            this.elements.talkgroupInput.value = 'all';
+        } else if (savedData) {
             try {
-                const selectedArray = JSON.parse(newSystemData);
+                const selectedArray = JSON.parse(savedData);
                 if (selectedArray && selectedArray.length > 0) {
-                    // New system has data, use it and clear old storage to prevent conflicts
-                    localStorage.removeItem('brandmeister_talkgroup');
-                    localStorage.removeItem('brandmeister_monitor_all');
-                    
-                    // Set monitoredTalkgroups from new system
                     this.monitoredTalkgroups = selectedArray.map(id => parseInt(id));
                     this.config.monitorAllTalkgroups = false;
                     
                     if (this.config.verbose) {
-                        console.log('✅ Loaded talkgroups from new system:', this.monitoredTalkgroups);
+                        console.log('✅ Loaded talkgroups:', this.monitoredTalkgroups);
                     }
-                    return; // Skip old system processing
+                } else {
+                    // Empty array - default to TG 91
+                    this.setDefaultTalkgroup();
                 }
             } catch (error) {
-                console.error('Error parsing new system data:', error);
-            }
-        }
-        
-        // Fallback to old system if new system has no data
-        const savedTg = localStorage.getItem('brandmeister_talkgroup');
-        const monitorAll = localStorage.getItem('brandmeister_monitor_all') === 'true';
-        
-        if (savedTg) {
-            if (savedTg === 'all' || monitorAll) {
-                this.monitoredTalkgroups = [];
-                this.config.monitorAllTalkgroups = true;
-                this.elements.talkgroupInput.value = 'all';
-            } else {
-                // Parse comma-separated list of talkgroup IDs
-                const tgList = savedTg.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id) && id > 0);
-                this.monitoredTalkgroups = tgList;
-                this.config.monitorAllTalkgroups = false;
-                this.elements.talkgroupInput.value = savedTg;
+                console.error('Error parsing talkgroup data:', error);
+                this.setDefaultTalkgroup();
             }
         } else {
-            // No saved talkgroup - default to TG 91 (Worldwide)
-            this.monitoredTalkgroups = [91];
-            this.config.monitorAllTalkgroups = false;
-            this.elements.talkgroupInput.value = '91';
-            
-            // Also add to visual selection system
-            this.selectedTalkgroups.add('91');
-            
-            if (this.config.verbose) {
-                console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
-            }
+            // No saved data - default to TG 91
+            this.setDefaultTalkgroup();
         }
 
         // Always update the active TGs display after loading
         this.updateActiveTgsDisplay();
+    }
+
+    setDefaultTalkgroup() {
+        // Default to TG 91 (Worldwide)
+        this.monitoredTalkgroups = [91];
+        this.config.monitorAllTalkgroups = false;
+        this.elements.talkgroupInput.value = '91';
+        this.selectedTalkgroups.add('91');
+        
+        if (this.config.verbose) {
+            console.log('🌍 No saved talkgroup found - defaulting to TG 91 (Worldwide)');
+        }
     }
 
     loadAliasesFromStorage() {
@@ -1610,13 +1591,16 @@ class BrandmeisterMonitor {
         if (targetTalkgroups === 'all') {
             this.monitoredTalkgroups = [];
             this.config.monitorAllTalkgroups = true;
-            localStorage.setItem('brandmeister_talkgroup', 'all');
             localStorage.setItem('brandmeister_monitor_all', 'true');
         } else {
             this.monitoredTalkgroups = Array.isArray(targetTalkgroups) ? targetTalkgroups : [targetTalkgroups];
             this.config.monitorAllTalkgroups = false;
-            localStorage.setItem('brandmeister_talkgroup', this.monitoredTalkgroups.join(','));
             localStorage.setItem('brandmeister_monitor_all', 'false');
+            
+            // Ensure selectedTalkgroups stays in sync with what we're monitoring
+            this.selectedTalkgroups.clear();
+            this.monitoredTalkgroups.forEach(id => this.selectedTalkgroups.add(String(id)));
+            this.saveSelectedTalkGroupsToStorage();
         }
         
         // Clear active transmissions when talkgroup changes
