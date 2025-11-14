@@ -253,52 +253,56 @@ class OnboardingManager {
             <div class="onboarding-modal">
                 <div class="onboarding-header">
                     <h2 data-i18n="onboarding.welcome">👋 Welcome to Brandmeister Monitor!</h2>
+                    <p class="onboarding-intro" data-i18n="onboarding.intro">Let's get you started by selecting some talkgroups to monitor.</p>
                 </div>
                 <div class="onboarding-content">
-                    <p data-i18n="onboarding.intro">Let's get you started by selecting some talkgroups to monitor.</p>
-                    
                     <div class="onboarding-section">
-                        <div class="onboarding-country">
-                            <span class="material-icons">location_on</span>
-                            <span data-i18n="onboarding.detected">Detected location:</span>
-                            <strong id="detectedCountry">${countryName}</strong>
+                        <!-- Location Info -->
+                        <div class="onboarding-subsection">
+                            <div class="onboarding-country">
+                                <span class="material-icons">location_on</span>
+                                <span data-i18n="onboarding.detected">Detected location:</span>
+                                <strong id="detectedCountry">${countryName}</strong>
+                            </div>
                         </div>
-                        <p class="onboarding-subtitle" data-i18n="onboarding.suggestion">Based on your location, we recommend these popular talkgroups:</p>
-                    </div>
 
-                    <div class="onboarding-search">
-                        <div class="onboarding-search-box">
-                            <span class="material-icons">search</span>
-                            <input type="text" id="onboardingSearch" placeholder="Search for more talkgroups..." autocomplete="off">
-                            <button class="onboarding-search-clear" id="onboardingSearchClear" style="display: none;">
-                                <span class="material-icons">close</span>
+                        <!-- Search Box -->
+                        <div class="onboarding-subsection">
+                            <div class="onboarding-search-box">
+                                <span class="material-icons">search</span>
+                                <input type="text" id="onboardingSearch" placeholder="Search for more talkgroups..." autocomplete="off">
+                                <button class="onboarding-search-clear" id="onboardingSearchClear" style="display: none;">
+                                    <span class="material-icons">close</span>
+                                </button>
+                            </div>
+                            <div class="onboarding-search-results" id="onboardingSearchResults"></div>
+                        </div>
+
+                        <!-- Talkgroups List -->
+                        <div class="onboarding-subsection">
+                            <p class="onboarding-subtitle" data-i18n="onboarding.suggestion">Recommended talkgroups for your location:</p>
+                            <div class="onboarding-talkgroups" id="onboardingTalkgroups">
+                                ${recommendations.tgs.map((tg, index) => `
+                                    <label class="onboarding-tg-item">
+                                        <input type="checkbox" value="${tg}" checked>
+                                        <span class="tg-badge">TG ${tg}</span>
+                                        <span class="tg-name">${recommendations.names[index]}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="onboarding-subsection onboarding-actions-section">
+                            <button class="btn-onboarding-primary" id="onboardingApply">
+                                <span class="material-icons">check</span>
+                                <span data-i18n="onboarding.apply">Start Monitoring</span>
                             </button>
+                            <button class="btn-onboarding-secondary" id="onboardingSkip">
+                                <span data-i18n="onboarding.skip">Skip, I'll configure later</span>
+                            </button>
+                            <p class="onboarding-hint" data-i18n="onboarding.hint">💡 You can always change these in the sidebar settings.</p>
                         </div>
-                        <div class="onboarding-search-results" id="onboardingSearchResults"></div>
-                    </div>
-
-                    <div class="onboarding-talkgroups" id="onboardingTalkgroups">
-                        ${recommendations.tgs.map((tg, index) => `
-                            <label class="onboarding-tg-item">
-                                <input type="checkbox" value="${tg}" checked>
-                                <span class="tg-badge">TG ${tg}</span>
-                                <span class="tg-name">${recommendations.names[index]}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-
-                    <div class="onboarding-actions">
-                        <button class="btn-onboarding-primary" id="onboardingApply">
-                            <span class="material-icons">check</span>
-                            <span data-i18n="onboarding.apply">Start Monitoring</span>
-                        </button>
-                        <button class="btn-onboarding-secondary" id="onboardingSkip">
-                            <span data-i18n="onboarding.skip">Skip, I'll configure later</span>
-                        </button>
-                    </div>
-
-                    <div class="onboarding-footer">
-                        <p data-i18n="onboarding.hint">💡 You can always change these in the sidebar settings.</p>
                     </div>
                 </div>
             </div>
