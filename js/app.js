@@ -2078,7 +2078,7 @@ class BrandmeisterMonitor {
                 const sourceNameElement = existingActiveEntry.querySelector('.card-source-name');
                 const tgElement = existingActiveEntry.querySelector('.card-tg');
                 const detailsElement = existingActiveEntry.querySelector('.card-details');
-                const controlsElement = existingActiveEntry.querySelector('.card-controls');
+                const controlsElement = existingActiveEntry.querySelector('.card-status-panel');
                 
                 const callsign = this.extractCallsignFromTitle(titleText);
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
@@ -2117,8 +2117,16 @@ class BrandmeisterMonitor {
                     const qrzLink = this.createQRZLogbookLink(callsign);
                     controlsElement.innerHTML = `
                         ${qrzLink}
-                        <span class="card-tg">TG ${tg || '?'}</span>
-                        <span class="card-status live"><span class="material-icons small">fiber_manual_record</span> LIVE</span>
+                        <span class="card-tg" title="${window.t('tooltip.talkgroup').replace('{number}', tg || '?')}">
+                            <span class="material-icons">cell_tower</span>
+                            <span>TG ${tg || '?'}</span>
+                        </span>
+                        <div class="card-chronometer">
+                            <span class="call-duration">
+                                <span class="material-icons">timer</span>
+                                <span class="duration-text">0s</span>
+                            </span>
+                        </div>
                     `;
                 }
                 
