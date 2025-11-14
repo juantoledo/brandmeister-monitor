@@ -3593,11 +3593,14 @@ button:disabled {
 
 .card-callsign {
     font-size: 1.8rem;
-    font-weight: 800;
+    font-weight: 900;
     color: var(--text);
     letter-spacing: 0.5px;
     line-height: 1;
     text-transform: uppercase;
+    font-style: italic;
+    -webkit-text-stroke: 0.5px var(--text);
+    text-stroke: 0.5px var(--text);
 }
 
 .card-callsign a {
