@@ -141,12 +141,39 @@
         rgba(30, 41, 59, 0.75) 100%);
 }
 
-[data-theme="dark"] .card-tg {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+[data-theme="dark"] .card-main::after {
+    background: linear-gradient(135deg, 
+        rgba(30, 41, 59, 0.85) 0%, 
+        rgba(30, 41, 59, 0.80) 50%, 
+        rgba(30, 41, 59, 0.75) 100%);
+}
+
+[data-theme="dark"] .card-status-panel {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .card-status-panel .qrz-link {
+    background: var(--primary);
+}
+
+[data-theme="dark"] .card-status-panel .qrz-link:hover {
+    background: var(--primary-light);
+}
+
+[data-theme="dark"] .card-status-panel .card-tg {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .card-status-panel .card-tg:hover {
+    background: var(--primary);
+}
+
+[data-theme="dark"] .card-status-panel .card-chronometer .call-duration {
+    background: var(--success);
 }
 
 [data-theme="dark"] .card-status.live {
-    background: linear-gradient(135deg, var(--error) 0%, #b91c1c 100%);
+    background: var(--error);
 }
 
 [data-theme="dark"] .time-info,
@@ -3487,6 +3514,8 @@ button:disabled {
     animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 6px;
     border-left: 4px solid var(--success);
+    display: flex;
+    align-items: stretch;
 }
 
 /* Exit animation class */
@@ -3573,6 +3602,30 @@ button:disabled {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.card-main::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.85) 0%, 
+        rgba(255, 255, 255, 0.80) 50%, 
+        rgba(255, 255, 255, 0.75) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Ensure content appears above the overlay */
+.card-main > * {
+    position: relative;
+    z-index: 2;
 }
 
 /* Card Header - Callsign, Radio ID, and Controls */
@@ -3659,53 +3712,83 @@ button:disabled {
     flex-wrap: nowrap;
 }
 
-.card-tg {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    user-select: none;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.card-tg:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transform: translateY(-1px);
-}
-
-.card-status.live {
-    background: linear-gradient(135deg, var(--error) 0%, #b91c1c 100%);
-    color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+/* Status Panel - Container for QRZ, TG, and chronometer */
+.card-status-panel {
     display: flex;
-    align-items: center;
-    gap: 3px;
-    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);
-    animation: statusPulse 2s ease-in-out infinite;
-    white-space: nowrap;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-evenly;
+    padding: 0;
+    background: var(--surface);
+    flex-shrink: 0;
+    width: 120px;
+    gap: 1px;
+    overflow: hidden;
 }
 
-.card-status.live .material-icons.small {
-    font-size: 0.9rem;
+.card-status-panel .card-tg {
+    background: var(--gray-700);
+    color: var(--white);
+    padding: 12px 8px;
+    border-radius: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    user-select: none;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    min-height: 0;
+    line-height: 1.2;
+    text-align: center;
+    word-break: break-word;
+}
+
+.card-status-panel .card-tg .material-icons {
+    font-size: 1.5rem;
+    opacity: 0.95;
+}
+
+.card-status-panel .card-tg:hover {
+    background: var(--primary);
+    cursor: pointer;
+    transform: scale(1.02);
+}
+
+.card-status-panel .card-status.live {
+    background: var(--error);
+    color: var(--white);
+    padding: 10px;
+    border-radius: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+.card-status-panel .card-status.live .material-icons.small {
+    font-size: 1.2rem;
 }
 
 @keyframes statusPulse {
     0%, 100% { 
-        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+        opacity: 1;
     }
     50% { 
-        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5);
+        opacity: 0.8;
     }
 }
 
@@ -3900,26 +3983,56 @@ button:disabled {
     gap: 4px;
 }
 
-.card-chronometer {
-    position: absolute;
-    bottom: 0;
-    right: 0;
+.card-content {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.card-chronometer .call-duration {
-    background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+.card-status-panel .card-chronometer {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.card-status-panel .card-chronometer .call-duration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 12px 8px;
+    background: var(--success);
     color: var(--white);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    border-radius: 0;
+    flex: 1;
+    animation: chronoPulse 2s ease-in-out infinite;
+    line-height: 1;
+}
+
+.card-status-panel .card-chronometer .call-duration .material-icons {
+    font-size: 1.5rem;
+    opacity: 0.95;
+}
+
+.card-status-panel .card-chronometer .duration-text {
+    font-size: 1.1rem;
     font-weight: 700;
     font-family: 'Courier New', 'SF Mono', Monaco, monospace;
-    min-width: 50px;
+    letter-spacing: 1px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+@keyframes chronoPulse {
+    0%, 100% { 
+        opacity: 1;
+        background: var(--success);
+    }
+    50% { 
+        opacity: 0.9;
+        background: #047857;
+    }
 }
 
 /* Large flag display in middle-right area - HIDDEN for background experiment */
@@ -4033,10 +4146,39 @@ button:disabled {
         font-size: 0.7rem;
     }
     
-    .card-chronometer .call-duration {
-        padding: 5px 10px;
-        font-size: 0.85rem;
-        min-width: 45px;
+    /* Card Status Panel - Responsive */
+    .card-status-panel {
+        width: 90px;
+    }
+    
+    .card-status-panel .qrz-link {
+        padding: 8px 6px;
+    }
+    
+    .card-status-panel .qrz-link .material-icons {
+        font-size: 1.2rem;
+    }
+    
+    .card-status-panel .card-tg {
+        padding: 8px 6px;
+        font-size: 0.65rem;
+    }
+    
+    .card-status-panel .card-tg .material-icons {
+        font-size: 1.3rem;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration {
+        padding: 8px 6px;
+        gap: 1px;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration .material-icons {
+        font-size: 1.3rem;
+    }
+    
+    .card-status-panel .card-chronometer .duration-text {
+        font-size: 0.9rem;
     }
 }
 
@@ -4049,6 +4191,7 @@ button:disabled {
     
     .card-callsign {
         font-size: 1.3rem;
+        -webkit-text-stroke: 0.3px var(--text);
     }
     
     .card-source-name {
@@ -4060,8 +4203,8 @@ button:disabled {
     }
     
     .card-main {
-        padding: 8px 12px;
-        gap: 6px;
+        padding: 8px 10px;
+        gap: 5px;
     }
     
     .card-header {
@@ -4073,18 +4216,202 @@ button:disabled {
         font-size: 0.6rem;
     }
     
-    .card-chronometer .call-duration {
-        padding: 4px 8px;
-        font-size: 0.8rem;
-        min-width: 40px;
-    }
-    
     .card-alias {
         font-size: 0.75rem;
     }
     
     .card-phonetic {
         font-size: 0.7rem;
+    }
+    
+    /* Card Status Panel - Mobile */
+    .card-status-panel {
+        width: 70px;
+    }
+    
+    .card-status-panel .qrz-link {
+        padding: 6px 4px;
+    }
+    
+    .card-status-panel .qrz-link .material-icons {
+        font-size: 1.1rem;
+    }
+    
+    .card-status-panel .qrz-link .qrz-text {
+        font-size: 0.55rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .card-status-panel .card-tg {
+        padding: 6px 4px;
+        font-size: 0.6rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .card-status-panel .card-tg .material-icons {
+        font-size: 1.2rem;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration {
+        padding: 6px 4px;
+        gap: 1px;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration .material-icons {
+        font-size: 1.2rem;
+    }
+    
+    .card-status-panel .card-chronometer .duration-text {
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+}
+
+/* Very Small Mobile Screens */
+@media (max-width: 360px) {
+    .card-callsign {
+        font-size: 1.15rem;
+        -webkit-text-stroke: 0.2px var(--text);
+    }
+    
+    .card-source-name {
+        font-size: 0.85rem;
+    }
+    
+    .card-main {
+        padding: 6px 8px;
+        gap: 4px;
+    }
+    
+    .card-header {
+        gap: 4px;
+    }
+    
+    .card-identity {
+        gap: 6px;
+    }
+    
+    .card-radio-id {
+        font-size: 0.7rem;
+    }
+    
+    .card-location {
+        font-size: 0.75rem;
+    }
+    
+    .card-time-weather {
+        gap: 4px;
+        margin-left: 4px;
+    }
+    
+    .time-info, .weather-info {
+        padding: 2px 4px;
+        font-size: 0.65rem;
+        gap: 2px;
+    }
+    
+    .time-info .material-icons.small,
+    .weather-info .material-icons.small {
+        font-size: 0.75rem;
+    }
+    
+    /* Card Status Panel - Very Small */
+    .card-status-panel {
+        width: 60px;
+    }
+    
+    .card-status-panel .qrz-link {
+        padding: 5px 3px;
+    }
+    
+    .card-status-panel .qrz-link .material-icons {
+        font-size: 1rem;
+    }
+    
+    .card-status-panel .qrz-link .qrz-text {
+        font-size: 0.5rem;
+        letter-spacing: 0.2px;
+    }
+    
+    .card-status-panel .card-tg {
+        padding: 5px 3px;
+        font-size: 0.55rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .card-status-panel .card-tg .material-icons {
+        font-size: 1.1rem;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration {
+        padding: 5px 3px;
+        gap: 0px;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration .material-icons {
+        font-size: 1.1rem;
+    }
+    
+    .card-status-panel .card-chronometer .duration-text {
+        font-size: 0.65rem;
+        letter-spacing: 0.3px;
+    }
+}
+
+/* Extremely Small Screens - Consider horizontal scroll or stacking */
+@media (max-width: 320px) {
+    .active-transmission {
+        flex-direction: column;
+    }
+    
+    .card-status-panel {
+        width: 100%;
+        flex-direction: row;
+        height: 50px;
+        align-items: stretch;
+    }
+    
+    .card-status-panel .qrz-link,
+    .card-status-panel .card-tg,
+    .card-status-panel .card-chronometer {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .card-status-panel .qrz-link {
+        flex-direction: row;
+        padding: 4px 6px;
+        gap: 4px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card-status-panel .card-tg {
+        flex-direction: row;
+        padding: 4px 6px;
+        gap: 4px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card-status-panel .card-chronometer .call-duration {
+        flex-direction: row;
+        padding: 4px 6px;
+        gap: 4px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card-status-panel .card-chronometer .duration-text {
+        white-space: nowrap;
+    }
+    
+    .card-main {
+        padding: 8px;
+    }
+    
+    .card-callsign {
+        font-size: 1.1rem;
     }
 }
 
@@ -4904,38 +5231,41 @@ button:disabled {
     margin-left: 8px;
 }
 
-.qrz-link {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+.card-status-panel .qrz-link {
+    background: var(--primary);
     color: var(--white);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
+    padding: 12px 8px;
+    border-radius: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
     text-transform: uppercase;
     text-decoration: none;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 3px;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.3px;
-    position: relative;
+    flex: 1;
+    min-height: 0;
+    transition: all 0.15s ease;
+    letter-spacing: 0.8px;
     cursor: pointer;
+    position: relative;
+    text-align: center;
 }
 
-.qrz-link .material-icons.small {
-    font-size: 1rem;
+.card-status-panel .qrz-link .material-icons.small {
+    font-size: 1.4rem;
+    opacity: 0.95;
 }
 
-.qrz-link:hover {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
-    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+.card-status-panel .qrz-link:hover {
+    background: var(--primary-light);
+    transform: scale(1.02);
 }
 
-.qrz-link:active {
-    transform: translateY(0) scale(0.98);
+.card-status-panel .qrz-link:active {
+    transform: scale(0.98);
 }
 
 
@@ -5543,19 +5873,6 @@ button:disabled {
     .card-left {
         flex: 1;
         min-width: 0; /* Allow text to overflow properly */
-    }
-    
-    .card-chronometer {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-    }
-    
-    .card-chronometer .call-duration {
-        padding: 2px 6px; /* More compact duration badge */
-        font-size: 0.65rem; /* Smaller duration font */
-        min-width: 40px; /* Narrower minimum width */
-        border-radius: 3px; /* Smaller border radius */
     }
     
     /* Card details - alias and phonetic */
@@ -7244,6 +7561,18 @@ body.tour-active {
 body.tour-active .tour-tooltip,
 body.tour-active .tour-highlight {
     pointer-events: auto;
+}
+
+/* Disable hover effects during tour */
+body.tour-active .card-status-panel .qrz-link:hover,
+body.tour-active .card-status-panel .card-tg:hover,
+body.tour-active .card-callsign a:hover,
+body.tour-active .radio-id-link:hover,
+body.tour-active .card-location-link:hover,
+body.tour-active .card-source-name a:hover {
+    transform: none !important;
+    background: inherit !important;
+    color: inherit !important;
 }
 
 @keyframes tourFadeIn {

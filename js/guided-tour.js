@@ -64,10 +64,17 @@ class GuidedTour {
                 relative: true
             },
             {
+                selector: '.qrz-link',
+                titleKey: 'tour.qrz.title',
+                descriptionKey: 'tour.qrz.description',
+                position: 'left',
+                relative: true
+            },
+            {
                 selector: '.card-tg',
                 titleKey: 'tour.talkgroup.title',
                 descriptionKey: 'tour.talkgroup.description',
-                position: 'bottom',
+                position: 'left',
                 relative: true
             },
             {

@@ -951,7 +951,7 @@ class BrandmeisterMonitor {
             if (activeElement) {
                 const now = Math.floor(Date.now() / 1000);
                 const currentDuration = now - group.startTime;
-                const durationElement = activeElement.querySelector('.call-duration');
+                const durationElement = activeElement.querySelector('.duration-text');
                 if (durationElement) {
                     durationElement.textContent = this.formatDuration(currentDuration);
                 }
@@ -2230,11 +2230,6 @@ class BrandmeisterMonitor {
                                     ${radioIdDisplay}
                                 </div>
                             </div>
-                            <div class="card-controls">
-                                ${qrzLink}
-                                <span class="card-tg" title="${window.t('tooltip.talkgroup').replace('{number}', tg || '?')}">TG ${tg || '?'}<\/span>
-                                <span class="card-status live" title="${window.t('tooltip.transmission.live')}"><span class="material-icons small">fiber_manual_record<\/span>LIVE<\/span>
-                            <\/div>
                         <\/div>
                         <div class="card-content">
                             <div class="card-left">
@@ -2245,16 +2240,32 @@ class BrandmeisterMonitor {
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}<\/div>` : ''}
                                 <\/div>
                             <\/div>
-                            <div class="card-chronometer">
-                                <span class="call-duration">0s<\/span>
-                            <\/div>
+                        <\/div>
+                    <\/div>
+                    <div class="card-status-panel">
+                        ${qrzLink}
+                        <span class="card-tg" title="${window.t('tooltip.talkgroup').replace('{number}', tg || '?')}">
+                            <span class="material-icons">cell_tower<\/span>
+                            <span>TG ${tg || '?'}<\/span>
+                        <\/span>
+                        <div class="card-chronometer">
+                            <span class="call-duration">
+                                <span class="material-icons">timer<\/span>
+                                <span class="duration-text">0s<\/span>
+                            <\/span>
                         <\/div>
                     <\/div>
                 `;
                 
                 // Apply flag background if available
                 if (flagBackgroundUrl) {
-                    activeEntry.style.backgroundImage = `url('${flagBackgroundUrl}')`;
+                    const cardMain = activeEntry.querySelector('.card-main');
+                    if (cardMain) {
+                        cardMain.style.backgroundImage = `url('${flagBackgroundUrl}')`;
+                        cardMain.style.backgroundPosition = 'right center';
+                        cardMain.style.backgroundRepeat = 'no-repeat';
+                        cardMain.style.backgroundSize = 'auto 100%';
+                    }
                 }
                 
                 // Add to active container at the bottom (newest last)
