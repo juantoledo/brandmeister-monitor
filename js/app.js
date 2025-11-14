@@ -4897,7 +4897,9 @@ class BrandmeisterMonitor {
                     }
 
                     if (weatherInfo && locationInfo.weather) {
-                        weatherInfo.textContent = `${locationInfo.weather.emoji} ${locationInfo.weather.temperature}°C`;
+                        const tempC = locationInfo.weather.temperature;
+                        const tempF = Math.round((tempC * 9/5) + 32);
+                        weatherInfo.textContent = `${locationInfo.weather.emoji} ${tempC}°C / ${tempF}°F`;
                         weatherInfo.title = `Current weather conditions - Powered by Open-Meteo`;
                         weatherInfo.style.cursor = 'pointer';
                         
@@ -4927,7 +4929,10 @@ class BrandmeisterMonitor {
                         }
                     }
 
-                    console.log(`✅ Updated time/weather for ${city}: ${locationInfo.localTime}, ${locationInfo.weather?.temperature}°C`);
+                    if (this.config.verbose && locationInfo.weather) {
+                        const tempF = Math.round((locationInfo.weather.temperature * 9/5) + 32);
+                        console.log(`✅ Updated time/weather for ${city}: ${locationInfo.localTime}, ${locationInfo.weather.temperature}°C / ${tempF}°F`);
+                    }
                 } else {
                     // Show fallback if data unavailable
                     const timeInfo = timeWeatherElement.querySelector('.time-info');
