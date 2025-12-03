@@ -125,6 +125,14 @@
 }
 
 /* Dark mode specific adjustments */
+[data-theme="dark"] .app-logo {
+    filter: brightness(0) invert(1);
+}
+
+[data-theme="dark"] .header-content h1 {
+    color: var(--text);
+}
+
 [data-theme="dark"] .header-status {
     background: var(--gray-700);
 }
@@ -544,6 +552,11 @@ body {
     line-height: 1.6;
     height: 100vh;
     overflow: hidden;
+}
+
+/* Smooth color transitions for primary color changes */
+*:not(.active-transmission):not(.card-main) {
+    transition: background-color 1s ease, border-color 1s ease, color 1s ease;
 }
 
 /* APP LAYOUT */
@@ -3745,7 +3758,7 @@ button:disabled {
 }
 
 .card-status-panel .card-tg {
-    background: var(--gray-700);
+    background: var(--primary);
     color: var(--white);
     padding: 12px 8px;
     border-radius: 0;

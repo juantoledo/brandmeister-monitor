@@ -11,6 +11,7 @@ class BrandmeisterMonitor {
         // Session-based tracking - no legacy activeCalls needed
         this.transmissionGroups = {}; // Group related transmission events
         this.connectionStartTime = Date.now(); // Track session start time
+        this.colorOwnerSessionKey = null; // Track which transmission owns the current color
         
         // RadioID Database for additional user information
         this.radioIDDatabase = {};
@@ -153,6 +154,7 @@ class BrandmeisterMonitor {
             downloadTalkgroupsBtn: document.getElementById('downloadTalkgroups'),
             clearTalkgroupCacheBtn: document.getElementById('clearTalkgroupCache'),
             talkgroupStatus: document.getElementById('talkgroupStatus'),
+            autoColorFromFlagCheckbox: document.getElementById('autoColorFromFlag'),
             colorPresets: document.getElementById('colorPresets'),
             colorPreview: document.getElementById('colorPreview'),
             colorValue: document.getElementById('colorValue'),
@@ -211,6 +213,7 @@ class BrandmeisterMonitor {
         // Real-time settings updates for checkboxes
         this.elements.verboseCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         this.elements.monitorAllTalkgroupsCheckbox.addEventListener('change', () => this.updateConfigFromUI());
+        this.elements.autoColorFromFlagCheckbox.addEventListener('change', () => this.updateConfigFromUI());
         
         // Load saved settings
         this.loadSettings();
@@ -2255,6 +2258,9 @@ class BrandmeisterMonitor {
                     if (cardMain) {
                         cardMain.setAttribute('data-flag', flagBackgroundUrl);
                         cardMain.style.setProperty('--flag-url', `url('${flagBackgroundUrl}')`);
+                        
+                        // Extract dominant color from flag and apply it
+                        this.extractFlagColor(flagBackgroundUrl, sessionKey);
                     }
                 }
                 
@@ -2626,6 +2632,14 @@ class BrandmeisterMonitor {
                 group.duration = stopTime - group.startTime;
                 group.lastUpdateTime = Date.now();
                 
+                // Release color ownership if this transmission owned it
+                if (this.colorOwnerSessionKey === sessionKey) {
+                    this.colorOwnerSessionKey = null;
+                    if (this.config.verbose) {
+                        console.log(`Session ${sessionKey} released color ownership`);
+                    }
+                }
+                
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
                     console.log(`[${timestamp}] DEBUG: Session marked as completed - duration: ${group.duration.toFixed(1)}s, will remove from active UI`);
@@ -2665,6 +2679,14 @@ class BrandmeisterMonitor {
         group.status = 'completed';
         group.stopTime = call.Stop;
         group.duration = duration;
+        
+        // Release color ownership if this transmission owned it
+        if (this.colorOwnerSessionKey === sessionKey) {
+            this.colorOwnerSessionKey = null;
+            if (this.config.verbose) {
+                console.log(`Session ${sessionKey} released color ownership`);
+            }
+        }
         
         // Update statistics
         this.totalCalls++;
@@ -2810,6 +2832,14 @@ class BrandmeisterMonitor {
                 session.stopTime = now;
                 session.duration = (now - session.startTime) / 1000;
                 autoCompletedSessions++;
+                
+                // Release color ownership if this transmission owned it
+                if (this.colorOwnerSessionKey === sessionKey) {
+                    this.colorOwnerSessionKey = null;
+                    if (this.config.verbose) {
+                        console.log(`Session ${sessionKey} released color ownership (auto-completed)`);
+                    }
+                }
                 
                 // Create completion log entry
                 this.createCompletionLogEntry(session, 'auto-completed due to age');
@@ -3598,6 +3628,7 @@ class BrandmeisterMonitor {
                 this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
                 this.config.enableTalkgroupAPI = settings.enableTalkgroupAPI !== undefined ? settings.enableTalkgroupAPI : false;
                 this.config.primaryColor = settings.primaryColor || '#2563eb';
+                this.config.autoColorFromFlag = settings.autoColorFromFlag !== undefined ? settings.autoColorFromFlag : false;
                 
                 // Apply the primary color
                 this.applyPrimaryColor(this.config.primaryColor);
@@ -3624,7 +3655,8 @@ class BrandmeisterMonitor {
             monitorAllTalkgroups: this.config.monitorAllTalkgroups,
             enableRadioIDLookup: this.config.enableRadioIDLookup,
             enableTalkgroupAPI: this.config.enableTalkgroupAPI,
-            primaryColor: this.config.primaryColor
+            primaryColor: this.config.primaryColor,
+            autoColorFromFlag: this.config.autoColorFromFlag
         };
         
         localStorage.setItem('brandmeister-settings', JSON.stringify(settings));
@@ -3799,6 +3831,20 @@ class BrandmeisterMonitor {
         this.config.minDuration = parseInt(this.elements.minDurationInput.value) || 0;
         this.config.verbose = this.elements.verboseCheckbox.checked;
         this.config.monitorAllTalkgroups = newMonitorAllTalkgroups;
+        
+        // Handle auto color from flag toggle
+        const previousAutoColor = this.config.autoColorFromFlag;
+        this.config.autoColorFromFlag = this.elements.autoColorFromFlagCheckbox.checked;
+        
+        // If auto color from flag was just disabled, reset to default color
+        if (previousAutoColor && !this.config.autoColorFromFlag) {
+            const defaultColor = '#0066cc'; // First color in the picker
+            this.config.primaryColor = defaultColor;
+            this.applyPrimaryColor(defaultColor);
+            this.updateColorPreview(defaultColor);
+            this.updateColorPresets(defaultColor);
+        }
+        
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.config.enableRadioIDLookup = this.elements.enableRadioIDLookupCheckbox.checked;
         }
@@ -3826,6 +3872,7 @@ class BrandmeisterMonitor {
         this.elements.minDurationInput.value = this.config.minDuration;
         this.elements.verboseCheckbox.checked = this.config.verbose;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
+        this.elements.autoColorFromFlagCheckbox.checked = this.config.autoColorFromFlag;
         if (this.elements.enableRadioIDLookupCheckbox) {
             this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
         }
@@ -4028,6 +4075,13 @@ class BrandmeisterMonitor {
             g: parseInt(result[2], 16),
             b: parseInt(result[3], 16)
         } : null;
+    }
+
+    rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
     }
 
     darkenColor(color, percent) {
@@ -4758,6 +4812,123 @@ class BrandmeisterMonitor {
     getCountryCode(countryName) {
         // Use the global country code function from config.js
         return window.getCountryCode(countryName);
+    }
+
+    /**
+     * Extract dominant color from flag image and apply it to the card
+     */
+    extractFlagColor(flagUrl, sessionKey) {
+        // Only extract color if auto color from flag is enabled
+        if (!this.config.autoColorFromFlag) {
+            return;
+        }
+        
+        // Check if there's already a color owner (older transmission still active)
+        if (this.colorOwnerSessionKey) {
+            // Check if the color owner is still active
+            const ownerGroup = this.transmissionGroups[this.colorOwnerSessionKey];
+            if (ownerGroup && ownerGroup.status === 'active') {
+                // Color is locked to the older transmission, skip extraction
+                if (this.config.verbose) {
+                    console.log(`Color locked to session ${this.colorOwnerSessionKey}, skipping color extraction for ${sessionKey}`);
+                }
+                return;
+            } else {
+                // Owner transmission ended, this transmission can claim the color
+                if (this.config.verbose) {
+                    console.log(`Previous color owner ${this.colorOwnerSessionKey} ended, ${sessionKey} can claim color`);
+                }
+                this.colorOwnerSessionKey = null;
+            }
+        }
+        
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        
+        img.onload = () => {
+            try {
+                // Create canvas to analyze the image
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Use a smaller size for faster processing
+                canvas.width = 50;
+                canvas.height = 30;
+                ctx.drawImage(img, 0, 0, 50, 30);
+                
+                // Get image data
+                const imageData = ctx.getImageData(0, 0, 50, 30);
+                const pixels = imageData.data;
+                
+                // Count color occurrences (simplified - take most frequent non-white color)
+                const colorMap = new Map();
+                
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+                    const a = pixels[i + 3];
+                    
+                    // Skip transparent and very light colors (likely background)
+                    if (a < 200 || (r > 220 && g > 220 && b > 220)) continue;
+                    
+                    // Quantize colors to reduce variations
+                    const quantizedR = Math.round(r / 20) * 20;
+                    const quantizedG = Math.round(g / 20) * 20;
+                    const quantizedB = Math.round(b / 20) * 20;
+                    
+                    const colorKey = `${quantizedR},${quantizedG},${quantizedB}`;
+                    colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+                }
+                
+                // Find most common color
+                let dominantColor = null;
+                let maxCount = 0;
+                
+                for (const [color, count] of colorMap.entries()) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        dominantColor = color;
+                    }
+                }
+                
+                if (dominantColor) {
+                    const [r, g, b] = dominantColor.split(',').map(Number);
+                    const hexColor = this.rgbToHex(r, g, b);
+                    
+                    // Update the global primary color
+                    this.config.primaryColor = hexColor;
+                    this.applyPrimaryColor(hexColor);
+                    
+                    // Save to localStorage
+                    this.saveSettings();
+                    
+                    // Update color picker UI
+                    this.updateColorPreview(hexColor);
+                    this.updateColorPresets(hexColor);
+                    
+                    // Claim color ownership for this transmission
+                    this.colorOwnerSessionKey = sessionKey;
+                    
+                    if (this.config.verbose) {
+                        console.log(`Extracted flag color: ${hexColor}`);
+                        console.log(`Session ${sessionKey} claimed color ownership`);
+                    }
+                }
+            } catch (error) {
+                if (this.config.verbose) {
+                    console.error('Error extracting flag color:', error);
+                }
+            }
+        };
+        
+        img.onerror = () => {
+            if (this.config.verbose) {
+                console.error('Failed to load flag image for color extraction');
+            }
+        };
+        
+        img.src = flagUrl;
     }
 
     /**

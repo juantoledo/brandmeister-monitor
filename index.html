@@ -188,6 +188,15 @@
                         </div>
                         
                         <div class="setting-group">
+                            <label for="autoColorFromFlag" class="switch-label">
+                                <input type="checkbox" id="autoColorFromFlag">
+                                <span class="switch-slider"></span>
+                                <span class="switch-text" data-i18n="settings.autoColorFromFlag.label">Auto Color from Flag</span>
+                            </label>
+                            <span class="setting-description" data-i18n="settings.autoColorFromFlag.description">Automatically set primary color from country flag</span>
+                        </div>
+                        
+                        <div class="setting-group">
                             <label for="minDuration" data-i18n="settings.duration.label">Min Duration (sec):</label>
                             <input type="number" id="minDuration" min="0" max="60" step="1" value="2">
                             <span class="setting-description" data-i18n="settings.duration.description">Only log transmissions longer than this duration (excludes short kerchunks)</span>
