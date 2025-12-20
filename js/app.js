@@ -2074,6 +2074,18 @@ class BrandmeisterMonitor {
             // Handle active/started transmissions
             const existingActiveEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
             
+            // Remove any duplicate cards that might exist
+            const allMatching = document.querySelectorAll(`[data-session-key="${sessionKey}"]`);
+            if (allMatching.length > 1) {
+                if (this.config.verbose) {
+                    console.warn(`⚠️ Found ${allMatching.length} cards for session ${sessionKey}, removing duplicates`);
+                }
+                // Keep only the first one
+                for (let i = 1; i < allMatching.length; i++) {
+                    allMatching[i].remove();
+                }
+            }
+            
             if (existingActiveEntry) {
                 // Update existing active transmission UI
                 const callsignElement = existingActiveEntry.querySelector('.card-callsign');
@@ -2143,6 +2155,15 @@ class BrandmeisterMonitor {
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
                     console.log(`[${timestamp}] Creating new active transmission UI for ${titleText} (SessionID: ${sessionKey}), ContextID: ${group.contextID || 'N/A'}, TG: ${tg}`);
+                }
+                
+                // Safety check: Ensure no card exists before creating
+                const preExisting = document.querySelector(`[data-session-key="${sessionKey}"]`);
+                if (preExisting) {
+                    if (this.config.verbose) {
+                        console.warn(`⚠️ Card already exists for ${sessionKey}, removing before create`);
+                    }
+                    preExisting.remove();
                 }
                 
                 // Remove "no activity" message if it exists
@@ -2264,6 +2285,15 @@ class BrandmeisterMonitor {
                     }
                 }
                 
+                // Final check before appending
+                const finalCheck = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+                if (finalCheck) {
+                    if (this.config.verbose) {
+                        console.error(`🚨 Duplicate at append time for ${sessionKey}!`);
+                    }
+                    finalCheck.remove();
+                }
+                
                 // Add to active container at the bottom (newest last)
                 this.elements.activeContainer.appendChild(activeEntry);
                 
@@ -2314,6 +2344,15 @@ class BrandmeisterMonitor {
         const contextID = call.ContextID ? String(call.ContextID) : '';
 
         if (eventType === 'start') {
+            // ⚠️ DUPLICATE EVENT PREVENTION: Check if session already exists before creating
+            if (this.transmissionGroups[sessionKey]) {
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.warn(`[${timestamp}] ⚠️ DUPLICATE Session-Start detected for ${callsign} (SessionID: ${sessionKey}) - session already exists, ignoring duplicate event`);
+                }
+                return; // Exit early to prevent duplicate processing
+            }
+            
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
                 console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - creating session in memory (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
@@ -2394,6 +2433,17 @@ class BrandmeisterMonitor {
                     sessionType: sessionType || 'null',
                     contextID: contextID || 'null'
                 });
+            }
+            
+            // ⚠️ RACE CONDITION CHECK: Verify if UI card already exists even if session object doesn't
+            // This prevents Session-Update from creating duplicate cards when Session-Start just processed
+            const existingCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
+            if (existingCard && !this.transmissionGroups[sessionKey]) {
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.warn(`[${timestamp}] ⚠️ RACE CONDITION: Session-Update found existing UI card but no session object for ${callsign} (${sessionKey}) - Session-Start may have just processed. Skipping duplicate creation.`);
+                }
+                return; // Exit early to prevent duplicate session/card creation
             }
             
             // Update existing session or create if not found
