@@ -94,7 +94,9 @@ class BrandmeisterMonitor {
             // Then load other data
             this.loadTalkgroupFromStorage();
             this.loadAliasesFromStorage();
-            this.loadRadioIDDatabase();
+            
+            // Initialize RadioID cache (no download needed - API-based lookups)
+            this.initializeRadioIDCache();
             
             // Clean old RadioID cache entries on startup
             this.cleanRadioIDCache();
@@ -147,7 +149,6 @@ class BrandmeisterMonitor {
             minDurationInput: document.getElementById('minDuration'),
             verboseCheckbox: document.getElementById('verbose'),
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
-            enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
             radioIDSettings: document.getElementById('radioIDSettings'),
             enableTalkgroupAPICheckbox: document.getElementById('enableTalkgroupAPI'),
             talkgroupSettings: document.getElementById('talkgroupSettings'),
@@ -186,11 +187,6 @@ class BrandmeisterMonitor {
         if (this.elements.resetAppDataBtn) {
             this.elements.resetAppDataBtn.addEventListener('click', () => this.resetApplicationData());
         }
-        // RadioID event listeners
-        if (this.elements.enableRadioIDLookupCheckbox) {
-            this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
-        }
-        
         // Talkgroup settings event listeners
         if (this.elements.enableTalkgroupAPICheckbox) {
             this.elements.enableTalkgroupAPICheckbox.addEventListener('change', () => this.toggleTalkgroupSettings());
@@ -2179,29 +2175,31 @@ class BrandmeisterMonitor {
                 activeEntry.setAttribute('data-session-key', sessionKey);
                 
                 // Extract callsign for QRZ link
-                const callsign = this.extractCallsignFromTitle(titleText);
+                // Prefer RadioID callsign if available, otherwise use session callsign
+                const radioIdInfo = group.radioIdInfo || null;
+                const callsign = radioIdInfo?.callsign || this.extractCallsignFromTitle(titleText);
                 const qrzLink = this.createQRZLogbookLink(callsign);
                 const phoneticCallsign = this.callsignToPhonetic(callsign);
                 
-                // Use cached RadioID information from session (already looked up once)
-                const radioIdInfo = group.radioIdInfo || null;
+                // Get location info from RadioID or fallback to LinkName
+                const linkName = group.linkName || '';
+                const linkType = group.linkType || '';
                 
                 if (this.config.verbose) {
-                    if (radioIdInfo) {
-                        console.log(`♻️ Using RadioID info from session cache for ${callsign}:`, radioIdInfo);
-                        console.log(`   → Name: "${radioIdInfo.name}", City: "${radioIdInfo.city}", Country: "${radioIdInfo.country}"`);
-                    } else {
-                        console.log(`⚠️ No RadioID info available in session for ${callsign} (RadioID: ${group.sourceID})`);
-                        console.log(`   → This usually means RadioID lookup returned null (not in database or lookup disabled)`);
-                    }
+                    console.log(`🎨 Creating card for session ${sessionKey}:`, {
+                        hasRadioIdInfo: !!radioIdInfo,
+                        radioIdInfo: radioIdInfo,
+                        linkName: linkName,
+                        sourceID: group.sourceID
+                    });
                 }
                 
                 let locationInfo = '';
                 let flagBackgroundUrl = '';
                 let countryCode = '';
-                let timeWeatherInfo = '';
                 
-                if (radioIdInfo) {
+                // Prefer RadioID info if available, otherwise use LinkName
+                if (radioIdInfo && radioIdInfo.country) {
                     const city = radioIdInfo.city;
                     const state = radioIdInfo.state;
                     const country = radioIdInfo.country;
@@ -2209,21 +2207,25 @@ class BrandmeisterMonitor {
                     const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
                     if (locationParts.length > 0) {
                         countryCode = this.getCountryCode(country);
-                        // Create flag background URL from flag-icons CDN
-                        flagBackgroundUrl = countryCode ? `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg` : '';
-                        // Make location text clickable for Google search with distance placeholder
-                        locationInfo = `<div class="card-location card-location-link" title="${window.t('tooltip.search.location')}">${locationParts.join(', ')}<span class="location-distance" data-city="${city}" data-state="${state}" data-country="${country}"></span></div>`;
-                        
-                        // Add time and weather info placeholder only if not monitoring all talkgroups
-                        if (!this.config.monitorAllTalkgroups) {
-                            timeWeatherInfo = `<div class="card-time-weather" data-city="${city}" data-state="${state}" data-country="${country}">
-                                <span class="time-info"><span class="material-icons small">schedule</span> ${window.t('status.loading')}</span>
-                                <span class="weather-info"><span class="material-icons small">public</span> --°</span>
-                            </div>`;
-                            
-                            // Async load time and weather
-                            this.loadTimeWeatherInfo(city, state, country, sessionKey);
+                        if (countryCode) {
+                            flagBackgroundUrl = `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg`;
                         }
+                        locationInfo = `<div class="card-location" title="${locationParts.join(', ')}">${locationParts.join(', ')}</div>`;
+                        
+                        if (this.config.verbose) {
+                            console.log(`🏳️ Using RadioID country "${country}" -> code "${countryCode || 'none'}"`);
+                        }
+                    }
+                } else if (this.config.useRepeaterLocationForFlag && linkName) {
+                    // Fallback to LinkName if no RadioID info
+                    countryCode = this.extractCountryFromLinkName(linkName);
+                    if (countryCode) {
+                        flagBackgroundUrl = `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${countryCode}.svg`;
+                    }
+                    locationInfo = `<div class="card-location" title="Repeater: ${linkName}">${linkName}</div>`;
+                    
+                    if (this.config.verbose) {
+                        console.log(`🏳️ Extracted country code "${countryCode || 'none'}" from LinkName: "${linkName}"`);
                     }
                 }
                 
@@ -2250,7 +2252,17 @@ class BrandmeisterMonitor {
                         <div class="card-content">
                             <div class="card-left">
                                 ${displayName ? `<div class="card-source-name"><a href="https://www.qrz.com/db/${encodeURIComponent(callsign)}" target="_blank" title="${window.t('tooltip.click.lookup.qrz').replace('{callsign}', callsign)}">${displayName}</a></div>` : ''}
-                                ${locationInfo ? `<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">${locationInfo}${timeWeatherInfo}</div>` : ''}
+                                ${locationInfo ? `<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">${locationInfo}</div>` : ''}
+                                <div class="card-time-weather">
+                                    <div class="time-info" title="${window.t('tooltip.local.time')}">
+                                        <span class="material-icons small">schedule</span>
+                                        <span>--:--</span>
+                                    </div>
+                                    <div class="weather-info" title="${window.t('tooltip.local.weather')}">
+                                        <span class="material-icons small">cloud</span>
+                                        <span>--°<\/span>
+                                    </div>
+                                </div>
                                 <div class="card-details">
                                     ${alias ? `<div class="card-alias">${alias}<\/div>` : ''}
                                     ${phoneticCallsign ? `<div class="card-phonetic">${phoneticCallsign}<\/div>` : ''}
@@ -2283,6 +2295,11 @@ class BrandmeisterMonitor {
                         // Extract dominant color from flag and apply it
                         this.extractFlagColor(flagBackgroundUrl, sessionKey);
                     }
+                }
+                
+                // Load time and weather info if RadioID data is available
+                if (radioIdInfo && radioIdInfo.city && radioIdInfo.country) {
+                    this.loadTimeWeatherInfo(radioIdInfo.city, radioIdInfo.state, radioIdInfo.country, sessionKey);
                 }
                 
                 // Final check before appending
@@ -2330,7 +2347,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    createOrUpdateTransmissionSession(sessionKey, call, eventType) {
+    async createOrUpdateTransmissionSession(sessionKey, call, eventType) {
         const callsign = call.SourceCall;
         const sourceName = call.SourceName || '';
         const tg = call.DestinationID;
@@ -2356,35 +2373,30 @@ class BrandmeisterMonitor {
             if (this.config.verbose) {
                 const timestamp = new Date().toLocaleString();
                 console.log(`[${timestamp}] DEBUG: createOrUpdateTransmissionSession START for ${callsign} on TG ${tg} - creating session in memory (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
-                console.log(`   → Callsign: "${callsign}", SourceID: "${sourceID}", SourceName: "${sourceName}"`);
+                console.log(`   → Callsign: "${callsign}", SourceID: "${sourceID}", SourceName: "${sourceName}", LinkName: "${linkName}"`);
                 if (!callsign || callsign.trim() === '') {
                     console.warn(`⚠️ WARNING: Callsign is empty or undefined in Session-Start!`);
                 }
             }
             
-            // Lookup and cache RadioID information once per session
-            const radioIdInfo = this.lookupRadioID(sourceID);
+            // Use callsign from session data
+            const resolvedCallsign = callsign;
             
-            // Use RadioID callsign as primary source if available (more reliable than session data)
-            const resolvedCallsign = radioIdInfo?.callsign || callsign;
-            
-            if (this.config.verbose) {
-                if (radioIdInfo) {
-                    console.log(`💾 Storing RadioID info in session for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
-                    console.log(`   → Will display: Callsign="${radioIdInfo.callsign || 'N/A'}", Name="${radioIdInfo.name || 'N/A'}", Location="${[radioIdInfo.city, radioIdInfo.country].filter(Boolean).join(', ') || 'N/A'}"`);
-                    if (radioIdInfo.callsign && radioIdInfo.callsign !== callsign) {
-                        console.log(`   ℹ️ Using RadioID callsign "${radioIdInfo.callsign}" instead of session callsign "${callsign}"`);
-                    }
-                } else {
-                    console.log(`⚠️ RadioID lookup returned NULL for ${resolvedCallsign} (${sourceID}) - will display without name/location`);
+            // Wait for RadioID lookup before creating session
+            let radioIdInfo = null;
+            try {
+                radioIdInfo = await this.lookupRadioID(sourceID);
+                if (radioIdInfo && this.config.verbose) {
+                    console.log(`💾 Retrieved RadioID info for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
                 }
+            } catch (err) {
+                console.error(`Failed to lookup RadioID ${sourceID}:`, err);
             }
             
-            // Create new session entry
+            // Create new session entry with RadioID data already populated
             this.transmissionGroups[sessionKey] = {
                 sessionID: call.SessionID,
-                callsign: resolvedCallsign, // Use RadioID callsign if available
-                sourceName,
+                callsign: resolvedCallsign,
                 sourceName,
                 tg,
                 startTime,
@@ -2392,7 +2404,6 @@ class BrandmeisterMonitor {
                 duration: null,
                 alias: this.getStoredAlias(callsign),
                 sourceID,
-                radioIdInfo, // Store RadioID lookup result in session
                 linkName,
                 linkType,
                 sessionType,
@@ -2401,7 +2412,8 @@ class BrandmeisterMonitor {
                 state: 'live', // UI states: live, stale, orphaned
                 lastUpdateTime: Date.now(),
                 createdTime: Date.now(),
-                logEntry: null
+                logEntry: null,
+                radioIdInfo: radioIdInfo // Include RadioID data from the start
             };
 
             // Don't immediately show active transmission - this will be handled by delayed display logic
@@ -2467,25 +2479,25 @@ class BrandmeisterMonitor {
                         contextID
                     });
                 }
-                // Lookup and cache RadioID information once per session
-                const radioIdInfo = this.lookupRadioID(sourceID);
                 
-                // Use RadioID callsign as primary source if available
-                const resolvedCallsign = radioIdInfo?.callsign || callsign;
+                // Use callsign from session data
+                const resolvedCallsign = callsign;
                 
-                if (this.config.verbose) {
-                    if (radioIdInfo) {
-                        console.log(`💾 Storing RadioID info in session (from Update) for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
-                        if (radioIdInfo.callsign && radioIdInfo.callsign !== callsign) {
-                            console.log(`   ℹ️ Using RadioID callsign "${radioIdInfo.callsign}" instead of session callsign "${callsign}"`);
-                        }
+                // Wait for RadioID lookup before creating session
+                let radioIdInfo = null;
+                try {
+                    radioIdInfo = await this.lookupRadioID(sourceID);
+                    if (radioIdInfo && this.config.verbose) {
+                        console.log(`💾 Retrieved RadioID info for ${resolvedCallsign} (${sourceID}):`, radioIdInfo);
                     }
+                } catch (err) {
+                    console.error(`Failed to lookup RadioID ${sourceID}:`, err);
                 }
                 
                 // Create session if it doesn't exist (missed the start event)
                 this.transmissionGroups[sessionKey] = {
                     sessionID: call.SessionID,
-                    callsign: resolvedCallsign, // Use RadioID callsign if available
+                    callsign: resolvedCallsign,
                     sourceName,
                     tg,
                     startTime,
@@ -2493,13 +2505,13 @@ class BrandmeisterMonitor {
                     duration: null,
                     alias: this.getStoredAlias(callsign),
                     sourceID,
-                    radioIdInfo, // Store RadioID lookup result in session
                     linkName,
                     linkType,
                     sessionType,
                     contextID,
                     status: 'updated',
-                    logEntry: null
+                    logEntry: null,
+                    radioIdInfo: radioIdInfo // Include RadioID data from the start
                 };
                 
                 if (this.config.verbose) {
@@ -3324,11 +3336,14 @@ class BrandmeisterMonitor {
         const actualCallsign = parts[parts.length - 1];
         const radioID = parts.length > 1 ? parts[0] : null;
         
-        // Use cached RadioID information from group if available, otherwise lookup
-        const radioIdInfo = group?.radioIdInfo || (radioID ? this.lookupRadioID(radioID) : null);
+        // Get location from RadioID or LinkName
+        const radioIdInfo = group?.radioIdInfo || null;
+        const linkName = fieldData.linkName || group?.linkName || '';
         let locationText = '-';
         let flagIcon = '<span class="material-icons small">public</span>';
+        let countryCode = '';
         
+        // Prefer RadioID info if available
         if (radioIdInfo) {
             const city = radioIdInfo.city;
             const state = radioIdInfo.state;
@@ -3337,12 +3352,21 @@ class BrandmeisterMonitor {
             const locationParts = [city, state, country].filter(part => part && part.trim() !== '');
             if (locationParts.length > 0) {
                 locationText = locationParts.join(', ');
-                const countryCode = this.getCountryCode(country);
+                countryCode = this.getCountryCode(country);
                 flagIcon = countryCode ? `<span class="fi fi-${countryCode}" title="${country}"></span>` : '<span class="material-icons small">public</span>';
+            }
+        } else if (linkName) {
+            // Fallback to LinkName
+            locationText = linkName;
+            if (this.config.useRepeaterLocationForFlag) {
+                countryCode = this.extractCountryFromLinkName(linkName);
+                if (countryCode) {
+                    flagIcon = `<span class="fi fi-${countryCode}" title="${linkName}"></span>`;
+                }
             }
         }
         
-        // Get operator name from RadioID database
+        // Get operator name from RadioID or session data
         const operatorName = radioIdInfo?.name || fieldData.sourceName || '-';
         
         // Talker alias (fallback to empty if not available)
@@ -3358,12 +3382,6 @@ class BrandmeisterMonitor {
         const isActive = fieldData.status === 'Active';
         const statusIcon = isActive ? '<span class="material-icons small">fiber_manual_record</span>' : '<span class="material-icons small">check_circle</span>';
         
-        // Get country code for background flag
-        let countryCode = '';
-        if (radioIdInfo?.country) {
-            countryCode = this.getCountryCode(radioIdInfo.country);
-        }
-        
         // Create name-location text with proper handling of unknowns
         let nameLocationText;
         if (operatorName === '-' && locationText === '-') {
@@ -3374,7 +3392,7 @@ class BrandmeisterMonitor {
         
         // Create one-line compact layout with flag background and callsign as QRZ link
         logEntry.innerHTML = `
-            <div class="compact-log-line" data-country="${countryCode}" title="${radioIdInfo?.country || '-'}">
+            <div class="compact-log-line" data-country="${countryCode}" title="${linkName || '-'}">
                 <div class="compact-log-line-left">
                     <span class="compact-timestamp">${timestamp}</span>
                     <a href="https://www.qrz.com/db/${encodeURIComponent(actualCallsign)}" target="_blank" class="compact-callsign qrz-callsign" title="${window.t('tooltip.lookup.qrz').replace('{callsign}', actualCallsign)}">${actualCallsign}</a>
@@ -3675,7 +3693,6 @@ class BrandmeisterMonitor {
                 this.config.minDuration = settings.minDuration || 2;
                 this.config.verbose = settings.verbose || false;
                 this.config.monitorAllTalkgroups = settings.monitorAllTalkgroups || false;
-                this.config.enableRadioIDLookup = settings.enableRadioIDLookup !== undefined ? settings.enableRadioIDLookup : true;
                 this.config.enableTalkgroupAPI = settings.enableTalkgroupAPI !== undefined ? settings.enableTalkgroupAPI : false;
                 this.config.primaryColor = settings.primaryColor || '#2563eb';
                 this.config.autoColorFromFlag = settings.autoColorFromFlag !== undefined ? settings.autoColorFromFlag : false;
@@ -3703,7 +3720,6 @@ class BrandmeisterMonitor {
             minDuration: this.config.minDuration,
             verbose: this.config.verbose,
             monitorAllTalkgroups: this.config.monitorAllTalkgroups,
-            enableRadioIDLookup: this.config.enableRadioIDLookup,
             enableTalkgroupAPI: this.config.enableTalkgroupAPI,
             primaryColor: this.config.primaryColor,
             autoColorFromFlag: this.config.autoColorFromFlag
@@ -3837,7 +3853,6 @@ class BrandmeisterMonitor {
         this.config.minDuration = 2; // Reset to 2 seconds default
         this.config.verbose = false;
         this.config.monitorAllTalkgroups = false;
-        this.config.enableRadioIDLookup = true;
         this.config.primaryColor = '#0066cc';
         
         // Apply default color
@@ -3895,10 +3910,6 @@ class BrandmeisterMonitor {
             this.updateColorPresets(defaultColor);
         }
         
-        if (this.elements.enableRadioIDLookupCheckbox) {
-            this.config.enableRadioIDLookup = this.elements.enableRadioIDLookupCheckbox.checked;
-        }
-        
         // Clear active transmissions if monitoring scope changed
         if (previousMonitorAllTalkgroups !== this.config.monitorAllTalkgroups) {
             this.clearActiveTransmissions();
@@ -3923,39 +3934,13 @@ class BrandmeisterMonitor {
         this.elements.verboseCheckbox.checked = this.config.verbose;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
         this.elements.autoColorFromFlagCheckbox.checked = this.config.autoColorFromFlag;
-        if (this.elements.enableRadioIDLookupCheckbox) {
-            this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
-        }
         if (this.elements.enableTalkgroupAPICheckbox) {
             this.elements.enableTalkgroupAPICheckbox.checked = this.config.enableTalkgroupAPI;
         }
         this.updateColorSelection();
-        this.toggleRadioIDSettings();
         this.updateRadioIDStatus();
         this.toggleTalkgroupSettings();
         this.updateTalkgroupStatus();
-    }
-
-    toggleRadioIDSettings() {
-        if (this.elements.radioIDSettings && this.elements.enableRadioIDLookupCheckbox) {
-            const isEnabled = this.elements.enableRadioIDLookupCheckbox.checked;
-            this.config.enableRadioIDLookup = isEnabled;
-            this.elements.radioIDSettings.style.display = isEnabled ? 'block' : 'none';
-            this.saveSettings();
-            
-            if (isEnabled) {
-                // Auto-download if no database exists
-                if (!this.radioIDDatabase) {
-                    this.updateRadioIDStatus('Downloading...');
-                    this.downloadRadioIDDatabase();
-                } else {
-                    this.loadRadioIDDatabase();
-                }
-            } else {
-                // Auto-clear cache when disabled
-                this.clearRadioIDCache();
-            }
-        }
     }
 
     toggleTalkgroupSettings() {
@@ -4148,193 +4133,20 @@ class BrandmeisterMonitor {
 
     // RadioID Database Functions
     
-    // Initialize RadioID database
-    async loadRadioIDDatabase() {
-        console.log('🗂️ Initializing RadioID database...');
-        
-        if (!this.config.enableRadioIDLookup) {
-            console.log('RadioID lookup disabled in settings');
-            this.updateRadioIDStatus('Disabled');
-            return;
-        }
-
-        try {
-            // Check if we have cached data
-            const cachedData = localStorage.getItem('radioIDDatabase');
-            const lastUpdate = localStorage.getItem('radioIDLastUpdate');
-            
-            if (cachedData && lastUpdate) {
-                const cacheAge = Date.now() - parseInt(lastUpdate);
-                const cacheExpiry = this.config.radioIDCacheExpiry;
-                
-                console.log(`📋 Loading RadioID database from cache (${Math.round(cacheAge / (1000 * 60 * 60 * 24))} days old)`);
-                this.radioIDDatabase = JSON.parse(cachedData);
-                this.radioIDLastUpdate = parseInt(lastUpdate);
-                this.updateRadioIDStatus();
-                
-                // Auto-download if cache is expired
-                if (cacheAge >= cacheExpiry) {
-                    console.log('⏰ Cache expired - downloading fresh RadioID database...');
-                    await this.downloadRadioIDDatabase();
-                }
-                return;
-            }
-
-            // No cached data exists
-            console.log('� No cached RadioID database found - use Download button to fetch data');
-            this.updateRadioIDStatus('Not downloaded - downloading initial data...');
-            await this.downloadRadioIDDatabase();
-            
-        } catch (error) {
-            console.error('❌ Failed to initialize RadioID database:', error);
-            this.updateRadioIDStatus('Error loading database');
-        }
+    // Initialize RadioID cache (no database download needed)
+    initializeRadioIDCache() {
+        console.log('🗂️ RadioID API ready - using on-demand lookups with cache');
+        this.updateRadioIDStatus('Ready - API lookups enabled');
     }
 
-    // Download RadioID database from radioid.net
+    // Legacy function kept for UI compatibility
     async downloadRadioIDDatabase() {
-        if (this.radioIDUpdateInProgress) {
-            console.log('RadioID download already in progress');
-            return;
-        }
-
-        this.radioIDUpdateInProgress = true;
-        this.updateRadioIDStatus('Downloading...');
-
-        try {
-            console.log(`📡 Downloading RadioID database from ${this.config.radioIDDatabaseURL}`);
-            
-            const response = await fetch(this.config.radioIDDatabaseURL);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const csvText = await response.text();
-            console.log(`📊 Downloaded ${csvText.length} characters of CSV data`);
-
-            // Parse the CSV data
-            const parsedData = this.parseRadioIDCSV(csvText);
-            console.log(`✅ Parsed ${Object.keys(parsedData).length} RadioID records`);
-
-            // Store in memory first
-            this.radioIDDatabase = parsedData;
-            this.radioIDLastUpdate = Date.now();
-
-            // Try to save to localStorage with quota error handling
-            try {
-                const dataToStore = JSON.stringify(parsedData);
-                const sizeInMB = (dataToStore.length / (1024 * 1024)).toFixed(2);
-                console.log(`💾 Attempting to store ${sizeInMB}MB of RadioID data...`);
-                
-                localStorage.setItem('radioIDDatabase', dataToStore);
-                localStorage.setItem('radioIDLastUpdate', this.radioIDLastUpdate.toString());
-                console.log('✅ Successfully cached RadioID database to localStorage');
-                
-            } catch (storageError) {
-                if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
-                    console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only (will not persist)');
-                    const message = window.t ? 
-                        `${Object.keys(parsedData).length.toLocaleString()} ${window.t('radioid.records.memory.only')}` :
-                        `${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`;
-                    this.updateRadioIDStatus(message);
-                    return; // Still functional, just won't persist
-                } else {
-                    throw storageError; // Re-throw other storage errors
-                }
-            }
-
-            this.updateRadioIDStatus();
-            
-        } catch (error) {
-            console.error('❌ Failed to download RadioID database:', error);
-            this.updateRadioIDStatus(`Error: ${error.message}`);
-        } finally {
-            this.radioIDUpdateInProgress = false;
-        }
-    }
-
-    // Parse RadioID CSV data
-    parseRadioIDCSV(csvText) {
-        const database = {};
-        const lines = csvText.split('\n');
-        
-        if (lines.length < 2) {
-            throw new Error('Invalid CSV format: insufficient data');
-        }
-
-        // Parse header to get column indices
-        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        console.log('📋 CSV Headers:', headers);
-
-        const radioIdIndex = headers.findIndex(h => h.toLowerCase().includes('id'));
-        const callsignIndex = headers.findIndex(h => h.toLowerCase().includes('call'));
-        const firstNameIndex = headers.findIndex(h => h.toLowerCase().includes('fname') || h.toLowerCase().includes('first'));
-        const lastNameIndex = headers.findIndex(h => h.toLowerCase().includes('lname') || h.toLowerCase().includes('last'));
-        const cityIndex = headers.findIndex(h => h.toLowerCase().includes('city'));
-        const stateIndex = headers.findIndex(h => h.toLowerCase().includes('state'));
-        const countryIndex = headers.findIndex(h => h.toLowerCase().includes('country'));
-
-        console.log(`📊 Column indices - ID:${radioIdIndex}, Call:${callsignIndex}, City:${cityIndex}, State:${stateIndex}, Country:${countryIndex}`);
-
-        let recordCount = 0;
-        let skippedCount = 0;
-
-        // Parse data rows
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
-            
-            if (columns.length < headers.length) {
-                skippedCount++;
-                continue;
-            }
-
-            const radioId = columns[radioIdIndex];
-            if (!radioId || isNaN(radioId)) {
-                skippedCount++;
-                continue;
-            }
-
-            // Only store essential fields to save space
-            const city = cityIndex >= 0 ? columns[cityIndex] : '';
-            const state = stateIndex >= 0 ? columns[stateIndex] : '';
-            const country = countryIndex >= 0 ? columns[countryIndex] : '';
-            
-            // Build full name from first and last name
-            const firstName = firstNameIndex >= 0 ? columns[firstNameIndex] : '';
-            const lastName = lastNameIndex >= 0 ? columns[lastNameIndex] : '';
-            const fullName = [firstName, lastName].filter(n => n && n.trim()).join(' ').trim();
-            
-            // Get callsign from CSV
-            const callsign = callsignIndex >= 0 ? columns[callsignIndex] : '';
-
-            // Only store record if we have location data, name, or callsign
-            if (city || state || country || fullName || callsign) {
-                database[radioId] = {
-                    cs: callsign || '',  // 'cs' for callsign
-                    c: city || '',       // Use short keys to save space
-                    s: state || '',     
-                    n: country || '',    // 'n' for nation/country
-                    m: fullName || ''    // 'm' for name (person)
-                };
-                recordCount++;
-            } else {
-                skippedCount++;
-            }
-        }
-
-        console.log(`✅ Parsed ${recordCount} RadioID records with location data, skipped ${skippedCount} records`);
-        return database;
+        console.log('ℹ️ RadioID now uses API lookups - no download needed');
+        this.updateRadioIDStatus('Ready - API lookups enabled');
     }
 
     // Lookup RadioID information
-    lookupRadioID(radioId) {
-        if (!this.config.enableRadioIDLookup) {
-            return null;
-        }
-
+    async lookupRadioID(radioId) {
         const id = radioId.toString();
         
         // First check in-memory cache (fastest)
@@ -4365,47 +4177,70 @@ class BrandmeisterMonitor {
             return cachedData;
         }
         
-        // If not in cache, lookup from database
-        if (!this.radioIDDatabase) {
+        // If not in cache, fetch from API
+        try {
+            this.radioIDCacheStats.databaseLookups++;
+            
             if (this.config.verbose) {
-                console.log(`📱 ⚠️ RadioID database not loaded, cannot lookup ${id}`);
+                console.log(`📡 Fetching RadioID ${id} from API...`);
             }
-            return null;
-        }
-        
-        const record = this.radioIDDatabase[id];
-        if (!record) {
+            
+            const response = await fetch(`${this.config.radioIDApiURL}${id}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.results || data.results.length === 0) {
+                this.radioIDCacheStats.notFound++;
+                if (this.config.verbose) {
+                    console.log(`📱 ℹ️ RadioID ${id} not found in API`);
+                }
+                return null;
+            }
+            
+            const user = data.results[0];
+            const resolvedData = {
+                radioId: id,
+                callsign: user.callsign || '',
+                city: user.city || '',
+                state: user.state || '',
+                country: user.country || '',
+                name: user.name || '',
+                timestamp: Date.now()
+            };
+            
+            if (this.config.verbose) {
+                console.log(`📱 ✅ RadioID API response for ${id}:`, user);
+                console.log(`📱 Resolved data:`, resolvedData);
+                const testCountryCode = this.getCountryCode(resolvedData.country);
+                console.log(`🏳️ Country "${resolvedData.country}" maps to code: "${testCountryCode || 'NOT FOUND'}"`);
+            }
+            
+            // Cache in memory first (fastest)
+            this.addToMemoryCache(id, resolvedData);
+            
+            // Then cache in localStorage (persistent)
+            this.saveRadioIDToCache(id, resolvedData);
+            
+            if (this.config.verbose) {
+                console.log(`📱 Cached in memory and localStorage`);
+            }
+            
+            return resolvedData;
+            
+        } catch (error) {
+            console.error(`❌ Failed to fetch RadioID ${id} from API:`, error);
             this.radioIDCacheStats.notFound++;
-            if (this.config.verbose) {
-                console.log(`📱 ℹ️ RadioID ${id} not found in database`);
-            }
             return null;
         }
-        
-        this.radioIDCacheStats.databaseLookups++;
-        
-        // Convert short keys back to full names
-        const resolvedData = {
-            radioId: id,
-            callsign: record.cs || '',  // 'cs' field contains the callsign
-            city: record.c || '',
-            state: record.s || '',
-            country: record.n || '',
-            name: record.m || '',        // 'm' field contains the full name
-            timestamp: Date.now()
-        };
-        
-        // Cache in memory first (fastest)
-        this.addToMemoryCache(id, resolvedData);
-        
-        // Then cache in localStorage (persistent)
-        this.saveRadioIDToCache(id, resolvedData);
-        
-        if (this.config.verbose) {
-            console.log(`📱 🔍 Resolved and cached RadioID data for ${id} (${this.radioIDMemoryCache.size}/${this.config.radioIDMemoryCacheLimit} in memory)`);
-        }
-        
-        return resolvedData;
     }
 
     /**
@@ -4862,6 +4697,21 @@ class BrandmeisterMonitor {
     getCountryCode(countryName) {
         // Use the global country code function from config.js
         return window.getCountryCode(countryName);
+    }
+
+    // Extract country from LinkName (e.g., "United States_EA_Tennessee" -> "United States")
+    extractCountryFromLinkName(linkName) {
+        if (!linkName || typeof linkName !== 'string') return null;
+        
+        // LinkName format is typically: "Country_Zone_Region" or just "Country"
+        // Examples: "United States_EA_Tennessee", "Spain_EA5_Madrid", "Germany"
+        const parts = linkName.split('_');
+        if (parts.length > 0) {
+            const countryPart = parts[0].trim();
+            // Get country code using existing mapping
+            return this.getCountryCode(countryPart);
+        }
+        return null;
     }
 
     /**

@@ -7,7 +7,7 @@
 window.BrandmeisterConfig = {
     // Basic settings
     minDuration: 2, // filter out short transmissions (seconds)
-    verbose: false, // Enable verbose console logging for debugging (does not affect activity log)
+    verbose: true, // Enable verbose console logging for debugging (does not affect activity log)
     monitorAllTalkgroups: false, // if true, monitor all TGs; if false, use monitoredTalkgroup
     primaryColor: '#2563eb', // Primary color for the interface
     
@@ -29,10 +29,10 @@ window.BrandmeisterConfig = {
     slowOperationThreshold: 100, // Log operations taking longer than 100ms
     
     // RadioID Database settings
-    radioIDDatabaseURL: 'https://radioid.net/static/user.csv',
+    radioIDApiURL: 'https://api.allorigins.win/raw?url=https://radioid.net/api/users?id=',
     radioIDCacheExpiry: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     radioIDMemoryCacheLimit: 500, // Maximum entries to keep in memory cache
-    enableRadioIDLookup: true, // Enable RadioID database features
+    useRepeaterLocationForFlag: false, // Use RadioID API for country flag
     
     // Talkgroup Database settings
     talkgroupDatabaseURL: 'https://api.brandmeister.network/v2/talkgroup',
