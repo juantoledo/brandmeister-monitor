@@ -14,7 +14,7 @@ window.BrandmeisterConfig = {
     // Session management settings
     maxInactivityTime: 120000, // Mark as stale after 2 minutes (120 seconds)
     maxSessionAge: 300000, // Auto-complete after 5 minutes (300 seconds)
-    sessionCleanupInterval: 60000, // Check for orphaned sessions every minute
+    sessionCleanupInterval: 5000, // Check for orphaned sessions every 5 seconds
     allowMultipleSessionsPerTG: true, // Allow multiple concurrent sessions per talkgroup
     
     // Memory optimization settings

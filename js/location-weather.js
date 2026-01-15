@@ -167,6 +167,10 @@ class LocationWeatherService {
             const url = `${this.apis.geocoding}?q=${encodeURIComponent(query)}&format=json&limit=1`;
             
             const response = await fetch(url);
+            if (!response.ok) {
+                console.warn(`Geocoding API returned ${response.status} for ${query}`);
+                return null;
+            }
             const data = await response.json();
             
             if (data && data.length > 0) {
@@ -185,7 +189,11 @@ class LocationWeatherService {
                 return coords;
             }
         } catch (error) {
-            console.warn('Geocoding failed:', error);
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.warn(`CORS or network error in geocoding for ${city}, ${normalizedCountry}`);
+            } else {
+                console.warn('Geocoding failed:', error);
+            }
         }
         
         return null;
@@ -207,6 +215,10 @@ class LocationWeatherService {
             const url = `${this.apis.weather}?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
             
             const response = await fetch(url);
+            if (!response.ok) {
+                console.warn(`Weather API returned ${response.status}`);
+                return null;
+            }
             const data = await response.json();
             
             if (data && data.current_weather) {
@@ -226,7 +238,11 @@ class LocationWeatherService {
                 return weather;
             }
         } catch (error) {
-            console.warn('Weather fetch failed:', error);
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.warn('CORS or network error in weather API');
+            } else {
+                console.warn('Weather fetch failed:', error);
+            }
         }
         
         return null;

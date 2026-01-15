@@ -1444,9 +1444,23 @@ class BrandmeisterMonitor {
         
         // Wait for animation to complete, then remove element
         setTimeout(() => {
-            element.remove();
+            // Force removal even if element is somehow still attached
+            if (element.parentNode) {
+                element.remove();
+            }
             if (callback) callback();
         }, 500); // Match the CSS animation duration
+        
+        // Fallback: Force removal after 1 second if still present
+        setTimeout(() => {
+            if (element.parentNode) {
+                if (this.config.verbose) {
+                    console.warn('⚠️ Force removing stuck card after animation timeout');
+                }
+                element.remove();
+                if (callback) callback();
+            }
+        }, 1000);
     }
 
     loadTalkgroupFromStorage() {
@@ -2808,15 +2822,22 @@ class BrandmeisterMonitor {
             }
             
             // Clean up stuck sessions (sessions that never completed)
-            if (group && (group.status === 'started' || group.status === 'updated')) {
+            if (group && (group.status === 'started' || group.status === 'updated' || group.status === 'active')) {
                 const sessionAge = now - (group.startTime * 1000);
                 if (sessionAge > 600000) { // 10 minutes
-                    this.logDebug('Cleaning up stuck session', {
-                        sessionID: key,
-                        callsign: group.callsign,
-                        status: group.status,
-                        ageMinutes: (sessionAge / 60000).toFixed(1)
-                    });
+                    if (this.config.verbose) {
+                        this.logDebug('Cleaning up stuck session', {
+                            sessionID: key,
+                            callsign: group.callsign,
+                            status: group.status,
+                            ageMinutes: (sessionAge / 60000).toFixed(1)
+                        });
+                    }
+                    // Force remove UI card for this session
+                    const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${key}"]`);
+                    if (activeEntry) {
+                        activeEntry.remove();
+                    }
                     delete this.transmissionGroups[key];
                     cleanedItems++;
                 }
@@ -2974,21 +2995,66 @@ class BrandmeisterMonitor {
         const activeTransmissionElements = document.querySelectorAll('.active-transmission');
         const logEntryElements = document.querySelectorAll('.log-entry');
         
+        let removedOrphans = 0;
+        let removedDuplicates = 0;
+        let removedCompleted = 0;
+        let removedStale = 0;
+        const now = Date.now();
+        
         // Check for and remove duplicate elements
         const seenSessionKeys = new Set();
         activeTransmissionElements.forEach(element => {
             const sessionKey = element.getAttribute('data-session-key');
             if (seenSessionKeys.has(sessionKey)) {
                 element.remove(); // Remove duplicate
+                removedDuplicates++;
             } else {
                 seenSessionKeys.add(sessionKey);
                 
+                const session = this.transmissionGroups[sessionKey];
+                
                 // Remove elements for sessions that no longer exist
-                if (!this.transmissionGroups[sessionKey]) {
+                if (!session) {
+                    if (this.config.verbose) {
+                        console.log(`🗑️ Removing orphaned card with no session: ${sessionKey}`);
+                    }
                     element.remove();
+                    removedOrphans++;
+                }
+                // Remove cards for completed sessions that should have been removed
+                else if (session.status === 'completed') {
+                    if (this.config.verbose) {
+                        console.log(`🗑️ Removing card for completed session: ${sessionKey}`);
+                    }
+                    element.remove();
+                    removedCompleted++;
+                }
+                // Remove cards stuck in 'exiting' state
+                else if (element.classList.contains('exiting')) {
+                    if (this.config.verbose) {
+                        console.log(`🗑️ Removing stuck card in exiting state: ${sessionKey}`);
+                    }
+                    element.remove();
+                    removedOrphans++;
+                }
+                // TIMEOUT ALL CARDS: Remove any card that has been visible for too long
+                // This catches cards that failed to get weather/location data or other issues
+                else if (session.createdTime && (now - session.createdTime) > this.config.maxSessionAge) {
+                    if (this.config.verbose) {
+                        console.log(`⏱️ Removing card due to timeout: ${sessionKey} (age: ${((now - session.createdTime) / 1000).toFixed(1)}s)`);
+                    }
+                    element.remove();
+                    removedStale++;
+                    // Also clean up the session
+                    session.status = 'completed';
+                    session.state = 'orphaned';
                 }
             }
         });
+        
+        if (this.config.verbose && (removedOrphans > 0 || removedDuplicates > 0 || removedCompleted > 0 || removedStale > 0)) {
+            console.log(`🧹 DOM cleanup: removed ${removedOrphans} orphans, ${removedDuplicates} duplicates, ${removedCompleted} completed, ${removedStale} timed out`);
+        }
         
         // Limit log entries more aggressively if we have too many
         if (logEntryElements.length > this.config.maxLogEntries * 1.2) {
@@ -2996,6 +3062,12 @@ class BrandmeisterMonitor {
             for (let i = 0; i < excessCount; i++) {
                 logEntryElements[i].remove();
             }
+        }
+        
+        // Check if we need to show "no activity" message
+        const remainingActive = this.elements.activeContainer.querySelectorAll('.active-transmission').length;
+        if (remainingActive === 0 && !this.elements.activeContainer.querySelector('.no-activity')) {
+            this.elements.activeContainer.appendChild(this.createNoActivityElement(this._htmlFragments.noActivityActive));
         }
     }
 
@@ -4605,11 +4677,15 @@ class BrandmeisterMonitor {
             console.log('📋 Error details:', {
                 message: error.message,
                 type: error.constructor.name,
-                url: this.config.talkgroupDatabaseURL
+                url: this.config.talkgroupDatabaseURL,
+                isCorsError: error.name === 'TypeError' && error.message.includes('fetch')
             });
             
-            // Update status to indicate fallback
-            this.updateTalkgroupStatus('API failed - using static data');
+            // Update status to indicate fallback with specific error type
+            const errorType = error.name === 'TypeError' && error.message.includes('fetch') 
+                ? 'CORS/Network error' 
+                : 'API error';
+            this.updateTalkgroupStatus(`${errorType} - using static data`);
             
             // Don't throw the error, allow application to continue with static data
             
@@ -5006,26 +5082,24 @@ class BrandmeisterMonitor {
                         console.log(`✅ Updated time/weather for ${city}: ${locationInfo.localTime}, ${locationInfo.weather.temperature}°C / ${tempF}°F`);
                     }
                 } else {
-                    // Show fallback if data unavailable
-                    const timeInfo = timeWeatherElement.querySelector('.time-info');
-                    const weatherInfo = timeWeatherElement.querySelector('.weather-info');
-                    
-                    if (timeInfo) timeInfo.innerHTML = '<span class="material-icons small">schedule</span> --:--';
-                    if (weatherInfo) weatherInfo.innerHTML = '<span class="material-icons small">public</span> --°';
+                    // API failed (CORS or other error) - hide the time/weather container
+                    if (this.config.verbose) {
+                        console.log(`⚠️ Location info unavailable for ${city}, ${country} - hiding time/weather UI`);
+                    }
+                    timeWeatherElement.style.display = 'none';
                 }
             } catch (error) {
-                console.warn('Failed to load time/weather info:', error);
+                console.warn(`Failed to load weather for ${city}, ${country}:`, error);
                 
-                // Show error state
+                // Hide time/weather element on error
                 const transmissionCard = document.querySelector(`[data-session-key="${sessionKey}"]`);
                 if (transmissionCard) {
                     const timeWeatherElement = transmissionCard.querySelector('.card-time-weather');
                     if (timeWeatherElement) {
-                        const timeInfo = timeWeatherElement.querySelector('.time-info');
-                        const weatherInfo = timeWeatherElement.querySelector('.weather-info');
-                        
-                        if (timeInfo) timeInfo.innerHTML = '<span class="material-icons small">schedule</span> --:--';
-                        if (weatherInfo) weatherInfo.innerHTML = '<span class="material-icons small">public</span> --°';
+                        if (this.config.verbose) {
+                            console.log(`⚠️ Hiding time/weather UI due to error`);
+                        }
+                        timeWeatherElement.style.display = 'none';
                     }
                 }
             } finally {
