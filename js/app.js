@@ -2681,12 +2681,12 @@ class BrandmeisterMonitor {
                 }
             }
 
-            // Handle UI updates for Session-Update events - always update
+            // Handle UI updates for Session-Update events - update for all non-completed sessions
             const group = this.transmissionGroups[sessionKey];
-            if (group && group.status === 'active') {
+            if (group && group.status !== 'completed') {
                 if (this.config.verbose) {
                     const timestamp = new Date().toLocaleString();
-                    console.log(`[${timestamp}] DEBUG: Updating transmission UI for ${group.callsign} (Session-Update)`);
+                    console.log(`[${timestamp}] DEBUG: Updating transmission UI for ${group.callsign} (Session-Update, status: ${group.status})`);
                 }
                 this.createOrUpdateTransmissionGroup(sessionKey, call);
             } else if (this.config.verbose) {
@@ -2723,9 +2723,23 @@ class BrandmeisterMonitor {
                 
                 // Update UI to remove from active display and move to completed log
                 this.createOrUpdateTransmissionGroup(sessionKey, call);
-            } else if (this.config.verbose) {
-                const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}] DEBUG: Session-Stop for ${callsign} but no existing session found (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'}`);
+            } else {
+                // Session-Stop received but no session exists in memory
+                // This can happen if session was already cleaned up or we missed Session-Start
+                // FORCE REMOVE any UI card that might exist for this session
+                if (this.config.verbose) {
+                    const timestamp = new Date().toLocaleString();
+                    console.log(`[${timestamp}] DEBUG: Session-Stop for ${callsign} but no existing session found (SessionID: ${sessionKey}), ContextID: ${contextID || 'N/A'} - forcing UI card removal`);
+                }
+                
+                // Try to remove card from UI even without session data
+                const activeEntry = this.elements.activeContainer.querySelector(`[data-session-key="${sessionKey}"]`);
+                if (activeEntry) {
+                    if (this.config.verbose) {
+                        console.log(`🗑️ Force removing orphaned card for session ${sessionKey} on Session-Stop`);
+                    }
+                    this.animateTransmissionRemoval(activeEntry);
+                }
             }
         }
     }
@@ -2890,20 +2904,35 @@ class BrandmeisterMonitor {
             const timeSinceUpdate = now - session.lastUpdateTime;
             const totalSessionAge = now - session.createdTime;
             
-            // Mark as stale if no updates for configured time (internal tracking only)
+            // Immediately complete and remove sessions with no updates (likely ended without Session-Stop)
             if (timeSinceUpdate > this.config.maxInactivityTime && session.state === 'live') {
                 session.state = 'stale';
-                session.status = 'stale';
+                session.status = 'completed';
+                session.stopTime = now;
+                session.duration = (now - session.startTime) / 1000;
                 staleSessions++;
-                // No UI update - keep sessions looking live until auto-completion
+                
+                // Release color ownership
+                if (this.colorOwnerSessionKey === sessionKey) {
+                    this.colorOwnerSessionKey = null;
+                    if (this.config.verbose) {
+                        console.log(`Session ${sessionKey} released color ownership (stale - no updates)`);
+                    }
+                }
+                
+                // Create completion log entry
+                this.createCompletionLogEntry(session, 'no updates for ' + (timeSinceUpdate / 1000).toFixed(0) + 's (likely missed Session-Stop)');
+                
+                // Remove from active UI immediately
+                this.removeSessionFromActiveUI(sessionKey);
                 
                 if (this.config.verbose) {
-                    this.logDebug('Session marked as stale (internal only)', {
+                    this.logDebug('Session auto-completed due to no updates', {
                         sessionID: session.sessionID,
                         callsign: session.callsign,
                         tg: session.tg,
                         timeSinceUpdate: (timeSinceUpdate / 1000).toFixed(1) + 's',
-                        reason: 'no updates received'
+                        reason: 'no updates received - likely ended without Session-Stop'
                     });
                 }
             }

@@ -12,8 +12,8 @@ window.BrandmeisterConfig = {
     primaryColor: '#2563eb', // Primary color for the interface
     
     // Session management settings
-    maxInactivityTime: 120000, // Mark as stale after 2 minutes (120 seconds)
-    maxSessionAge: 300000, // Auto-complete after 5 minutes (300 seconds)
+    maxInactivityTime: 90000, // Mark as stale after 90 seconds of no updates
+    maxSessionAge: 60000, // Auto-complete after 1 minute total (60 seconds)
     sessionCleanupInterval: 5000, // Check for orphaned sessions every 5 seconds
     allowMultipleSessionsPerTG: true, // Allow multiple concurrent sessions per talkgroup
     
