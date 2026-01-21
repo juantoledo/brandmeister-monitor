@@ -1,0 +1,144 @@
+name: Update RadioID Database
+
+on:
+  # Run daily at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: "radioid-update"
+  cancel-in-progress: false
+
+jobs:
+  update-radioid:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Download RadioID CSV
+      run: |
+        echo "📡 Downloading RadioID database from radioid.net..."
+        curl -L -o static/user.csv https://radioid.net/static/user.csv
+        
+        # Verify the file was downloaded and is not empty
+        if [ ! -s static/user.csv ]; then
+          echo "❌ Failed to download user.csv or file is empty"
+          exit 1
+        fi
+        
+        # Get file size
+        FILE_SIZE=$(du -h static/user.csv | cut -f1)
+        echo "✅ Downloaded user.csv ($FILE_SIZE)"
+
+    - name: Generate JavaScript module
+      run: |
+        echo "🔧 Converting CSV to JavaScript module..."
+        
+        # Read CSV file and escape for JavaScript template literal
+        CSV_CONTENT=$(cat static/user.csv | sed 's/\\/\\\\/g' | sed "s/\`/\\\\\`/g")
+        
+        # Create user-data.js with the CSV content
+        cat > js/user-data.js << 'EOF'
+window.RADIOID_CSV_DATA = `
+EOF
+        cat static/user.csv >> js/user-data.js
+        echo '`;' >> js/user-data.js
+        
+        # Get file sizes
+        CSV_SIZE=$(du -h static/user.csv | cut -f1)
+        JS_SIZE=$(du -h js/user-data.js | cut -f1)
+        echo "✅ Created js/user-data.js"
+        echo "   CSV size: $CSV_SIZE"
+        echo "   JavaScript module size: $JS_SIZE"
+
+    - name: Check for changes
+      id: check-changes
+      run: |
+        # Check if there are actual changes in the CSV data
+        git add static/user.csv js/user-data.js
+        
+        if git diff --cached --quiet; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ No changes detected in RadioID database"
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "✅ Changes detected in RadioID database"
+          
+          # Get some statistics about the CSV
+          TOTAL_LINES=$(wc -l < static/user.csv)
+          TOTAL_RECORDS=$((TOTAL_LINES - 1))
+          echo "📊 Total RadioID records: $TOTAL_RECORDS"
+        fi
+
+    - name: Commit changes
+      if: steps.check-changes.outputs.changed == 'true'
+      run: |
+        TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+        TOTAL_LINES=$(wc -l < static/user.csv)
+        TOTAL_RECORDS=$((TOTAL_LINES - 1))
+        
+        git commit -m "chore: update RadioID database - $TIMESTAMP
+
+        - Updated user.csv with latest data from radioid.net
+        - Generated new js/user-data.js module
+        - Total records: $TOTAL_RECORDS
+        
+        [skip ci]"
+        echo "✅ Changes committed"
+
+    - name: Push changes
+      if: steps.check-changes.outputs.changed == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
+
+    - name: Setup Pages
+      if: steps.check-changes.outputs.changed == 'true'
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      if: steps.check-changes.outputs.changed == 'true'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+
+    - name: Deploy to GitHub Pages
+      if: steps.check-changes.outputs.changed == 'true'
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+    - name: Output results
+      run: |
+        if [ "${{ steps.check-changes.outputs.changed }}" == "true" ]; then
+          echo "🚀 RadioID database updated and deployed successfully!"
+          echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
+          TOTAL_LINES=$(wc -l < static/user.csv)
+          TOTAL_RECORDS=$((TOTAL_LINES - 1))
+          echo "📊 Total RadioID records: $TOTAL_RECORDS"
+          echo "⏰ Next automatic update: tomorrow at 2 AM UTC"
+        else
+          echo "ℹ️ No changes detected in RadioID database"
+          echo "⏰ Next check: tomorrow at 2 AM UTC"
+        fi

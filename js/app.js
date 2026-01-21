@@ -146,8 +146,6 @@ class BrandmeisterMonitor {
             minDurationInput: document.getElementById('minDuration'),
             verboseCheckbox: document.getElementById('verbose'),
             monitorAllTalkgroupsCheckbox: document.getElementById('monitorAllTalkgroups'),
-            enableRadioIDLookupCheckbox: document.getElementById('enableRadioIDLookup'),
-            radioIDSettings: document.getElementById('radioIDSettings'),
             enableTalkgroupAPICheckbox: document.getElementById('enableTalkgroupAPI'),
             talkgroupSettings: document.getElementById('talkgroupSettings'),
             downloadTalkgroupsBtn: document.getElementById('downloadTalkgroups'),
@@ -183,10 +181,6 @@ class BrandmeisterMonitor {
         // Reset application data button
         if (this.elements.resetAppDataBtn) {
             this.elements.resetAppDataBtn.addEventListener('click', () => this.resetApplicationData());
-        }
-        // RadioID event listeners
-        if (this.elements.enableRadioIDLookupCheckbox) {
-            this.elements.enableRadioIDLookupCheckbox.addEventListener('change', () => this.toggleRadioIDSettings());
         }
         
         // Talkgroup settings event listeners
@@ -351,8 +345,7 @@ class BrandmeisterMonitor {
         // Update activity log header if it exists
         this.updateActivityLogHeader();
         
-        // Update RadioID status if available
-        this.updateRadioIDStatusDisplay();
+
         
         // Refresh weather displays to show weekdays in new language
         this.refreshWeatherDisplays();
@@ -418,12 +411,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    updateRadioIDStatusDisplay() {
-        // Re-run the RadioID status update to apply new language
-        if (this.elements.radioIDStatus) {
-            this.updateRadioIDStatus();
-        }
-    }
+
 
     // Initialize Talk Group Selector
     initializeTalkGroupSelector() {
@@ -3826,40 +3814,15 @@ class BrandmeisterMonitor {
         this.elements.minDurationInput.value = this.config.minDuration;
         this.elements.verboseCheckbox.checked = this.config.verbose;
         this.elements.monitorAllTalkgroupsCheckbox.checked = this.config.monitorAllTalkgroups;
-        if (this.elements.enableRadioIDLookupCheckbox) {
-            this.elements.enableRadioIDLookupCheckbox.checked = this.config.enableRadioIDLookup;
-        }
         if (this.elements.enableTalkgroupAPICheckbox) {
             this.elements.enableTalkgroupAPICheckbox.checked = this.config.enableTalkgroupAPI;
         }
         this.updateColorSelection();
-        this.toggleRadioIDSettings();
-        this.updateRadioIDStatus();
         this.toggleTalkgroupSettings();
         this.updateTalkgroupStatus();
     }
 
-    toggleRadioIDSettings() {
-        if (this.elements.radioIDSettings && this.elements.enableRadioIDLookupCheckbox) {
-            const isEnabled = this.elements.enableRadioIDLookupCheckbox.checked;
-            this.config.enableRadioIDLookup = isEnabled;
-            this.elements.radioIDSettings.style.display = isEnabled ? 'block' : 'none';
-            this.saveSettings();
-            
-            if (isEnabled) {
-                // Auto-download if no database exists
-                if (!this.radioIDDatabase) {
-                    this.updateRadioIDStatus('Downloading...');
-                    this.downloadRadioIDDatabase();
-                } else {
-                    this.loadRadioIDDatabase();
-                }
-            } else {
-                // Auto-clear cache when disabled
-                this.clearRadioIDCache();
-            }
-        }
-    }
+
 
     toggleTalkgroupSettings() {
         if (this.elements.talkgroupSettings && this.elements.enableTalkgroupAPICheckbox) {
@@ -4046,13 +4009,7 @@ class BrandmeisterMonitor {
     
     // Initialize RadioID database
     async loadRadioIDDatabase() {
-        console.log('🗂️ Initializing RadioID database...');
-        
-        if (!this.config.enableRadioIDLookup) {
-            console.log('RadioID lookup disabled in settings');
-            this.updateRadioIDStatus('Disabled');
-            return;
-        }
+        console.log('🗂️ Loading RadioID database from embedded data...');
 
         try {
             // Check if we have cached data
@@ -4060,63 +4017,45 @@ class BrandmeisterMonitor {
             const lastUpdate = localStorage.getItem('radioIDLastUpdate');
             
             if (cachedData && lastUpdate) {
-                const cacheAge = Date.now() - parseInt(lastUpdate);
-                const cacheExpiry = this.config.radioIDCacheExpiry;
-                
-                console.log(`📋 Loading RadioID database from cache (${Math.round(cacheAge / (1000 * 60 * 60 * 24))} days old)`);
+                console.log('📋 Loading RadioID database from cache');
                 this.radioIDDatabase = JSON.parse(cachedData);
                 this.radioIDLastUpdate = parseInt(lastUpdate);
-                this.updateRadioIDStatus();
-                
-                // Auto-download if cache is expired
-                if (cacheAge >= cacheExpiry) {
-                    console.log('⏰ Cache expired - downloading fresh RadioID database...');
-                    await this.downloadRadioIDDatabase();
-                }
                 return;
             }
 
-            // No cached data exists
-            console.log('� No cached RadioID database found - use Download button to fetch data');
-            this.updateRadioIDStatus('Not downloaded - downloading initial data...');
-            await this.downloadRadioIDDatabase();
+            // Check if CSV data is embedded in window object
+            if (window.RADIOID_CSV_DATA) {
+                console.log('📡 Loading RadioID database from embedded CSV data...');
+                this.loadRadioIDFromEmbeddedData();
+            } else {
+                console.warn('⚠️ No RadioID CSV data found. Make sure user-data.js is loaded.');
+            }
             
         } catch (error) {
-            console.error('❌ Failed to initialize RadioID database:', error);
-            this.updateRadioIDStatus('Error loading database');
+            console.error('❌ Failed to load RadioID database:', error);
         }
     }
 
-    // Download RadioID database from radioid.net
-    async downloadRadioIDDatabase() {
-        if (this.radioIDUpdateInProgress) {
-            console.log('RadioID download already in progress');
-            return;
-        }
-
-        this.radioIDUpdateInProgress = true;
-        this.updateRadioIDStatus('Downloading...');
-
+    // Load RadioID database from embedded CSV data
+    loadRadioIDFromEmbeddedData() {
         try {
-            console.log(`📡 Downloading RadioID database from ${this.config.radioIDDatabaseURL}`);
-            
-            const response = await fetch(this.config.radioIDDatabaseURL);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!window.RADIOID_CSV_DATA) {
+                console.warn('⚠️ No embedded RadioID CSV data found');
+                return;
             }
 
-            const csvText = await response.text();
-            console.log(`📊 Downloaded ${csvText.length} characters of CSV data`);
+            const csvText = window.RADIOID_CSV_DATA;
+            console.log(`📊 Processing ${csvText.length} characters of embedded CSV data`);
 
             // Parse the CSV data
             const parsedData = this.parseRadioIDCSV(csvText);
             console.log(`✅ Parsed ${Object.keys(parsedData).length} RadioID records`);
 
-            // Store in memory first
+            // Store in memory
             this.radioIDDatabase = parsedData;
             this.radioIDLastUpdate = Date.now();
 
-            // Try to save to localStorage with quota error handling
+            // Try to save to localStorage
             try {
                 const dataToStore = JSON.stringify(parsedData);
                 const sizeInMB = (dataToStore.length / (1024 * 1024)).toFixed(2);
@@ -4128,25 +4067,21 @@ class BrandmeisterMonitor {
                 
             } catch (storageError) {
                 if (storageError.name === 'QuotaExceededError' || storageError.code === 22) {
-                    console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only (will not persist)');
-                    const message = window.t ? 
-                        `${Object.keys(parsedData).length.toLocaleString()} ${window.t('radioid.records.memory.only')}` :
-                        `${Object.keys(parsedData).length.toLocaleString()} records loaded (memory only)`;
-                    this.updateRadioIDStatus(message);
-                    return; // Still functional, just won't persist
+                    console.warn('⚠️ localStorage quota exceeded - RadioID data stored in memory only');
                 } else {
-                    throw storageError; // Re-throw other storage errors
+                    console.warn('⚠️ Failed to cache to localStorage:', storageError);
                 }
             }
-
-            this.updateRadioIDStatus();
             
         } catch (error) {
-            console.error('❌ Failed to download RadioID database:', error);
-            this.updateRadioIDStatus(`Error: ${error.message}`);
-        } finally {
-            this.radioIDUpdateInProgress = false;
+            console.error('❌ Failed to load embedded RadioID data:', error);
         }
+    }
+
+    // Load RadioID database from remote URL (fallback method)
+    async downloadRadioIDDatabase() {
+        console.warn('⚠️ downloadRadioIDDatabase is deprecated. Use embedded data via user-data.js instead.');
+        return;
     }
 
     // Parse RadioID CSV data
@@ -4227,10 +4162,6 @@ class BrandmeisterMonitor {
 
     // Lookup RadioID information
     lookupRadioID(radioId) {
-        if (!this.config.enableRadioIDLookup) {
-            return null;
-        }
-
         const id = radioId.toString();
         
         // First check in-memory cache (fastest)
@@ -4515,29 +4446,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    // Update RadioID status display
-    updateRadioIDStatus(customStatus = null) {
-        const statusElement = document.getElementById('radioIDStatus');
-        const updateElement = document.getElementById('radioIDLastUpdate');
-        
-        if (!statusElement || !updateElement) return;
 
-        if (customStatus) {
-            statusElement.textContent = customStatus;
-            updateElement.textContent = '';
-        } else if (this.radioIDDatabase && this.radioIDLastUpdate) {
-            const count = Object.keys(this.radioIDDatabase).length;
-            const lastUpdate = new Date(this.radioIDLastUpdate);
-            const recordsText = window.t ? window.t('radioid.records.loaded') : 'records loaded';
-            const updatedText = window.t ? window.t('radioid.updated') : 'Updated:';
-            statusElement.textContent = `${count.toLocaleString()} ${recordsText}`;
-            updateElement.textContent = `${updatedText} ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
-        } else {
-            const notLoadedText = window.t ? window.t('radioid.status.notloaded') : 'Not loaded';
-            statusElement.textContent = notLoadedText;
-            updateElement.textContent = '';
-        }
-    }
 
     updateTalkgroupStatus(customStatus = null) {
         const statusElement = document.getElementById('talkgroupStatus');
@@ -4587,8 +4496,6 @@ class BrandmeisterMonitor {
         keysToRemove.forEach(key => localStorage.removeItem(key));
         
         console.log(`🗑️ Cleared ${keysToRemove.length} individual RadioID cache entries`);
-        
-        this.updateRadioIDStatus('Cache cleared');
     }
 
     // Talkgroup Database Functions

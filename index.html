@@ -50,6 +50,7 @@
     <script src="js/location-weather.js"></script>
     <script src="js/guided-tour.js"></script>
     <script src="js/pwa-install.js"></script>
+    <script src="js/user-data.js"></script>
 </head>
 <body>
     <div class="app-layout">
@@ -209,22 +210,6 @@
                                 <span data-i18n="settings.monitor.all.label">Monitor All Talkgroups</span>
                             </label>
                             <span class="setting-description" data-i18n="settings.monitor.all.description">Override specific TG and monitor all activity</span>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <label class="toggle-label">
-                                <input type="checkbox" id="enableRadioIDLookup">
-                                <span class="toggle-slider"></span>
-                                <span data-i18n="settings.radioid.label">Enable RadioID Database</span>
-                            </label>
-                            <span class="setting-description" data-i18n="settings.radioid.description">Download and cache user information from radioid.net</span>
-                        </div>
-                        
-                        <div class="setting-group" id="radioIDSettings" style="display: none;">
-                            <div class="radioID-status">
-                                <span id="radioIDStatus" data-i18n="settings.radioid.status.notloaded">Not loaded</span>
-                                <span id="radioIDLastUpdate"></span>
-                            </div>
                         </div>
                         
                         <div class="setting-group">
