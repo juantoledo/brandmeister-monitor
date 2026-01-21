@@ -2253,10 +2253,8 @@ class BrandmeisterMonitor {
                 if (flagBackgroundUrl) {
                     const cardMain = activeEntry.querySelector('.card-main');
                     if (cardMain) {
-                        cardMain.style.backgroundImage = `url('${flagBackgroundUrl}')`;
-                        cardMain.style.backgroundPosition = 'right center';
-                        cardMain.style.backgroundRepeat = 'no-repeat';
-                        cardMain.style.backgroundSize = 'auto 100%';
+                        cardMain.setAttribute('data-flag', flagBackgroundUrl);
+                        cardMain.style.setProperty('--flag-url', `url('${flagBackgroundUrl}')`);
                     }
                 }
                 
