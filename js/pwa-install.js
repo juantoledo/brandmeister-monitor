@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if already installed
     if (isAppInstalled()) {
-        console.log('📱 App is already installed as PWA');
         return;
     }
     
@@ -26,8 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (installButton) {
         installButton.addEventListener('click', handleInstallClick);
     }
-    
-    console.log('📱 PWA install detection initialized');
 });
 
 /**
@@ -35,8 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
  * This fires when the browser detects the app meets PWA installation criteria
  */
 function handleBeforeInstallPrompt(event) {
-    console.log('📱 PWA installation prompt available');
-    
     // Prevent the default browser install prompt
     event.preventDefault();
     
@@ -55,7 +50,6 @@ function handleBeforeInstallPrompt(event) {
  */
 async function handleInstallClick() {
     if (!deferredPrompt) {
-        console.log('📱 No install prompt available');
         return;
     }
     
@@ -65,12 +59,6 @@ async function handleInstallClick() {
         
         // Wait for the user's response
         const { outcome } = await deferredPrompt.userChoice;
-        
-        if (outcome === 'accepted') {
-            console.log('📱 User accepted the install prompt');
-        } else {
-            console.log('📱 User dismissed the install prompt');
-        }
         
         // Hide the install button regardless of outcome
         if (installButton) {
@@ -89,8 +77,6 @@ async function handleInstallClick() {
  * Handle successful app installation
  */
 function handleAppInstalled(event) {
-    console.log('📱 App was successfully installed');
-    
     // Hide the install button
     if (installButton) {
         installButton.style.display = 'none';

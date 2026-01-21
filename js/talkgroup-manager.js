@@ -14,7 +14,6 @@ class TalkgroupManager {
     initializeWithStaticData(staticTalkgroups) {
         this.staticData = { ...staticTalkgroups };
         this.rebuildUnifiedData();
-        console.log(`📋 Initialized with ${Object.keys(this.staticData).length} static talkgroups`);
     }
 
     // Update with API data (when available)
@@ -23,7 +22,6 @@ class TalkgroupManager {
         this.lastUpdate = lastUpdate;
         this.isApiDataAvailable = Object.keys(apiData).length > 0;
         this.rebuildUnifiedData();
-        console.log(`🌐 Updated with ${Object.keys(this.apiData).length} API talkgroups`);
     }
 
     // Rebuild unified data with API priority
@@ -35,8 +33,6 @@ class TalkgroupManager {
         if (this.isApiDataAvailable) {
             Object.assign(this.unifiedData, this.apiData);
         }
-        
-        console.log(`🔄 Unified data rebuilt: ${Object.keys(this.unifiedData).length} total talkgroups (${Object.keys(this.apiData).length} from API, ${Object.keys(this.staticData).length} static)`);
     }
 
     // Get talkgroup name from unified data

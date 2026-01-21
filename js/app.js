@@ -8,14 +8,12 @@ class BrandmeisterMonitor {
         this.totalCalls = 0;
         this.lastActivityTime = null;
         this.callsignAliases = {}; // Store callsign to alias mappings
-        // Session-based tracking - no legacy activeCalls needed
         this.transmissionGroups = {}; // Group related transmission events
         this.connectionStartTime = Date.now(); // Track session start time
         
         // RadioID Database for additional user information
         this.radioIDDatabase = {};
         this.radioIDLastUpdate = null;
-        this.radioIDUpdateInProgress = false;
         this.radioIDMemoryCache = new Map(); // Fast in-memory cache for session
         this.radioIDCacheStats = {
             memoryHits: 0,
@@ -42,9 +40,6 @@ class BrandmeisterMonitor {
             startTimes: {},
             timer: null
         };
-
-        // Call duration tracking
-        this.activeCalls = new Map(); // SessionID -> { startTime, callsign, tg, ... }
 
         // Talk Group Selector state
         this.selectedTalkgroups = new Set();
@@ -94,9 +89,6 @@ class BrandmeisterMonitor {
             this.loadTalkgroupFromStorage();
             this.loadAliasesFromStorage();
             this.loadRadioIDDatabase();
-            
-            // Clean old RadioID cache entries on startup
-            this.cleanRadioIDCache();
             
             // Update talkgroup status display
             this.updateTalkgroupStatus();
@@ -986,7 +978,6 @@ class BrandmeisterMonitor {
     getMemoryUsage() {
         const usage = {
             transmissionGroups: Object.keys(this.transmissionGroups).length,
-            // activeCalls removed - using session-based tracking
             callsignAliases: Object.keys(this.callsignAliases).length,
             activeTransmissions: this.elements.activeContainer.querySelectorAll('.active-transmission').length,
             logEntries: this.elements.logContainer.querySelectorAll('.log-entry').length
@@ -1246,7 +1237,6 @@ class BrandmeisterMonitor {
         const usage = this.getMemoryUsage();
         this.logInfo('Memory Usage Report', {
             transmissionGroups: usage.transmissionGroups,
-            // activeCalls: usage.activeCalls, // Removed - using session-based tracking
             callsignAliases: usage.callsignAliases,
             activeTransmissions: usage.activeTransmissions,
             logEntries: usage.logEntries,
@@ -1353,7 +1343,6 @@ class BrandmeisterMonitor {
                 // Comprehensive emergency cleanup
                 this.performEmergencyCleanup('transmissionGroups');
                 this.performEmergencyCleanup('dom');
-                // this.activeCalls = {}; // Removed - using session-based tracking
                 this.performanceMonitor.operationTimes = {};
                 this.performanceMonitor.history = this.performanceMonitor.history.slice(-20);
                 
@@ -1375,12 +1364,11 @@ class BrandmeisterMonitor {
             },
             currentState: {
                 transmissionGroups: Object.keys(this.transmissionGroups).length,
-                // activeCalls: Object.keys(this.activeCalls).length, // Removed - using session-based tracking
                 callsignAliases: Object.keys(this.callsignAliases).length,
                 domElements: document.querySelectorAll('*').length,
                 activeTransmissions: document.querySelectorAll('.active-transmission').length,
                 logEntries: document.querySelectorAll('.log-entry').length,
-                radioIDCache: this.getRadioIDCacheStats()
+                radioIDMemoryCacheSize: this.radioIDMemoryCache.size
             }
         };
     }
@@ -1417,7 +1405,6 @@ class BrandmeisterMonitor {
         
         // Clear all memory references
         this.transmissionGroups = {};
-        // this.activeCalls = {}; // Removed - using session-based tracking
         this.callsignAliases = {};
     }
 
@@ -2743,16 +2730,14 @@ class BrandmeisterMonitor {
         
         const duration = this.endPerformanceTimer('memoryCleanup', {
             itemsCleaned: cleanedItems,
-            transmissionGroups: Object.keys(this.transmissionGroups).length,
-            // activeCalls: Object.keys(this.activeCalls).length // Removed - using session-based tracking
+            transmissionGroups: Object.keys(this.transmissionGroups).length
         });
         
         if (cleanedItems > 0 && this.config.verbose) {
             this.logDebug('Memory cleanup completed', {
                 itemsCleaned: cleanedItems,
                 cleanupTime: `${duration?.toFixed(2)}ms`,
-                remainingTransmissions: Object.keys(this.transmissionGroups).length,
-                // remainingActiveCalls: Object.keys(this.activeCalls).length // Removed - using session-based tracking
+                remainingTransmissions: Object.keys(this.transmissionGroups).length
             });
         }
     }
@@ -2941,14 +2926,9 @@ class BrandmeisterMonitor {
         const linkType = call.LinkType || '';
         const sessionType = call.SessionType || '';
 
-        // Session-based tracking - no legacy activeCalls cleanup needed
         // Sanitize callsign to ensure valid CSS selector characters only
         const sanitizedCallsign = callsign.replace(/[^\w-]/g, '_');
         const callKey = `${sanitizedCallsign}_${startTime}`;
-        // Legacy activeCalls tracking removed
-
-        this.totalCalls++;
-        this.lastActivityTime = new Date();
 
         this.totalCalls++;
         this.lastActivityTime = new Date();
@@ -3013,10 +2993,6 @@ class BrandmeisterMonitor {
     }
 
     updateExistingCall(callKey, call) {
-        // Legacy method - now handled by session-based tracking
-        // const activeCall = this.activeCalls[callKey];
-        // if (!activeCall || !activeCall.initialLogEntry) return;
-
         const talkerAlias = call.TalkerAlias || '';
         const sourceID = call.SourceID ? String(call.SourceID) : '';
         const linkName = call.LinkName || '';
@@ -3062,8 +3038,6 @@ class BrandmeisterMonitor {
         }
     }
 
-    // Legacy activeTransmission methods removed - using session-based UI updates
-
     clearActiveTransmissions() {
         // Clear the active container
         this.elements.activeContainer.innerHTML = '';
@@ -3077,9 +3051,6 @@ class BrandmeisterMonitor {
                 group.status = 'cleared';
             }
         }
-        
-        // Clear legacy activeCalls tracking - replaced by session-based tracking
-        // this.activeCalls = {};
     }
 
     clearActiveTransmissionsForTalkgroup(talkgroup) {
@@ -3126,8 +3097,6 @@ class BrandmeisterMonitor {
             this.elements.activeContainer.appendChild(this.createNoActivityElement(this._htmlFragments.noActivityActive));
         }
     }
-
-    // Legacy createActiveTransmissionEntry removed - using session-based UI
 
     // Helper function to safely escape strings for CSS selectors
     escapeCSSSelector(str) {
@@ -4078,12 +4047,6 @@ class BrandmeisterMonitor {
         }
     }
 
-    // Load RadioID database from remote URL (fallback method)
-    async downloadRadioIDDatabase() {
-        console.warn('⚠️ downloadRadioIDDatabase is deprecated. Use embedded data via user-data.js instead.');
-        return;
-    }
-
     // Parse RadioID CSV data
     parseRadioIDCSV(csvText) {
         const database = {};
@@ -4337,7 +4300,6 @@ class BrandmeisterMonitor {
             // QuotaExceededError - localStorage is full
             if (error.name === 'QuotaExceededError' || error.code === 22) {
                 console.warn('⚠️ localStorage quota exceeded for RadioID cache. Data will remain in memory only.');
-                // Don't call cleanRadioIDCache() here - it's expensive and may not help
                 // The in-memory cache will still work fine
             } else {
                 console.warn('Error saving RadioID cache:', error);
@@ -4345,66 +4307,7 @@ class BrandmeisterMonitor {
         }
     }
 
-    /**
-     * Clean old RadioID cache entries
-     * This is an expensive operation and should only be called manually or on startup
-     */
-    cleanRadioIDCache() {
-        try {
-            const startTime = performance.now();
-            const keysToRemove = [];
-            const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-            const currentCacheVersion = 3; // v3: added callsign
-            let versionUpgrades = 0;
-            let totalChecked = 0;
-            
-            // Batch process keys for better performance
-            const allKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('radioID_')) {
-                    allKeys.push(key);
-                }
-            }
-            
-            totalChecked = allKeys.length;
-            
-            // Process keys in batches to avoid blocking
-            allKeys.forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    
-                    // Remove entries with old cache version
-                    if (!data.version || data.version < currentCacheVersion) {
-                        keysToRemove.push(key);
-                        versionUpgrades++;
-                    }
-                    // Remove entries that are too old
-                    else if (data.timestamp && (Date.now() - data.timestamp) > maxAge) {
-                        keysToRemove.push(key);
-                    }
-                } catch (e) {
-                    // Invalid data, mark for removal
-                    keysToRemove.push(key);
-                }
-            });
-            
-            // Remove old entries
-            keysToRemove.forEach(key => {
-                localStorage.removeItem(key);
-            });
-            
-            const duration = (performance.now() - startTime).toFixed(2);
-            
-            if (keysToRemove.length > 0) {
-                console.log(`🧹 Cleaned ${keysToRemove.length}/${totalChecked} RadioID cache entries in ${duration}ms (${versionUpgrades} version upgrades, ${keysToRemove.length - versionUpgrades} expired)`);
-            } else {
-                console.log(`✅ RadioID cache is clean (${totalChecked} entries checked in ${duration}ms)`);
-            }
-        } catch (error) {
-            console.warn('Error cleaning RadioID cache:', error);
-        }
-    }
+
 
     /**
      * Get RadioID cache statistics
@@ -4468,34 +4371,6 @@ class BrandmeisterMonitor {
                 statusElement.textContent = `${stats.totalTalkgroups.toLocaleString()} talkgroups (${notLoadedText})`;
             }
         }
-    }
-
-    // Clear RadioID cache
-    clearRadioIDCache() {
-        console.log('🗑️ Clearing RadioID database cache...');
-        
-        // Clear in-memory cache
-        this.radioIDMemoryCache.clear();
-        
-        // Clear database reference
-        this.radioIDDatabase = null;
-        this.radioIDLastUpdate = null;
-        
-        // Clear localStorage cache
-        localStorage.removeItem('radioIDDatabase');
-        localStorage.removeItem('radioIDLastUpdate');
-        
-        // Clean up individual cached entries
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('radioID_')) {
-                keysToRemove.push(key);
-            }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        console.log(`🗑️ Cleared ${keysToRemove.length} individual RadioID cache entries`);
     }
 
     // Talkgroup Database Functions

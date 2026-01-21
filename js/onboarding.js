@@ -333,16 +333,12 @@ class OnboardingManager {
             return;
         }
 
-        console.log('✅ Onboarding: Attaching event listeners');
-
         applyBtn.addEventListener('click', (e) => {
-            console.log('🔘 Onboarding: Apply button clicked');
             e.preventDefault();
             this.applyTalkgroups();
         });
         
         skipBtn.addEventListener('click', (e) => {
-            console.log('🔘 Onboarding: Skip button clicked');
             e.preventDefault();
             this.skipOnboarding();
         });
@@ -481,8 +477,6 @@ class OnboardingManager {
         const checkboxes = document.querySelectorAll('#onboardingTalkgroups input[type="checkbox"]:checked');
         const selectedTGs = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
-        console.log('📋 Onboarding: Selected talkgroups:', selectedTGs);
-
         if (selectedTGs.length === 0) {
             alert('Please select at least one talkgroup to monitor.');
             return;
@@ -496,12 +490,8 @@ class OnboardingManager {
         localStorage.setItem('brandmeister_talkgroup', selectedTGs.join(','));
         localStorage.setItem('brandmeister_monitor_all', 'false');
         
-        console.log('💾 Onboarding: Saved to localStorage');
-        
         // Reload the app's talkgroup configuration
         if (window.brandmeisterMonitor) {
-            console.log('🔄 Onboarding: Reloading app talkgroups');
-            
             // Load selected talkgroups into sidebar
             window.brandmeisterMonitor.loadSelectedTalkGroupsFromStorage();
             
@@ -514,7 +504,6 @@ class OnboardingManager {
 
         // Mark onboarding as completed
         localStorage.setItem(this.storageKey, 'true');
-        console.log('✅ Onboarding: Completed');
 
         // Close modal
         this.closeModal();
