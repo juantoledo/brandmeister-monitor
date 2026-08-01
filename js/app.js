@@ -1616,6 +1616,7 @@ class BrandmeisterMonitor {
 
             // Connection event handlers
             this.socket.on('connect', () => {
+                this.socket.emit('join', 'everything');
                 this.onConnect();
             });
 
@@ -1740,7 +1741,7 @@ class BrandmeisterMonitor {
             // Only proceed if we should monitor this talkgroup
             if (!this.config.monitorAllTalkgroups && this.monitoredTalkgroups.length > 0 && !this.monitoredTalkgroups.includes(tg)) {
                 if (this.config.verbose) {
-                    //console.log(`Skipping TG ${tg} - only monitoring TGs: ${this.monitoredTalkgroups.join(', ')}`);
+                    console.log(`Skipping TG ${tg} - only monitoring TGs: ${this.monitoredTalkgroups.join(', ')}`);
                 }
                 this.endPerformanceTimer('messageProcessing', { result: 'filtered_out', tg, sessionID });
                 return;
@@ -5341,7 +5342,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
 // Service Worker registration for offline capability and auto-updates
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('js/sw.js', { scope: '/' })
             .then((registration) => {
                 console.log('✅ Service Worker registered:', registration);
                 
